@@ -1,0 +1,23 @@
+drug,gene,variant_or_allele,evidence_level,phenotype_category,annotation_text,india_relevance
+clopidogrel,CYP2C19,CYP2C19*2,1A,altered drug response,Poor metabolizers have significantly reduced clopidogrel activation; avoid standard dose or use ticagrelor/prasugrel.,~30% allele frequency in Indian populations implies large IM/PM share
+clopidogrel,CYP2C19,CYP2C19*3,1A,altered drug response,Nonfunctional allele; reduced active metabolite.,~4% in Indians
+prasugrel,CYP2C19,CYP2C19*2,2A,efficacy,Less impact than clopidogrel; activation not CYP2C19-dependent.,Safe alternative
+ticagrelor,CYP2C19,any,1A,no_action,Not CYP2C19-dependent.,Safe alternative
+warfarin,CYP2C9,CYP2C9*3,1A,dosing,VKORC1/CYP2C9 genotypes guide initial dose.,Indian VKORC1 -1639G>A frequency ~13-16%
+warfarin,VKORC1,VKORC1 -1639G>A,1A,dosing,AA genotype: low dose.,Reported in Indian cohorts
+phenytoin,CYP2C9,CYP2C9*3,1A,dosing,Lower maintenance dose for IM/PM.,Common antiepileptic in India
+carbamazepine,HLA-B,HLA-B*15:02,1A,toxicity,Strong association with SJS/TEN in Han; test-before-treat recommended in at-risk populations.,HLA-B*15:02 reported in NE Indian and Thai-adjacent groups
+allopurinol,HLA-B,HLA-B*58:01,1A,toxicity,SJS/TEN risk; screen before use in high-frequency populations.,HLA-B*58:01 frequency ~5-10% in Indians
+abacavir,HLA-B,HLA-B*57:01,1A,toxicity,Hypersensitivity; screen before use.,Standard of care
+simvastatin,SLCO1B1,SLCO1B1 c.521T>C,1A,toxicity,C allele: myopathy risk; avoid high doses.,AF ~8% in South Asians
+codeine,CYP2D6,CYP2D6 UM/PM,1A,efficacy_toxicity,PMs: no analgesia; UMs: opioid toxicity risk.,*10 and *4 present in Indians
+tamoxifen,CYP2D6,CYP2D6 PM,1A,efficacy,PMs: reduced endoxifen and worse outcomes.,Consider anastrozole alternative
+fluorouracil,DPYD,DPYD*2A,1A,toxicity,Severe toxicity risk; dose reduction or alternative.,DPYD*2A rare in Indians (<0.5%) but screen if available
+irinotecan,UGT1A1,UGT1A1*28,2A,toxicity,Neutropenia risk with 7/7.,AF ~10% South Asian
+thiopurines,TPMT,TPMT*3A,1A,dosing,PM: 10x dose reduction or avoid.,TPMT*3A ~4.5% in Indians
+thiopurines,NUDT15,NUDT15*3,1A,dosing,Leukopenia risk; dose reduction.,NUDT15*3 ~6.5% in Indians - higher than East Asians previously thought
+primaquine,G6PD,G6PD Mediterranean,1A,toxicity,Hemolysis in G6PD-deficient; check G6PD before use.,Malaria-endemic districts; G6PD deficiency 2-22% by community
+dapsone,G6PD,G6PD Mediterranean,1A,toxicity,Hemolysis risk; screen.,Leprosy multidrug therapy is nationwide
+rasburicase,G6PD,G6PD deficient,1A,contraindicated,Contraindicated in G6PD deficiency.,Emergency oncology use
+methotrexate,MTHFR,MTHFR 677C>T,3,toxicity,Weak evidence; not actionable alone.,AF ~20% T allele in Indians
+amlodipine,CYP3A5,CYP3A5*3,3,dosing,Weak evidence in Indians.,AF ~70% *3 in Indians

@@ -1,0 +1,18 @@
+gene,phenotype,metabolizer_status,drug,drug_class,recommendation,severity_if_ignored,alternatives
+CYP2C19,CYP2C19 ultrarapid metabolizer,UM,clopidogrel,antiplatelet,Standard dosing; note possible reduced efficacy debate in guidelines is UM-related caution only,low,
+CYP2C19,CYP2C19 intermediate metabolizer,IM,clopidogrel,antiplatelet,Avoid standard clopidogrel; prefer ticagrelor or prasugrel,high,ticagrelor; prasugrel
+CYP2C19,CYP2C19 poor metabolizer,PM,clopidogrel,antiplatelet,Avoid clopidogrel; use ticagrelor or prasugrel,critical,ticagrelor; prasugrel
+CYP2C19,CYP2C19 normal metabolizer,NM,clopidogrel,antiplatelet,Standard dosing,low,
+CYP2D6,CYP2D6 poor metabolizer,PM,codeine,opioid,Avoid codeine; use morphine or non-opioid analgesic,high,morphine
+CYP2D6,CYP2D6 ultrarapid metabolizer,UM,codeine,opioid,Avoid codeine due to toxicity risk; use morphine,critical,morphine
+CYP2D6,CYP2D6 poor metabolizer,PM,tamoxifen,oncology,Avoid tamoxifen; use anastrozole (postmenopausal),high,anastrozole
+CYP2C9+CYP4F2,CYP2C9 IM,IM,warfarin,anticoagulant,Reduce initial dose; use pharmacogenomic dosing algorithm,high,
+DPYD,DPYD nonfunction heterozygote,heterozygote,fluorouracil,oncology,50% initial dose reduction with therapeutic drug monitoring,critical,capecitabine dose-adjust
+TPMT,TPMT poor metabolizer,PM,thiopurines,immunosuppressant,Reduce dose 10x or avoid; check NUDT15,critical,
+NUDT15,NUDT15 poor metabolizer,PM,thiopurines,immunosuppressant,Reduce dose 30-80% based on genotype,critical,
+G6PD,G6PD deficient,deficient,primaquine,antimalarial,Do not administer; use non-8-aminoquinoline regimen until G6PD normal,critical,chloroquine (for non-relapsing)
+G6PD,G6PD deficient,deficient,dapsone,antimicrobial,Avoid; use alternative regimen,critical,,
+G6PD,G6PD deficient,deficient,rasburicase,oncology,Contraindicated; use allopurinol or febuxostat,critical,allopurinol
+HLA-B,HLA-B*15:02 positive,carrier,carbamazepine,antiepileptic,Do not use carbamazepine; use levetiracetam or valproate,critical,levetiracetam; valproate
+HLA-B,HLA-B*58:01 positive,carrier,allopurinol,gout,Reduce dose or use alternative; benefit-risk assessment,critical,febuxostat (screened)
+SLCO1B1,SLCO1B1 decreased function,IM,simvastatin,statin,Limit dose or choose alternative statin,medium,atorvastatin; rosuvastatin

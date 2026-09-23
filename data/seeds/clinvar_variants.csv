@@ -1,0 +1,24 @@
+variant_id,gene_symbol,hgvs,clinvar_accession,clinical_significance,disease_name,af_indian,af_sas,af_global,pgx_star_allele,pgx_function
+NM_000053.4(ATP7B):c.2931C>G,ATP7B,p.Pro977Leu? placeholder,VCV000001337,Likely pathogenic,Wilson disease,0.008,0.004,0.0006,,
+NM_007294.4(BRCA1):c.68_69delAG,BRCA1,c.68_69delAG,VCV000039687,Pathogenic,Breast-ovarian cancer familial 1,0.0004,0.0008,0.0006,,
+NM_000551.4(VHL):c.194C>G,VHL,p.(Ser65Ter),VCV00000461,Pathogenic,Von Hippel-Lindau disease,0.0002,0.0001,0.0001,,
+NG_008840.1(HBB):c.20A>T,HBB,c.20A>T (HbS),VCV000019738,Pathogenic,Sickle cell disease,0.021,0.023,0.005,,
+NG_008840.1(HBB):c.79G>A,HBB,c.79G>A (HbE),VCV000019739,Pathogenic,Beta-thalassemia/HbE,0.017,0.038,0.011,,
+NG_008840.1(HBB):c.118C>T,HBB,c.118C>T (IVS1-5 G>C),VCV000019740,Pathogenic,Beta-thalassemia,0.013,0.032,0.004,,
+NG_007294.3(SMN1):g.27134T>CG,SMN1,SMN1 exon7 deletion,VCV000083808,Pathogenic,Spinal muscular atrophy type 1,0.009,0.009,0.006,,
+NM_000051.4(ATM):c.3247C>T,ATM,p.(Arg1083Ter),VCV00004161,Pathogenic,Ataxia-telangiectasia,0.0003,0.0002,0.0002,,
+NM_004006.3(CFTR):c.1521_1523delCTT,CFTR,p.Phe508del,VCV000000456,Pathogenic,Cystic fibrosis,0.0006,0.002,0.021,,
+NM_000927.4(GLA):c.902G>A,GLA,p.(Arg301Gln),VCV000065708,Pathogenic,Fabry disease cardiac variant,0.0003,0.0001,0.0004,,
+NM_000277.1(PAH):c.1223C>T,PAH,p.(Arg408Trp),VCV000002507,Pathogenic,Phenylketonuria,0.0005,0.001,0.004,,
+NM_000023.2(SGCA):c.746C>T,SGCA,p.(Arg249Cys),VCV000090538,Pathogenic,Limb-girdle muscular dystrophy R3,0.0011,0.0008,0.0002,,
+NM_000277.1(PAH):c.912G>C,PAH,p.(Trp304Cys),VCV000002518,Likely pathogenic,Phenylketonuria,0.0002,0.0003,0.0001,,
+NM_001354609.2(DMPK):c....CTGexp,DMPK,CTG repeat expansion,VCV000081082,Pathogenic,Myotonic dystrophy type 1,,0.0005,0.0003,,
+,CYP2C19,,VCV000099700,,,0.30,,,CYP2C19*2,LoF
+,CYP2C19,,VCV000099719,,,0.04,,,CYP2C19*3,LoF
+,CYP2C19,,VCV000099733,,,0.21,,,CYP2C19*17,GoF
+,CYP2D6,,VCV000099741,,,0.12,,,CYP2D6*10,Decreased
+,CYP2D6,,VCV000099757,,,0.05,,,CYP2D6*4,LoF
+,G6PD,,VCV000090537,,,0.022,,,G6PD Mediterranean,LoF
+,G6PD,,VCV000090539,,,0.011,,,G6PD Mahidol,LoF
+,TPMT,,VCV000099655,,,0.045,,,TPMT*3A,LoF
+,NUDT15,,VCV000981622,,,0.065,,,NUDT15*3,LoF

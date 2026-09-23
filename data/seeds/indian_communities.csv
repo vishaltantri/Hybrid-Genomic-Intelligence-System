@@ -1,0 +1,24 @@
+community,linguistic_group,primary_states,founder_disease_id,founder_note,carrier_multiplier
+Sindhi,Indo-Aryan,"Maharashtra; Gujarat; Delhi",ORPHA:231222,"Beta-thalassemia carrier rate ~8-10%, among highest in India",2.2
+Punjabi Khatri,Indo-Aryan,"Punjab; Delhi; Haryana",ORPHA:231222,"Beta-thalassemia carrier rate ~6-8%",1.8
+Gujarati Patel,Indo-Aryan,"Gujarat",ORPHA:231222,"Beta-thalassemia and G6PD founder variants",1.5
+Marwari/Maheshwari,Indo-Aryan,"Rajasthan; Maharashtra",ORPHA:231222,"Thalassemia elevated in trader communities",1.5
+Bengali,Indo-Aryan,"West Bengal; Tripura",ORPHA:231222,"HbE high; thalassemia common",1.4
+Agarwal,Indo-Aryan,"Delhi; Uttar Pradesh; Haryana",ORPHA:915,"Wilson disease reported clusters",1.3
+Muslim (North),Indo-Aryan,"Uttar Pradesh; Bihar; Telangana",ORPHA:231222,"Consanguinity in some subgroups",1.3
+Reddy,Dravidian,"Andhra Pradesh; Telangana",ORPHA:915,"Wilson disease founder effect reported in Andhra",1.6
+Kamma,Dravidian,"Andhra Pradesh; Telangana",ORPHA:915,"Wilson disease clusters reported",1.5
+Naidu,Dravidian,"Andhra Pradesh; Tamil Nadu",ORPHA:915,"Wilson disease",1.4
+Tamil,Dravidian,"Tamil Nadu; Puducherry",ORPHA:231222,"High consanguinity state; thalassemia + spinal muscular atrophy",1.4
+Kannada,Dravidian,"Karnataka",ORPHA:231222,"High consanguinity state",1.4
+Telugu,Dravidian,"Andhra Pradesh; Telangana",ORPHA:915,"Consanguinity 18-26%",1.4
+Malayali,Dravidian,"Kerala; Lakshadweep",ORPHA:231222,"Thalassemia present; no major founder reported",1.2
+Gond,Tribal-Central,"Madhya Pradesh; Chhattisgarh; Maharashtra",ORPHA:232,"Sickle cell trait 10-15% in some Gond subgroups",3.0
+Bhil,Tribal-Central,"Madhya Pradesh; Gujarat; Rajasthan",ORPHA:232,"Sickle cell and G6PD deficiency elevated",2.8
+Munda,Tribal-East,"Jharkhand; Odisha; West Bengal",ORPHA:232,"Sickle cell tribal belt",2.5
+Santhal,Tribal-East,"Jharkhand; West Bengal; Odisha",ORPHA:232,"Sickle cell; thalassemia",2.2
+Khond,Dravidian-Tribal,"Odisha; Andhra Pradesh",ORPHA:232,"Sickle cell high",2.6
+Mizo,Tibeto-Burman,"Mizoram",ORPHA:232,"HbE very high; G6PD Mahidol",2.0
+Naga,Tibeto-Burman,"Nagaland; Manipur",ORPHA:231222,"HbE high",1.8
+Bodo,Tibeto-Burman,"Assam",ORPHA:231222,"HbE",1.6
+Assamese,Indo-Aryan,"Assam",ORPHA:231222,"HbE carrier high",1.5

@@ -1,0 +1,30 @@
+venv/
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# data: raw is large; small seeds are committed, big downloads are not
+# data/processed and reports are generated outputs (kg_build / demo / queues)
+data/raw/
+data/processed/
+data/external/
+reports/
+.freebuff/
+models/**/*.safetensors
+models/**/*.bin
+models/**/*.onnx
+
+.env
+*.log
+data/*.sqlite3
+*.sqlite3
+mlruns/
+dvc.lock
+node_modules/
+web_dashboard/dist/
+mobile_app/.dart_tool/
+mobile_app/build/
+.DS_Store

@@ -1,0 +1,425 @@
+format-version: 1.2
+data-version: genomind_mini_seed_2026
+ontology: hp
+remark: MINI SEED for offline demo + tests. For production download the real hp.obo from
+  purl.obolibrary.org/obo/hp.obo and place it in data/raw/hpo/hp.obo — the same parser handles both.
+remark: Some HP ids in this seed are illustrative; the loader validates format, not ID correctness.
+
+[Term]
+id: HP:0000001
+name: All
+def: "Root of the HPO ontology." [HPO:seed]
+
+[Term]
+id: HP:0000118
+name: Phenotypic abnormality
+def: "Root term for all phenotypic abnormalities." [HPO:seed]
+is_a: HP:0000001 ! All
+
+[Term]
+id: HP:0000707
+name: Abnormality of the nervous system
+def: "An abnormality of the nervous system." [HPO:seed]
+is_a: HP:0000118 ! Phenotypic abnormality
+
+[Term]
+id: HP:0001249
+name: Intellectual disability
+def: "Subnormal intellectual functioning originating in the developmental period." [HPO:seed]
+synonym: "mental retardation" RELATED []
+synonym: "dimaagi vikas mein kami" RELATED [hinglish]
+is_a: HP:0000707 ! Abnormality of the nervous system
+
+[Term]
+id: HP:0001250
+name: Seizures
+def: "Clinical or subclinical disturbances of cerebral function caused by abnormal neuronal discharge." [HPO:seed]
+synonym: "fits" RELATED []
+synonym: "mirgi ka daura" RELATED [hinglish]
+is_a: HP:0000707 ! Abnormality of the nervous system
+
+[Term]
+id: HP:0001252
+name: Hypotonia
+def: "Muscular hypotonia: reduced muscle tone." [HPO:seed]
+synonym: "decreased muscle tone" EXACT []
+synonym: "naram maanspeshiyan" RELATED [hinglish]
+is_a: HP:0000707 ! Abnormality of the nervous system
+
+[Term]
+id: HP:0001263
+name: Global developmental delay
+def: "Significant delay in two or more developmental domains." [HPO:seed]
+synonym: "developmental delay" RELATED []
+is_a: HP:0000707 ! Abnormality of the nervous system
+
+[Term]
+id: HP:0001251
+name: Ataxia
+def: "Cerebellar ataxia with imbalance and incoordination." [HPO:seed]
+is_a: HP:0000707 ! Abnormality of the nervous system
+
+[Term]
+id: HP:0001337
+name: Tremor
+def: "Involuntary rhythmic oscillatory movement." [HPO:seed]
+is_a: HP:0000707 ! Abnormality of the nervous system
+
+[Term]
+id: HP:0001332
+name: Dystonia
+def: "Involuntary sustained muscle contraction causing twisting movements." [HPO:seed]
+is_a: HP:0000707 ! Abnormality of the nervous system
+
+[Term]
+id: HP:0001257
+name: Spasticity
+def: "Velocity-dependent increase in tonic stretch reflexes." [HPO:seed]
+is_a: HP:0000707 ! Abnormality of the nervous system
+
+[Term]
+id: HP:0001288
+name: Gait disturbance
+def: "An abnormal way of walking." [HPO:seed]
+is_a: HP:0000707 ! Abnormality of the nervous system
+
+[Term]
+id: HP:0002515
+name: Waddling gait
+def: "Trendelenburg-like gait seen in proximal muscle weakness." [HPO:seed]
+is_a: HP:0001288 ! Gait disturbance
+
+[Term]
+id: HP:0002066
+name: Gowers sign
+def: "Use of hands to push off the thighs when rising from the floor." [HPO:seed]
+is_a: HP:0000707 ! Abnormality of the nervous system
+
+[Term]
+id: HP:0001284
+name: Areflexia
+def: "Absence of neurologic reflexes." [HPO:seed]
+is_a: HP:0000707 ! Abnormality of the nervous system
+
+[Term]
+id: HP:0001265
+name: Hyporeflexia
+def: "Reduction of neurologic reflexes." [HPO:seed]
+is_a: HP:0000707 ! Abnormality of the nervous system
+
+[Term]
+id: HP:0001307
+name: Tongue fasciculation
+def: "Involuntary contraction of tongue muscle fibers." [HPO:seed]
+is_a: HP:0000707 ! Abnormality of the nervous system
+
+[Term]
+id: HP:0001297
+name: Stroke
+def: "Sudden neurologic deficit due to cerebral vascular event." [HPO:seed]
+is_a: HP:0000707 ! Abnormality of the nervous system
+
+[Term]
+id: HP:0002460
+name: Distal muscle weakness
+def: "Weakness of distal limb muscles." [HPO:seed]
+is_a: HP:0000707 ! Abnormality of the nervous system
+
+[Term]
+id: HP:0003011
+name: Abnormality of the musculature
+def: "An abnormality of the skeletal muscle system." [HPO:seed]
+is_a: HP:0000118 ! Phenotypic abnormality
+
+[Term]
+id: HP:0001324
+name: Muscle weakness
+def: "Reduced strength of muscles." [HPO:seed]
+synonym: "kamzori in muscles" RELATED [hinglish]
+is_a: HP:0003011 ! Abnormality of the musculature
+
+[Term]
+id: HP:0008981
+name: Calf muscle hypertrophy
+def: "Enlargement of calf muscles, often pseudohypertrophy." [HPO:seed]
+is_a: HP:0003011 ! Abnormality of the musculature
+
+[Term]
+id: HP:0002486
+name: Myotonia
+def: "Delayed relaxation of skeletal muscle after contraction." [HPO:seed]
+is_a: HP:0003011 ! Abnormality of the musculature
+
+[Term]
+id: HP:0001761
+name: Pes cavus
+def: "Abnormally high arch of the foot." [HPO:seed]
+is_a: HP:0000118 ! Phenotypic abnormality
+
+[Term]
+id: HP:0000478
+name: Abnormality of the eye
+def: "Any abnormality of the eye." [HPO:seed]
+is_a: HP:0000118 ! Phenotypic abnormality
+
+[Term]
+id: HP:0000618
+name: Nyctalopia
+def: "Inability to see in dim light or at night (night blindness)." [HPO:seed]
+synonym: "night blindness" EXACT []
+synonym: "raat mein na dikhna" RELATED [hinglish]
+is_a: HP:0000478 ! Abnormality of the eye
+
+[Term]
+id: HP:0000510
+name: Retinitis pigmentosa
+def: "Hereditary retinal degeneration with pigmentary changes." [HPO:seed]
+is_a: HP:0000478 ! Abnormality of the eye
+
+[Term]
+id: HP:0000639
+name: Nystagmus
+def: "Involuntary rhythmic eye movements." [HPO:seed]
+is_a: HP:0000478 ! Abnormality of the eye
+
+[Term]
+id: HP:0000518
+name: Cataract
+def: "Opacity of the lens of the eye." [HPO:seed]
+is_a: HP:0000478 ! Abnormality of the eye
+
+[Term]
+id: HP:0001083
+name: Ectopia lentis
+def: "Displacement of the lens from its normal position." [HPO:seed]
+is_a: HP:0000478 ! Abnormality of the eye
+
+[Term]
+id: HP:0000616
+name: Kayser-Fleischer ring
+def: "Copper deposition ring at corneal limbus." [HPO:seed]
+is_a: HP:0000478 ! Abnormality of the eye
+
+[Term]
+id: HP:0000592
+name: Blue sclerae
+def: "Abnormal blue coloring of the sclera." [HPO:seed]
+is_a: HP:0000478 ! Abnormality of the eye
+
+[Term]
+id: HP:0000582
+name: Upslanted palpebral fissure
+def: "Upward slanting of the palpebral fissure." [HPO:seed]
+is_a: HP:0000478 ! Abnormality of the eye
+
+[Term]
+id: HP:0000400
+name: Large ear
+def: "Abnormally large ears." [HPO:seed]
+is_a: HP:0000118 ! Phenotypic abnormality
+
+[Term]
+id: HP:0000271
+name: Long face
+def: "Facial height disproportionately increased." [HPO:seed]
+is_a: HP:0000118 ! Phenotypic abnormality
+
+[Term]
+id: HP:0000951
+name: Abnormality of the skin
+def: "Any abnormality of the skin." [HPO:seed]
+is_a: HP:0000118 ! Phenotypic abnormality
+
+[Term]
+id: HP:0000952
+name: Jaundice
+def: "Yellowing of skin and sclera due to hyperbilirubinemia." [HPO:seed]
+synonym: "piliya" RELATED [hindi]
+synonym: "aankhon ka peela hona" RELATED [hinglish]
+is_a: HP:0000951 ! Abnormality of the skin
+
+[Term]
+id: HP:0001010
+name: Hypopigmentation of the skin
+def: "Reduced skin pigmentation." [HPO:seed]
+is_a: HP:0000951 ! Abnormality of the skin
+
+[Term]
+id: HP:0000957
+name: Cafe-au-lait spot
+def: "Light brown macules on the skin." [HPO:seed]
+is_a: HP:0000951 ! Abnormality of the skin
+
+[Term]
+id: HP:0000954
+name: Single transverse palmar crease
+def: "Single palmar crease instead of two." [HPO:seed]
+is_a: HP:0000951 ! Abnormality of the skin
+
+[Term]
+id: HP:0000995
+name: Neurofibroma
+def: "Benign nerve sheath tumors." [HPO:seed]
+is_a: HP:0000951 ! Abnormality of the skin
+
+[Term]
+id: HP:0000969
+name: Edema
+def: "Abnormal accumulation of fluid in interstitial spaces of tissues." [HPO:seed]
+synonym: "sujan" RELATED [hinglish]
+is_a: HP:0000118 ! Phenotypic abnormality
+
+[Term]
+id: HP:0011344
+name: Delayed speech and language development
+def: "A degree of language development that is significantly below the norm for age." [HPO:seed]
+synonym: "der se bolna" RELATED [hinglish]
+is_a: HP:0000707 ! Abnormality of the nervous system
+
+[Term]
+id: HP:0012378
+name: Fatigue
+def: "A subjective feeling of tiredness characterized by a lack of energy." [HPO:seed]
+synonym: "thakan" RELATED [hinglish]
+is_a: HP:0000118 ! Phenotypic abnormality
+
+[Term]
+id: HP:0000790
+name: Hematuria
+def: "The presence of blood in the urine." [HPO:seed]
+is_a: HP:0000118 ! Phenotypic abnormality
+
+[Term]
+id: HP:0001945
+name: Fever
+def: "Body temperature elevated above the normal range." [HPO:seed]
+synonym: "bukhaar" RELATED [hinglish]
+is_a: HP:0000118 ! Phenotypic abnormality
+
+[Term]
+id: HP:0012735
+name: Cough
+def: "A sudden, audible expulsion of air from the lungs." [HPO:seed]
+synonym: "khansi" RELATED [hinglish]
+is_a: HP:0000118 ! Phenotypic abnormality
+
+[Term]
+id: HP:0001508
+name: Failure to thrive
+def: "Faltering weight gain and growth in childhood." [HPO:seed]
+synonym: "vikaas ruk jaana" RELATED [hinglish]
+is_a: HP:0000118 ! Phenotypic abnormality
+
+[Term]
+id: HP:0004322
+name: Short stature
+def: "Height below two standard deviations for age." [HPO:seed]
+synonym: "lambi height nahi hona" RELATED [hinglish]
+is_a: HP:0000118 ! Phenotypic abnormality
+
+[Term]
+id: HP:0000098
+name: Tall stature
+def: "Height above two standard deviations for age." [HPO:seed]
+is_a: HP:0000118 ! Phenotypic abnormality
+
+[Term]
+id: HP:0000256
+name: Macrocephaly
+def: "Head circumference above two standard deviations." [HPO:seed]
+is_a: HP:0000118 ! Phenotypic abnormality
+
+[Term]
+id: HP:0000252
+name: Microcephaly
+def: "Head circumference below two standard deviations." [HPO:seed]
+is_a: HP:0000118 ! Phenotypic abnormality
+
+[Term]
+id: HP:0001217
+name: Clubbing of fingers
+def: "Bulbous deformity of fingertips with nail bed angle loss." [HPO:seed]
+is_a: HP:0000118 ! Phenotypic abnormality
+
+[Term]
+id: HP:0001744
+name: Splenomegaly
+def: "Abnormal enlargement of the spleen." [HPO:seed]
+synonym: "tili ka badhna" RELATED [hinglish]
+is_a: HP:0000118 ! Phenotypic abnormality
+
+[Term]
+id: HP:0002240
+name: Hepatomegaly
+def: "Abnormal enlargement of the liver." [HPO:seed]
+is_a: HP:0000118 ! Phenotypic abnormality
+
+[Term]
+id: HP:0001394
+name: Cirrhosis
+def: "Chronic liver disease with fibrosis and nodular regeneration." [HPO:seed]
+is_a: HP:0000118 ! Phenotypic abnormality
+
+[Term]
+id: HP:0001738
+name: Exocrine pancreatic insufficiency
+def: "Reduced pancreatic exocrine secretion causing maldigestion." [HPO:seed]
+is_a: HP:0000118 ! Phenotypic abnormality
+
+[Term]
+id: HP:0002591
+name: Steatorrhea
+def: "Excess fat in feces, frothy foul-smelling stools." [HPO:seed]
+is_a: HP:0000118 ! Phenotypic abnormality
+
+[Term]
+id: HP:0002783
+name: Recurrent respiratory infections
+def: "Repeated infections of the respiratory tract." [HPO:seed]
+synonym: "baar baar khaansi bukhaar" RELATED [hinglish]
+is_a: HP:0000118 ! Phenotypic abnormality
+
+[Term]
+id: HP:0002110
+name: Bronchiectasis
+def: "Permanent dilation of bronchi." [HPO:seed]
+is_a: HP:0000118 ! Phenotypic abnormality
+
+[Term]
+id: HP:0001903
+name: Anemia
+def: "Reduced hemoglobin concentration." [HPO:seed]
+synonym: "khoon ki kami" RELATED [hinglish]
+is_a: HP:0000118 ! Phenotypic abnormality
+
+[Term]
+id: HP:0001878
+name: Hemolytic anemia
+def: "Anemia due to red cell destruction." [HPO:seed]
+is_a: HP:0001903 ! Anemia
+
+[Term]
+id: HP:0001638
+name: Cardiomyopathy
+def: "Myocardial disorder with structural or functional abnormality." [HPO:seed]
+is_a: HP:0000118 ! Phenotypic abnormality
+
+[Term]
+id: HP:0000848
+name: Adrenal insufficiency
+def: "Insufficient adrenal steroid production." [HPO:seed]
+is_a: HP:0000118 ! Phenotypic abnormality
+
+[Term]
+id: HP:0000365
+name: Hearing impairment
+def: "Partial or complete hearing loss." [HPO:seed]
+synonym: "sunai kam hona" RELATED [hinglish]
+is_a: HP:0000118 ! Phenotypic abnormality
+
+[Term]
+id: HP:0012532
+name: Chronic pain
+def: "Persistent or recurrent pain lasting longer than 3 months." [HPO:seed]
+synonym: "dard" RELATED [hinglish]
+is_a: HP:0000118 ! Phenotypic abnormality

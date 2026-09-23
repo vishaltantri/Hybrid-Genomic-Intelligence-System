@@ -1,0 +1,86 @@
+version: "3.9"
+
+# GENOMIND-INDIA local development stack.
+# Usage: docker compose up -d
+# Neo4j browser: http://localhost:7474 (neo4j / genomind_dev_password)
+# MLflow: http://localhost:5000
+# Label Studio: http://localhost:8080
+# Adminer (Postgres UI): http://localhost:8081
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: genomind
+      POSTGRES_PASSWORD: genomind_dev_password
+      POSTGRES_DB: genomind
+    ports: ["5432:5432"]
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U genomind"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports: ["6379:6379"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  neo4j:
+    image: neo4j:5.26-community
+    environment:
+      NEO4J_AUTH: neo4j/genomind_dev_password
+      NEO4J_server_memory_heap_max__size: 1G
+    ports: ["7474:7474", "7687:7687"]
+    volumes: [neo4jdata:/data]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:7474 >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:v2.17.2
+    command: mlflow server --host 0.0.0.0 --port 5000 --backend-store-uri sqlite:////mlruns/mlflow.db
+    ports: ["5000:5000"]
+    volumes: [mlruns:/mlruns]
+
+  label-studio:
+    image: heartexlabs/label-studio:latest
+    environment:
+      LABEL_STUDIO_LOCAL_FILES_SERVING_ENABLED: "true"
+      LABEL_STUDIO_HOSTNAME: http://localhost:8080
+    ports: ["8080:8080"]
+    volumes: [labelstudio:/label-studio/data]
+
+  adminer:
+    image: adminer:latest
+    ports: ["8081:8080"]
+
+  api:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    environment:
+      GENOMIND_JWT_SECRET: change-me-in-production
+      NEO4J_URI: bolt://neo4j:7687
+      NEO4J_USER: neo4j
+      NEO4J_PASSWORD: genomind_dev_password
+      POSTGRES_DSN: postgresql+psycopg://genomind:genomind_dev_password@postgres:5432/genomind
+      REDIS_URL: redis://redis:6379/0
+    ports: ["8000:8000"]
+    depends_on:
+      postgres: {condition: service_healthy}
+      redis: {condition: service_healthy}
+      neo4j: {condition: service_healthy}
+
+volumes:
+  pgdata:
+  neo4jdata:
+  mlruns:
+  labelstudio:

@@ -1,0 +1,123 @@
+{
+  "version": "1.0",
+  "note": "Voice-guided questionnaire for ASHA workers. questions[].hi is spoken text (TTS/ASR prompt), answers map to symptoms/HPO and can raise red flags. Prototype content - review with a clinician and a Hindi/regional language expert before field use.",
+  "questions": [
+    {
+      "id": "q_age",
+      "hi": "बच्चे की उम्र कितनी है? साल या महीने में बताइए।",
+      "en": "What is the child's age?",
+      "type": "number",
+      "unit": "years",
+      "red_flag": null
+    },
+    {
+      "id": "q_development",
+      "hi": "क्या बच्चा अपनी उम्र के हिसाब से बैठता, चलता और बोलता है?",
+      "en": "Is the child sitting, walking and talking for their age?",
+      "type": "choice",
+      "options": ["haan", "nahi", "thoda"],
+      "symptom_if_positive": "developmental delay",
+      "hpo_id": "HP:0001263",
+      "red_flag": "delayed_development"
+    },
+    {
+      "id": "q_weakness",
+      "hi": "क्या बच्चा बार-बार गिरता है या उठने में हाथ का सहारा लेता है?",
+      "en": "Does the child fall often or use hands to stand up?",
+      "type": "choice",
+      "options": ["haan", "nahi", "kabhi_kabhi"],
+      "symptom_if_positive": "muscle weakness",
+      "hpo_id": "HP:0001324",
+      "red_flag": "progressive_weakness"
+    },
+    {
+      "id": "q_jaundice",
+      "hi": "क्या आँखें या नाखून पीले दिखते हैं?",
+      "en": "Do the eyes or nails look yellow?",
+      "type": "choice",
+      "options": ["haan", "nahi"],
+      "symptom_if_positive": "jaundice",
+      "hpo_id": "HP:0000952",
+      "red_flag": "jaundice"
+    },
+    {
+      "id": "q_seizure",
+      "hi": "क्या बच्चे को झटके या मिर्गी जैसा दौरा पड़ता है?",
+      "en": "Does the child have fits or seizures?",
+      "type": "choice",
+      "options": ["haan", "nahi"],
+      "symptom_if_positive": "seizures",
+      "hpo_id": "HP:0001250",
+      "red_flag": "seizures"
+    },
+    {
+      "id": "q_feeding",
+      "hi": "क्या बच्चा दूध पीता है और वज़न बढ़ रहा है?",
+      "en": "Is the child feeding and gaining weight?",
+      "type": "choice",
+      "options": ["haan", "nahi"],
+      "symptom_if_negative": "failure to thrive",
+      "hpo_id": "HP:0001508",
+      "red_flag": null
+    },
+    {
+      "id": "q_vision",
+      "hi": "क्या बच्चा अंधेरे में या रात में ठीक से देख नहीं पाता?",
+      "en": "Does the child have trouble seeing in dim light or at night?",
+      "type": "choice",
+      "options": ["haan", "nahi"],
+      "symptom_if_positive": "night blindness",
+      "hpo_id": "HP:0000618",
+      "red_flag": null
+    },
+    {
+      "id": "q_pallor",
+      "hi": "क्या हथेली और आँख के नीचे का हिस्सा बहुत सफेद लगता है?",
+      "en": "Do the palms or inner eyelids look very pale?",
+      "type": "choice",
+      "options": ["haan", "nahi"],
+      "symptom_if_positive": "anemia",
+      "hpo_id": "HP:0001903",
+      "red_flag": "severe_pallor"
+    },
+    {
+      "id": "q_recurrent_infections",
+      "hi": "क्या बच्चे को महीने में दो-तीन बार खाँसी-ज़ुकाम या बुखार होता है?",
+      "en": "Does the child get cough/cold or fever two-three times a month?",
+      "type": "choice",
+      "options": ["haan", "nahi"],
+      "symptom_if_positive": "recurrent infections",
+      "hpo_id": "HP:0002783",
+      "red_flag": null
+    },
+    {
+      "id": "q_family",
+      "hi": "क्या परिवार में किसी को ऐसी ही बीमारी है, या माता-पिता रिश्तेदार हैं?",
+      "en": "Does anyone in the family have a similar illness, or are the parents related?",
+      "type": "choice",
+      "options": ["haan", "nahi"],
+      "symptom_if_positive": "family history positive",
+      "hpo_id": null,
+      "red_flag": "family_history"
+    },
+    {
+      "id": "q_urine",
+      "hi": "क्या पेशाब का रंग बहुत गाढ़ा या लाल हो जाता है?",
+      "en": "Does the urine ever turn very dark or red?",
+      "type": "choice",
+      "options": ["haan", "nahi"],
+      "symptom_if_positive": "dark urine / hemoglobinuria",
+      "hpo_id": "HP:0000790",
+      "red_flag": "hemolysis_suspected"
+    }
+  ],
+  "red_flag_rules": {
+    "seizures": {"triage": "red", "why": "Active seizures need urgent evaluation"},
+    "progressive_weakness": {"triage": "red", "why": "Progressive weakness in a child needs specialist review"},
+    "severe_pallor": {"triage": "red", "why": "Severe pallor may mean severe anemia needing transfusion assessment"},
+    "hemolysis_suspected": {"triage": "red", "why": "Dark urine with pallor suggests acute hemolysis (G6PD/sickle)"},
+    "delayed_development": {"triage": "yellow", "why": "Developmental delay needs PHC referral and follow-up"},
+    "jaundice": {"triage": "yellow", "why": "Persistent jaundice needs liver function testing"},
+    "family_history": {"triage": "yellow", "why": "Family history or consanguinity raises genetic risk"}
+  }
+}

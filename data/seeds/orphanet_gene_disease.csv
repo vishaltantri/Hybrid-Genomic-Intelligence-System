@@ -1,0 +1,25 @@
+gene_symbol,gene_name,disease_id,association_type,confidence
+ATP7B,ATPase copper transporting beta,ORPHA:915,Causal,Definitive
+DMD,Dystrophin,ORPHA:98863,Causal,Definitive
+SMN1,Survival of motor neuron 1,ORPHA:123222,Causal,Definitive
+HBB,Hemoglobin subunit beta,ORPHA:231222,Causal,Definitive
+HBB,Hemoglobin subunit beta,ORPHA:232,Causal,Definitive
+CFTR,CF transmembrane conductance regulator,ORPHA:586,Causal,Definitive
+PAH,Phenylalanine hydroxylase,ORPHA:716,Causal,Definitive
+CYP21A2,Cytochrome P450 family 21 subfamily A member 2,ORPHA:418,Causal,Definitive
+G6PD,Glucose-6-phosphate dehydrogenase,ORPHA:355,Causal,Definitive
+FMR1,Fragile X messenger ribonucleoprotein 1,ORPHA:94126,Causal,Definitive
+DMPK,Dystrophia myotonica protein kinase,ORPHA:274,Causal,Definitive
+PMP22,Peripheral myelin protein 22,ORPHA:345,Causal,Definitive
+RHO,Rhodopsin,ORPHA:791,Causal,Strong
+USH2A,Usherin,ORPHA:791,Causal,Strong
+OCA2,OCA2 melanosomal transmembrane protein,ORPHA:79432,Causal,Definitive
+COL1A1,Collagen type I alpha 1 chain,ORPHA:666,Causal,Definitive
+FBN1,Fibrillin 1,ORPHA:558,Causal,Definitive
+NF1,Neurofibromin 1,ORPHA:636,Causal,Definitive
+TSC2,TSC complex subunit 2,ORPHA:805,Causal,Definitive
+TSC1,TSC complex subunit 1,ORPHA:805,Causal,Strong
+CYP2C19,Cytochrome P450 2C19,,PGx,None
+CYP2D6,Cytochrome P450 2D6,,PGx,None
+TPMT,Thiopurine S-methyltransferase,,PGx,None
+NUDT15,Nudix hydrolase 15,,PGx,None

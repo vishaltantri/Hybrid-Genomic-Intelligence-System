@@ -1,0 +1,62 @@
+{
+  "disclaimer": "Summary of publicly announced Indian government programs for counseling context. Verify current eligibility/amounts with the relevant authority before advising patients.",
+  "schemes": [
+    {
+      "name": "National Policy for Rare Diseases 2021",
+      "authority": "Ministry of Health and Family Welfare",
+      "benefit": "Financial assistance up to INR 50 lakh per patient for treatment of listed rare diseases at Centres of Excellence (one-time) under the NPRD 2021 framework.",
+      "applies_to": "Listed rare diseases incl. many lysosomal storage disorders, SMA, DMD (as per group)",
+      "url": "https://rarediseases.mohfw.gov.in"
+    },
+    {
+      "name": "Sickle Cell Anaemia Elimination Mission",
+      "authority": "Ministry of Health and Family Welfare / Ministry of Tribal Affairs",
+      "benefit": "Population-level screening (7 crore people in 17 states), counseling and treatment; targeted at tribal districts.",
+      "applies_to": "Sickle cell disease carriers and patients",
+      "url": "https://sickle.nhm.gov.in"
+    },
+    {
+      "name": "UMMID (Unique Methods of Management and treatment of Inherited Disorders)",
+      "authority": "Department of Biotechnology",
+      "benefit": "Genetic carrier screening, prenatal diagnosis and counseling for thalassemia and other inherited disorders at designated centres.",
+      "applies_to": "Thalassemia, SMA, other inherited disorders",
+      "url": "https://dbtindia.gov.in"
+    },
+    {
+      "name": "Ayushman Bharat PM-JAY",
+      "authority": "National Health Authority",
+      "benefit": "Health cover up to INR 5 lakh per family per year for secondary/tertiary care for eligible families.",
+      "applies_to": "Rare disease supportive care where covered",
+      "url": "https://pmjay.gov.in"
+    },
+    {
+      "name": "National Newborn Screening Program (RBSK/NHM linked)",
+      "authority": "National Health Mission",
+      "benefit": "Newborn screening for congenital hypothyroidism, CAH, G6PD deficiency, PKU and hemoglobinopathies in expanding state programs.",
+      "applies_to": "Newborns",
+      "url": "https://nhm.gov.in"
+    },
+    {
+      "name": "Rashtriya Bal Swasthya Karyakram (RBSK)",
+      "authority": "National Health Mission",
+      "benefit": "Child health screening and early intervention services including 4 Ds (defects, deficiencies, diseases, developmental delays).",
+      "applies_to": "Children 0-18 years",
+      "url": "https://rbsk.gov.in"
+    }
+  ],
+  "centres_of_excellence_examples": [
+    "All India Institute of Medical Sciences, New Delhi",
+    "PGIMER, Chandigarh",
+    "NIMHANS, Bengaluru",
+    "Sankara Nethralaya, Chennai",
+    "CMC, Vellore",
+    "SGPGIMS, Lucknow",
+    "NIIMS / ICMR network centres"
+  ],
+  "counselling_points": [
+    "Carrier status is common and is not a disease - both partners must be carriers for a 25% child risk in autosomal recessive disorders.",
+    "Carrier screening is a simple blood test (HPLC/CBC for thalassemia, enzyme assay for G6PD).",
+    "Prenatal diagnosis (CVS at 11-13 weeks or amniocentesis at 15-18 weeks) is available at select centres.",
+    "Consanguineous marriage increases the risk of autosomal recessive disease in offspring."
+  ]
+}

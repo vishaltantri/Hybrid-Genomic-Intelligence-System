@@ -1,0 +1,13 @@
+specialist_id,name,specialty,city,state,institution_dummy
+S001,Dr. A. Mehta,Clinical Geneticist,New Delhi,Delhi,AIIMS
+S002,Dr. R. Iyer,Pediatric Neurologist,Chennai,Tamil Nadu,CMC Vellore
+S003,Dr. S. Das,Neurologist - Neuromuscular,Kolkata,West Bengal,NIMHANS-affiliated
+S004,Dr. K. Reddy,Hepatologist - Wilson Disease,Hyderabad,Telangana,NIMS
+S005,Dr. P. Sharma,Hematologist - Thalassemia,Mumbai,Maharashtra,SION Hospital
+S006,Dr. N. Pillai,Genetic Counselor,Bengaluru,Karnataka,NIMHANS
+S007,Dr. V. Kumar,Pediatric Geneticist,Lucknow,Uttar Pradesh,SGPGI
+S008,Dr. M. Bose,Ophthalmologist - Retina,Chennai,Tamil Nadu,Sankara Nethralaya
+S009,Dr. T. Devi,Endocrinologist - CAH,Chandigarh,Chandigarh,PGIMER
+S010,Dr. J. Patel,Clinical Geneticist,Ahmedabad,Gujarat,FRIGE
+S011,Dr. L. Goswami,Physiatrist - Muscular Dystrophy,Guwahati,Assam,GMCH
+S012,Dr. C. Nair,Genetic Counselor,Kochi,Kerala,Amrita

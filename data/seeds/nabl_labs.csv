@@ -1,0 +1,13 @@
+lab_id,lab_name,city,state,tests_offered,nabl_accredited,phone_dummy
+L001,All India Institute of Medical Sciences Genetic Lab,New Delhi,Delhi,"WES; SMA MLPA; thalassemia panel; PGx panel",true,+91-11-xxxx
+L002,PGIMER Genetics,Chandigarh,Chandigarh,"WES; DMD panel; CFTR",true,+91-172-xxxx
+L003,NCBIR-Kolkata Genetic Division,Kolkata,West Bengal,"Thalassemia panel; WES",true,+91-33-xxxx
+L004,CMC Vellore Genetic Unit,Vellore,Tamil Nadu,"Thalassemia; WES; PGx",true,+91-416-xxxx
+L005,IGIB- CSIR New Delhi,New Delhi,Delhi,"WGS; IndiGen confirmations",true,+91-11-xxxx
+L006,NIMHANS Neurogenetics,Bengaluru,Karnataka,"DMD; SMA; WES neuro panel",true,+91-80-xxxx
+L007,Kasturba Medical College Genetics,Manipal,Karnataka,"WES; dysmorphology",true,+91-820-xxxx
+L008,Sankara Nethralaya Molecular Ophthalmology,Chennai,Tamil Nadu,"Retinitis pigmentosa panel; OCA panel",true,+91-44-xxxx
+L009,Hyderabad CDFD,L Hyderabad,Telangana,"WES; Wilson ATP7B; SMA",true,+91-40-xxxx
+L010,GCAR Lucknow,Lucknow,Uttar Pradesh,"Thalassemia; SMA; karyotype",true,+91-522-xxxx
+L011,IICB-Jadavpur,Kolkata,West Bengal,"WES",true,+91-33-xxxx
+L012,Ahmedabad FRIGE,Ahmedabad,Gujarat,"WES; thalassemia; CFTR",true,+91-79-xxxx

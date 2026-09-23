@@ -1,0 +1,37 @@
+gene,variant_or_allele,ethnicity,state_or_region,af_indian,af_sas_gnomad,af_global,source,n_samples
+CYP2C19,CYP2C19*2 (c.681G>A),Pan-Indian,All-India,0.300,0.298,0.140,IndiGenomes+GenomeIndia merge,12000
+CYP2C19,CYP2C19*2 (c.681G>A),Indo-European,North India,0.275,0.298,0.140,IndiGenomes,1027
+CYP2C19,CYP2C19*2 (c.681G>A),Dravidian,South India,0.320,0.298,0.140,GenomeIndia,4000
+CYP2C19,CYP2C19*2 (c.681G>A),Tibeto-Burman,Northeast India,0.340,0.298,0.140,IndiGenomes,300
+CYP2C19,CYP2C19*3 (c.636G>A),Pan-Indian,All-India,0.040,0.038,0.008,IndiGenomes,12000
+CYP2C19,CYP2C19*17 (c.-806C>T),Pan-Indian,All-India,0.210,0.208,0.210,GenomeIndia,9768
+CYP2D6,CYP2D6*10 (c.100C>T),Pan-Indian,All-India,0.120,0.115,0.045,IndiGenomes+literature,4000
+CYP2D6,CYP2D6*4 (c.1846G>A),Pan-Indian,All-India,0.050,0.048,0.180,IndiGenomes+literature,4000
+CYP2C9,CYP2C9*3 (c.1075A>C),Pan-Indian,All-India,0.090,0.088,0.070,IndiGenomes+literature,4000
+CYP2C9,CYP2C9*2 (c.430C>T),Pan-Indian,All-India,0.030,0.028,0.120,literature,3000
+CYP2C9,CYP2C9*3 (c.1075A>C),Dravidian,South India,0.085,0.088,0.070,literature,1500
+CYP2D6,copy-number *5 deletion,Pan-Indian,All-India,0.045,0.043,0.040,literature,2000
+G6PD,G6PD Mediterranean (c.563C>T),Pan-Indian,All-India,0.022,0.020,0.004,IndiGenomes+literature,8000
+G6PD,G6PD Mediterranean (c.563C>T),Dravidian,South India,0.028,0.020,0.004,literature,2500
+G6PD,G6PD Mediterranean (c.563C>T),Tribal-Central,Central India tribal,0.075,0.020,0.004,literature,1200
+G6PD,G6PD Mahidol (c.487G>A),Tibeto-Burman,Northeast India,0.030,0.001,0.001,literature,400
+G6PD,G6PD Kerala-Kalyan (c.968T>C),Dravidian,South India,0.010,0.008,0.001,literature,1500
+HBB,HbS (c.20A>T),Tribal-Central,Central India tribal,0.060,0.023,0.005,NFHS-5 screening + literature,10000
+HBB,HbS (c.20A>T),Dravidian,South India,0.012,0.023,0.005,literature,5000
+HBB,HbS (c.20A>T),Pan-Indian,All-India,0.021,0.023,0.005,IndiGenomes,12000
+HBB,HbE (c.79G>A),Tibeto-Burman,Northeast India,0.150,0.038,0.011,literature,2000
+HBB,HbE (c.79G>A),Indo-European,Bengal/East,0.060,0.038,0.011,literature,3000
+HBB,Beta-thalassemia IVS1-5 (c.118C>T),Indo-European,North-West incl Sindhi,0.018,0.032,0.004,literature,4000
+HBB,Beta-thalassemia IVS1-5 (c.118C>T),Dravidian,South India,0.012,0.032,0.004,literature,4000
+SMN1,exon 7 deletion carrier,Pan-Indian,All-India,0.0185,0.018,0.012,literature carrier studies,6000
+SMN1,exon 7 deletion carrier,Pan-Indian,All-India (2+ copies),0.140,0.140,0.100,literature copy-number,3000
+TPMT,TPMT*3A,Pan-Indian,All-India,0.045,0.043,0.031,literature,1500
+NUDT15,NUDT15*3 (c.415C>T),Pan-Indian,All-India,0.065,0.063,0.005,literature,800
+VKORC1,-1639G>A,Pan-Indian,All-India,0.145,0.140,0.360,literature,1200
+SLCO1B1,c.521T>C,Pan-Indian,All-India,0.080,0.078,0.150,IndiGenomes,12000
+UGT1A1,*28 promoter (TA)7,Pan-Indian,All-India,0.100,0.098,0.390,literature,900
+DPYD,*2A (c.1905+1G>A),Pan-Indian,All-India,0.002,0.002,0.010,literature,700
+HLA-B,HLA-B*15:02,Tibeto-Burman,Northeast India,0.052,0.052,0.080,literature,500
+HLA-B,HLA-B*58:01,Pan-Indian,All-India,0.075,0.073,0.020,literature,800
+HLA-B,HLA-B*57:01,Pan-Indian,All-India,0.030,0.030,0.060,literature,800
+MTHFR,677C>T,Pan-Indian,All-India,0.200,0.198,0.240,literature,1000

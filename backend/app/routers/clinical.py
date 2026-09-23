@@ -1,0 +1,76 @@
+"""Module 1/2 endpoints + patient records."""
+from __future__ import annotations
+
+from typing import List, Optional
+
+from fastapi import APIRouter, Depends, HTTPException, Query
+
+from backend.app import store
+from backend.app.models import ClinicalNoteIn, HpoProfileOut, PatientCreate, PatientOut
+from backend.app.security import current_user, require
+from backend.app.services import registry
+
+router = APIRouter(prefix="/api/v1", tags=["clinical"])
+
+
+@router.post("/patients", response_model=PatientOut)
+def create_patient(payload: PatientCreate, user: dict = Depends(require("clinical:write"))):
+    created = store.create_patient(payload.model_dump(), user["username"])
+    return PatientOut(**{k: created.get(k) for k in PatientOut.model_fields})
+
+
+@router.get("/patients", response_model=List[PatientOut])
+def list_patients(state: Optional[str] = Query(default=None), limit: int = Query(default=50, le=500),
+                  user: dict = Depends(require("clinical:read"))):
+    rows = store.list_patients(state=state, limit=limit)
+    return [PatientOut(**{k: r.get(k) for k in PatientOut.model_fields}) for r in rows]
+
+
+@router.get("/patients/{patient_id}")
+def get_patient(patient_id: str, user: dict = Depends(require("clinical:read"))):
+    patient = store.get_patient(patient_id)
+    if not patient:
+        raise HTTPException(status_code=404, detail="patient not found")
+    if user["role"] == "patient" and patient.get("created_by") != user["username"]:
+        raise HTTPException(status_code=403, detail="patients may only read their own record")
+    events = store.list_events(patient_id)
+    return {"patient": patient, "events": events}
+
+
+@router.post("/clinical/extract")
+def extract_entities(payload: ClinicalNoteIn, user: dict = Depends(require("clinical:write"))):
+    """Module 1: token-level NER + language ID over a clinical note."""
+    result = registry.ner.extract(payload.text)
+    if payload.patient_id:
+        store.add_event(payload.patient_id, "clinical_note", {"text": payload.text,
+                                                             "entities": result["entities"]})
+    store.audit(user["username"], "clinical.extract", payload.patient_id or "", payload.text[:120])
+    return result
+
+
+@router.post("/clinical/hpo-map", response_model=HpoProfileOut)
+def hpo_map(payload: ClinicalNoteIn, user: dict = Depends(require("clinical:write"))):
+    """Module 2: map clinical text to HPO terms (with low-confidence review flagging)."""
+    profile = registry.hpo_mapper.map_text(payload.text)
+    if payload.patient_id:
+        store.add_event(payload.patient_id, "hpo_profile", profile)
+
+    # Feed the active-learning queue when the mapper was unsure (Module 10)
+    uncertainty = registry.active_learning.score_uncertainty(
+        profile["hpo_profile"], None, profile["unmapped_symptoms"])
+    registry.active_learning.enqueue({"text": payload.text, "hpo_profile": profile["hpo_profile"],
+                                      "unmapped_symptoms": profile["unmapped_symptoms"],
+                                      "uncertainty": uncertainty})
+    store.audit(user["username"], "clinical.hpo_map", payload.patient_id or "",
+                f"{len(profile['hpo_ids'])} terms")
+    return HpoProfileOut(**profile)
+
+
+@router.get("/clinical/synonyms")
+def synonym_dictionary(user: dict = Depends(require("clinical:read")), limit: int = Query(200, le=2000)):
+    """The Indian medical synonym dictionary (patent claim #2) as a browsable artifact."""
+    from ml_services.config import SEEDS_DIR
+    from ml_services.utils import read_csv_rows
+
+    synonyms = read_csv_rows(SEEDS_DIR / "indian_synonyms.csv")
+    return {"n_entries": len(synonyms), "entries": synonyms[:limit]}

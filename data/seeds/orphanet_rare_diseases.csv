@@ -1,0 +1,20 @@
+disease_id,disease_name,inheritance,prevalence_per_100k,prevalence_class,onset,india_note,gene_symbol
+ORPHA:915,Wilson disease,Autosomal recessive,3.0,1-9 / 100 000,Childhood,"Founder effect reported in Andhra Pradesh; ATP7B mutations varied",ATP7B
+ORPHA:98863,Duchenne muscular dystrophy,X-linked recessive,5.0,1-9 / 100 000,Infancy/Childhood,"DMD gene deletions dominate in Indian cohort reports",DMD
+ORPHA:123222,Spinal muscular atrophy type 1,Autosomal recessive,1.5,1-9 / 100 000,Infancy,"SMN1 deletion carrier rate ~1/54 in India",SMN1
+ORPHA:231222,Beta-thalassemia major,Autosomal recessive,75.0,>1 / 1 000,Infancy,"~10-15k births/year in India; high carrier rate; Sindhi/Punjabi communities elevated",HBB
+ORPHA:232,Sickle cell disease,Autosomal recessive,40.0,>1 / 1 000,Childhood,"Tribal belts of Maharashtra/Chhattisgarh/MP/Odisha; Sickle Cell Mission target",HBB
+ORPHA:586,Cystic fibrosis,Autosomal recessive,2.0,1-9 / 100 000,Infancy,"Historically underdiagnosed in India; c.1521_1523delCTT seen",CFTR
+ORPHA:716,Phenylketonuria,Autosomal recessive,1.1,1-9 / 100 000,Infancy,"Newborn screening expanding via NBS programs",PAH
+ORPHA:418,Congenital adrenal hyperplasia,Autosomal recessive,1.5,1-9 / 100 000,Neonatal,"21-hydroxylase deficiency dominates",CYP21A2
+ORPHA:355,G6PD deficiency,X-linked recessive,4000.0,>1 / 1 000,Neonatal,"High frequency; primaquine/dapsone contraindicated in deficient",G6PD
+ORPHA:94126,Fragile X syndrome,X-linked dominant,2.0,1-9 / 100 000,Childhood,"CGG repeat expansion; underdiagnosed",FMR1
+ORPHA:274,Myotonic dystrophy type 1,Autosomal dominant,1.2,1-9 / 100 000,Adulthood,"CTG repeat expansion",DMPK
+ORPHA:345,Charcot-Marie-Tooth disease type 1A,Autosomal dominant,3.0,1-9 / 100 000,Childhood/Adulthood,"PMP22 1.4Mb duplication common",PMP22
+ORPHA:791,Retinitis pigmentosa,Autosomal recessive,35.0,1-9 / 10 000,Childhood/Adulthood,"Multiple genes; RHO, USH2A common in Indian cohorts",RHO
+ORPHA:79432,Oculocutaneous albinism type 2,Autosomal recessive,2.0,1-9 / 100 000,Neonatal,"OCA2 gene; South Indian reports",OCA2
+ORPHA:666,Osteogenesis imperfecta type 1,Autosomal dominant,0.5,<1 / 100 000,Neonatal,"COL1A1/COL1A2",COL1A1
+ORPHA:558,Marfan syndrome,Autosomal dominant,1.5,1-9 / 100 000,Childhood,"FBN1",FBN1
+ORPHA:636,Neurofibromatosis type 1,Autosomal dominant,3.0,1-9 / 100 000,Childhood,"NF1 gene",NF1
+ORPHA:805,Tuberous sclerosis complex,Autosomal dominant,1.0,1-9 / 100 000,Infancy,"TSC1/TSC2",TSC2
+ORPHA:870,Down syndrome,Chromosomal anomaly,130.0,>1 / 1 000,Neonatal,"Trisomy 21; ~30-35k births/year in India",chr21

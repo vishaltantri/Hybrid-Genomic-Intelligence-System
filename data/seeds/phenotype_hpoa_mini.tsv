@@ -1,0 +1,70 @@
+# MINI SEED for phenotype.hpoa — production: download purl.obolibrary.org/obo/hp/hpoa/phenotype.hpoa
+# into data/raw/hpo/phenotype.hpoa (same columns). Frequency: HP:0000004=obligate, HP:0003577=congenital onset.
+disease_id	disease_name	hpo_id	hpo_name	frequency	evidence	aspect
+ORPHA:915	Wilson disease	HP:0000616	Kayser-Fleischer ring	HP:0003577	PCS	O
+ORPHA:915	Wilson disease	HP:0000952	Jaundice	HP:0040281	PCS	O
+ORPHA:915	Wilson disease	HP:0001394	Cirrhosis	HP:0040281	PCS	O
+ORPHA:915	Wilson disease	HP:0001337	Tremor	HP:0040280	PCS	O
+ORPHA:915	Wilson disease	HP:0001332	Dystonia	HP:0040280	PCS	O
+ORPHA:915	Wilson disease	HP:0001250	Seizures	HP:0040280	PCS	O
+ORPHA:915	Wilson disease	HP:0002240	Hepatomegaly	HP:0040280	PCS	O
+ORPHA:98863	Duchenne muscular dystrophy	HP:0001324	Muscle weakness	HP:0000004	PCS	O
+ORPHA:98863	Duchenne muscular dystrophy	HP:0002515	Waddling gait	HP:0040280	PCS	O
+ORPHA:98863	Duchenne muscular dystrophy	HP:0002066	Gowers sign	HP:0040281	PCS	O
+ORPHA:98863	Duchenne muscular dystrophy	HP:0008981	Calf muscle hypertrophy	HP:0040280	PCS	O
+ORPHA:98863	Duchenne muscular dystrophy	HP:0001638	Cardiomyopathy	HP:0040281	PCS	O
+ORPHA:98863	Duchenne muscular dystrophy	HP:0001263	Global developmental delay	HP:0040280	PCS	O
+ORPHA:123222	Spinal muscular atrophy type 1	HP:0001252	Hypotonia	HP:0000004	PCS	O
+ORPHA:123222	Spinal muscular atrophy type 1	HP:0001284	Areflexia	HP:0040280	PCS	O
+ORPHA:123222	Spinal muscular atrophy type 1	HP:0001307	Tongue fasciculation	HP:0040281	PCS	O
+ORPHA:123222	Spinal muscular atrophy type 1	HP:0001263	Global developmental delay	HP:0040280	PCS	O
+ORPHA:231222	Beta-thalassemia major	HP:0001903	Anemia	HP:0000004	PCS	O
+ORPHA:231222	Beta-thalassemia major	HP:0000952	Jaundice	HP:0040280	PCS	O
+ORPHA:231222	Beta-thalassemia major	HP:0001744	Splenomegaly	HP:0040280	PCS	O
+ORPHA:231222	Beta-thalassemia major	HP:0002240	Hepatomegaly	HP:0040280	PCS	O
+ORPHA:231222	Beta-thalassemia major	HP:0004322	Short stature	HP:0040280	PCS	O
+ORPHA:232	Sickle cell disease	HP:0001878	Hemolytic anemia	HP:0000004	PCS	O
+ORPHA:232	Sickle cell disease	HP:0012532	Chronic pain	HP:0040280	PCS	O
+ORPHA:232	Sickle cell disease	HP:0001297	Stroke	HP:0040280	PCS	O
+ORPHA:232	Sickle cell disease	HP:0001744	Splenomegaly	HP:0040280	PCS	O
+ORPHA:232	Sickle cell disease	HP:0000952	Jaundice	HP:0040280	PCS	O
+ORPHA:586	Cystic fibrosis	HP:0002783	Recurrent respiratory infections	HP:0000004	PCS	O
+ORPHA:586	Cystic fibrosis	HP:0001738	Exocrine pancreatic insufficiency	HP:0040280	PCS	O
+ORPHA:586	Cystic fibrosis	HP:0002591	Steatorrhea	HP:0040280	PCS	O
+ORPHA:586	Cystic fibrosis	HP:0001508	Failure to thrive	HP:0040280	PCS	O
+ORPHA:586	Cystic fibrosis	HP:0002110	Bronchiectasis	HP:0040280	PCS	O
+ORPHA:586	Cystic fibrosis	HP:0001217	Clubbing of fingers	HP:0040280	PCS	O
+ORPHA:716	Phenylketonuria	HP:0001249	Intellectual disability	HP:0000004	PCS	O
+ORPHA:716	Phenylketonuria	HP:0001250	Seizures	HP:0040280	PCS	O
+ORPHA:716	Phenylketonuria	HP:0001010	Hypopigmentation of the skin	HP:0040280	PCS	O
+ORPHA:716	Phenylketonuria	HP:0000252	Microcephaly	HP:0040280	PCS	O
+ORPHA:418	Congenital adrenal hyperplasia	HP:0000848	Adrenal insufficiency	HP:0000004	PCS	O
+ORPHA:418	Congenital adrenal hyperplasia	HP:0004322	Short stature	HP:0040280	PCS	O
+ORPHA:355	G6PD deficiency	HP:0001878	Hemolytic anemia	HP:0000004	PCS	O
+ORPHA:355	G6PD deficiency	HP:0000952	Jaundice	HP:0040280	PCS	O
+ORPHA:94126	Fragile X syndrome	HP:0001249	Intellectual disability	HP:0000004	PCS	O
+ORPHA:94126	Fragile X syndrome	HP:0000400	Large ear	HP:0040280	PCS	O
+ORPHA:94126	Fragile X syndrome	HP:0000271	Long face	HP:0040280	PCS	O
+ORPHA:94126	Fragile X syndrome	HP:0001250	Seizures	HP:0040280	PCS	O
+ORPHA:274	Myotonic dystrophy type 1	HP:0002486	Myotonia	HP:0000004	PCS	O
+ORPHA:274	Myotonic dystrophy type 1	HP:0001324	Muscle weakness	HP:0040280	PCS	O
+ORPHA:274	Myotonic dystrophy type 1	HP:0000518	Cataract	HP:0040280	PCS	O
+ORPHA:345	Charcot-Marie-Tooth disease type 1A	HP:0002460	Distal muscle weakness	HP:0000004	PCS	O
+ORPHA:345	Charcot-Marie-Tooth disease type 1A	HP:0001761	Pes cavus	HP:0040280	PCS	O
+ORPHA:345	Charcot-Marie-Tooth disease type 1A	HP:0001265	Hyporeflexia	HP:0040280	PCS	O
+ORPHA:791	Retinitis pigmentosa	HP:0000618	Nyctalopia	HP:0000004	PCS	O
+ORPHA:791	Retinitis pigmentosa	HP:0000510	Retinitis pigmentosa	HP:0000004	PCS	O
+ORPHA:79432	Oculocutaneous albinism type 2	HP:0001010	Hypopigmentation of the skin	HP:0000004	PCS	O
+ORPHA:79432	Oculocutaneous albinism type 2	HP:0000639	Nystagmus	HP:0040280	PCS	O
+ORPHA:666	Osteogenesis imperfecta type 1	HP:0000592	Blue sclerae	HP:0000004	PCS	O
+ORPHA:666	Osteogenesis imperfecta type 1	HP:0000365	Hearing impairment	HP:0040280	PCS	O
+ORPHA:558	Marfan syndrome	HP:0000098	Tall stature	HP:0000004	PCS	O
+ORPHA:558	Marfan syndrome	HP:0001083	Ectopia lentis	HP:0040280	PCS	O
+ORPHA:636	Neurofibromatosis type 1	HP:0000957	Cafe-au-lait spot	HP:0000004	PCS	O
+ORPHA:636	Neurofibromatosis type 1	HP:0000995	Neurofibroma	HP:0040280	PCS	O
+ORPHA:805	Tuberous sclerosis complex	HP:0001250	Seizures	HP:0000004	PCS	O
+ORPHA:805	Tuberous sclerosis complex	HP:0001010	Hypopigmentation of the skin	HP:0040280	PCS	O
+ORPHA:870	Down syndrome	HP:0001252	Hypotonia	HP:0000004	PCS	O
+ORPHA:870	Down syndrome	HP:0000582	Upslanted palpebral fissure	HP:0000004	PCS	O
+ORPHA:870	Down syndrome	HP:0000954	Single transverse palmar crease	HP:0040280	PCS	O
+ORPHA:870	Down syndrome	HP:0001249	Intellectual disability	HP:0000004	PCS	O
