@@ -4,8 +4,9 @@ Run:
     .venv/bin/uvicorn backend.app.main:app --reload --port 8000
 Docs: http://localhost:8000/docs
 
-Bootstrapping: on first start the app creates a default admin when the users table is
-empty (admin / admin-password-change-me) — change it immediately in any real deployment.
+Bootstrapping: on first start the app creates dev users when the users table is empty
+(admin / admin-password-change-me, clinician / changeme, asha1 / changeme) — change
+them immediately in any real deployment.
 """
 from __future__ import annotations
 
@@ -76,7 +77,9 @@ def ensure_bootstrap() -> None:
     if not store.list_users():
         store.create_user("admin", "admin", hash_password("admin-password-change-me"),
                           "Bootstrap Administrator")
-        logger.warning("Created default admin user 'admin' — change the password immediately.")
+        store.create_user("clinician", "doctor", hash_password("changeme"), "Demo Clinician")
+        store.create_user("asha1", "asha", hash_password("changeme"), "Demo ASHA Worker")
+        logger.warning("Created default dev users (admin / clinician / asha1) — change passwords in any real deployment.")
 
 
 # Bootstrap at import time as well: `TestClient(app)` without a context manager does not

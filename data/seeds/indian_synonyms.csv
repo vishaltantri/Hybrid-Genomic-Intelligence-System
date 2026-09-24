@@ -62,3 +62,7 @@ poor weight gain,HP:0001508,Failure to thrive,en,
 khansi,HP:0012735,Cough,hinglish,
 patla hai,HP:0001508,Failure to thrive,hinglish,
 pet mein dard,HP:0012532,Chronic pain,hinglish,
+pet kharab,HP:0012532,Chronic pain,hinglish,"upset stomach"
+aankhon mein brown ring,HP:0000616,Corneal opacity,hinglish,"Kayser-Fleischer ring wording"
+aankhon mein ring,HP:0000616,Corneal opacity,hinglish,"KF ring colloquial"
+pet saaf nahi hota,HP:0012532,Chronic pain,hinglish,

@@ -1,6 +1,7 @@
 # GENOMIND-INDIA Python dependencies
 # Core (required) — pure-Python friendly, installs everywhere.
 fastapi>=0.110
+python-multipart>=0.0.9
 uvicorn[standard]>=0.27
 pydantic>=2.6
 PyJWT>=2.8

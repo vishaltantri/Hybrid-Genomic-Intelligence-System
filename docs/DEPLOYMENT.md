@@ -33,24 +33,28 @@ Services:
 
 | Endpoint | What it does |
 |---|---|
-| `POST /api/diagnosis` | Symptoms (+ optional state/community/sex) → ranked differential with uncertainty and explanations |
-| `POST /api/clinical/ner` | Text → structured findings (Hindi/Hinglish/English) |
-| `POST /api/clinical/map-hpo` | Findings → HPO terms |
-| `POST /api/pharmacogenomics` | Patient variants/genes → drug safety flags |
-| `POST /api/reproductive/counsel` | Couple + community → child risk + multilingual report |
-| `POST /api/triage` | ASHA questionnaire → red/amber/green referral urgency |
-| `GET  /api/dashboard/national` | State-wise rare disease map (labelled simulated) |
-| `POST /api/learning/ingest` | Pull new PubMed papers → KG update proposals |
-| `POST /api/emr/fhir` | FHIR bundle → engine input |
-| `POST /api/auth/login` | JWT login (role-based access) |
+| `POST /api/v1/auth/token` | OAuth2 login (form) → JWT. Dev users: `admin`/`admin-password-change-me`, `clinician`/`changeme`, `asha1`/`changeme` |
+| `POST /api/v1/diagnosis` | Symptoms (text or hpo_ids, + state/community/sex) → ranked differential with uncertainty and explanations |
+| `POST /api/v1/clinical/ner` | Text → structured findings (Hindi/Hinglish/English) |
+| `POST /api/v1/pgx/assess` | Patient variants/genes → drug safety flags |
+| `POST /api/v1/reproductive/counsel` | Couple + community → child risk + multilingual report |
+| `GET  /api/v1/triage/questionnaire` | ASHA questionnaire (cached by the Flutter app for offline use) |
+| `POST /api/v1/triage/answers` / `/text` | Questionnaire answers or ASR transcript → red/amber/green referral |
+| `POST /api/v1/triage/sync` | Batched offline ASHA records → community alerts |
+| `GET  /api/v1/dashboard/national` | State-wise rare disease map (labelled simulated) |
+| `POST /api/v1/learning/ingest` | Pull new PubMed papers → KG update proposals |
+| `POST /api/v1/emr/fhir` | FHIR bundle → engine input |
+| `GET  /health` | Service + module status |
 
 ## Health checks
 
 ```bash
-curl localhost:8000/api/health          # service up
+curl localhost:8000/health              # service + module status
 .venv/bin/python -m pytest tests/       # 124 tests, ~80 s
 .venv/bin/python demo/run_demo.py       # end-to-end: NER → diagnosis → PGx → counseling → triage → reports
 ```
+
+Frontends: `web/` is the clinician React console (`npm install && npm run dev`, port 5173, proxies /api to :8000). `asha_app/` is the Flutter ASHA app (`flutter run`, API_URL build flag for the backend address; questionnaire caching + SQLite queue make it offline-first).
 
 ## Production notes (honest list)
 

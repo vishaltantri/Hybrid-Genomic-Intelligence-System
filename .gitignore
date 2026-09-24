@@ -29,3 +29,7 @@ web_dashboard/dist/
 mobile_app/.dart_tool/
 mobile_app/build/
 .DS_Store
+
+# frontend build outputs
+web/dist/
+node_modules/
