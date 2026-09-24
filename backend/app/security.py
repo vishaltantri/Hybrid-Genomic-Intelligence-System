@@ -19,8 +19,10 @@ from ml_services.config import ACCESS_TOKEN_MINUTES, JWT_ALGORITHM, JWT_SECRET, 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/token", auto_error=False)
 
 ROLE_PERMISSIONS: Dict[str, List[str]] = {
+    # doctor reads the KG (disease detail, stats) to explain diagnoses at the point of care
     "doctor": ["clinical:read", "clinical:write", "diagnosis:run", "xai:read", "pgx:read",
-               "reproductive:read", "reproductive:counsel", "feedback:write"],
+               "reproductive:read", "reproductive:counsel", "feedback:write",
+               "kg:read", "dashboard:read"],
     "patient": ["clinical:read:own", "diagnosis:read:own", "reproductive:read:own",
                 "pgx:read:own"],
     "asha": ["triage:write", "triage:read", "clinical:write:limited", "sync:write"],

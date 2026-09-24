@@ -13,12 +13,13 @@ export default function KgView() {
     setBusy(true); setMsg(null); setErr(null)
     try {
       const [q, drift] = await Promise.all([api.learningQueue(), api.learningDrift().catch(() => null)])
-      const n = q?.n_pending ?? q?.queue?.length ?? (Array.isArray(q) ? q.length : 0)
-      const proposals = q?.kg_proposals ?? q?.proposals ?? []
-      setMsg(`${n} correction(s) in the active-learning queue` +
-        (proposals.length ? `, ${proposals.length} KG update proposal(s) awaiting review` : '') +
-        (drift ? ` · drift status: ${drift.status ?? JSON.stringify(drift).slice(0, 60)}` : '') +
-        ' — corrections come from clinician feedback on real cases.')
+      // queue shape: { items: [...], stats: {...} }
+      const stats = q?.stats || {}
+      const nItems = Array.isArray(q?.items) ? q.items.length : (q?.n_pending ?? 0)
+      const parts = [`${nItems} item(s) in the active-learning queue`]
+      for (const [k, v] of Object.entries(stats)) parts.push(`${k}: ${v}`)
+      if (drift) parts.push(`drift: ${typeof drift === 'object' ? JSON.stringify(drift).slice(0, 80) : drift}`)
+      setMsg(parts.join(' · '))
     } catch (ex) { setErr(ex.message) } finally { setBusy(false) }
   }
 

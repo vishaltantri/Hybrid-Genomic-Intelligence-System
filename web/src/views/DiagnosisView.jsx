@@ -7,21 +7,25 @@ export default function DiagnosisView() {
   const [community, setCommunity] = useState('')
   const [sex, setSex] = useState('')
   const [res, setRes] = useState(null)
-  const [detail, setDetail] = useState(null)
+  const [xai, setXai] = useState(null)      // /xai/explain bundle: {diagnosis, explanation}
+  const [detail, setDetail] = useState(null) // /diseases/{id}: {disease, phenotypes, genes, founder_risk}
   const [err, setErr] = useState(null)
   const [busy, setBusy] = useState(false)
 
   async function run() {
-    setBusy(true); setErr(null); setRes(null); setDetail(null)
+    setBusy(true); setErr(null); setRes(null); setXai(null); setDetail(null)
     try {
-      const body = { text, state, community, sex, top_k: 10, explain: true }
+      const body = { text, state, community, sex, top_k: 10 }
       const r = await api.diagnose(body)
       setRes(r)
-      if (r.results?.length) setDetail(await api.explain(body))
+      if (r.results?.length) {
+        try { setXai(await api.explain({ ...body, top_k: 5 })) } catch { /* XAI optional */ }
+      }
     } catch (ex) { setErr(ex.message) } finally { setBusy(false) }
   }
 
   async function openDisease(id) {
+    setErr(null)
     try { setDetail(await api.diseaseDetail(id)) } catch (ex) { setErr(ex.message) }
   }
 
@@ -90,28 +94,43 @@ export default function DiagnosisView() {
         </div>
       )}
 
-      {detail?.driving_symptoms && (
+      {xai?.explanation && (
         <div className="panel">
-          <h3>Why this ranking? (XAI)</h3>
+          <h3>Why #{1} — {xai.explanation.disease_name}? (XAI)</h3>
+          <div className="note" style={{ marginBottom: 10 }}>
+            Attribution method: {xai.explanation.attribution?.method || '—'} · probability {fmt(xai.explanation.probability)}
+          </div>
           <table>
-            <thead><tr><th>Finding</th><th>Weight</th></tr></thead>
+            <thead><tr><th>Finding</th><th>Contribution</th><th>Weight</th></tr></thead>
             <tbody>
-              {detail.driving_symptoms.map(d => (
-                <tr key={d.patient_term || d.hpo_id}>
-                  <td>{d.name || d.patient_term || d.hpo_id}</td>
+              {(xai.explanation.attribution?.attributions || []).map(a => (
+                <tr key={a.hpo_id}>
+                  <td>{a.hpo_name || a.hpo_id}</td>
+                  <td>{typeof a.contribution === 'number' ? a.contribution.toFixed(3) : '—'}</td>
                   <td style={{ minWidth: 160 }}>
-                    {d.weight_pct ?? '—'}%
-                    <div className="bar"><div style={{ width: `${d.weight_pct || 0}%` }} /></div>
+                    {a.weight_pct ?? '—'}%
+                    <div className="bar"><div style={{ width: `${a.weight_pct || 0}%` }} /></div>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-          {detail.missing_findings?.length > 0 && (
+          {xai.explanation.missing_findings?.length > 0 && (
             <>
               <h3 style={{ marginTop: 16 }}>Findings that would raise certainty</h3>
-              <ul className="kv">{detail.missing_findings.map(m => <li key={m.hpo_id}>{m.hpo_name} — {m.would_increase}</li>)}</ul>
+              <ul className="kv">{xai.explanation.missing_findings.slice(0, 5).map(m => <li key={m.hpo_id}>{m.hpo_name} — {m.would_increase}</li>)}</ul>
             </>
+          )}
+          {xai.explanation.case_based_reasoning?.similar_cases?.length > 0 && (
+            <p className="note">Similar past cases: {xai.explanation.case_based_reasoning.similar_cases.length} retrieved from the case archive.</p>
+          )}
+          {typeof xai.explanation.narrative?.markdown === 'string' && (
+            <details style={{ marginTop: 10 }}>
+              <summary style={{ cursor: 'pointer', fontSize: 13, color: 'var(--accent)' }}>Full written explanation</summary>
+              <pre style={{ whiteSpace: 'pre-wrap', fontSize: 13, background: 'var(--bg)', padding: 14, borderRadius: 8, marginTop: 8 }}>
+{xai.explanation.narrative.markdown}
+              </pre>
+            </details>
           )}
         </div>
       )}
@@ -121,8 +140,12 @@ export default function DiagnosisView() {
           <h3>{detail.disease.name}</h3>
           <div className="kv">
             <div><b>Prevalence</b> {detail.disease.prevalence_per_100k ?? '—'} / 100k</div>
+            <div><b>Inheritance</b> {detail.disease.inheritance || '—'}</div>
             <div><b>Genes</b> {detail.genes?.join(', ') || '—'}</div>
           </div>
+          {detail.phenotypes?.length > 0 && (
+            <p className="note">{detail.phenotypes.length} phenotype annotations. Top: {detail.phenotypes.slice(0, 6).map(p => p.name).join(' · ')}</p>
+          )}
           {detail.founder_risk?.length > 0 && <div className="note">Founder risk: {detail.founder_risk.map(f => `${f.community} — ${f.note}`).join('; ')}</div>}
         </div>
       )}

@@ -67,7 +67,7 @@ export const api = {
 
   // dashboard
   national: () => request('/dashboard/national'),
-  policyBrief: () => request('/dashboard/policy-brief'),
+  policyBrief: () => request('/dashboard/policy-brief', { method: 'POST' }),
   researchGap: () => request('/dashboard/research-gap'),
 
   // continuous learning (Module 10)

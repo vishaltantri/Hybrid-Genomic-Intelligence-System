@@ -42,10 +42,13 @@ export default function NationalView() {
 
       {brief && (
         <div className="panel">
-          <h3>Policy brief</h3>
-          {typeof brief.brief === 'string'
-            ? <div style={{ whiteSpace: 'pre-wrap', fontSize: 14 }}>{brief.brief}</div>
-            : <pre style={{ whiteSpace: 'pre-wrap', fontSize: 13 }}>{JSON.stringify(brief, null, 2)}</pre>}
+          <h3>Policy brief{brief.month ? ` — ${brief.month}` : ''}</h3>
+          {typeof brief.markdown === 'string'
+            ? <div style={{ whiteSpace: 'pre-wrap', fontSize: 13.5, lineHeight: 1.5 }}>{brief.markdown}</div>
+            : typeof brief.brief === 'string'
+              ? <div style={{ whiteSpace: 'pre-wrap', fontSize: 13.5 }}>{brief.brief}</div>
+              : <pre style={{ whiteSpace: 'pre-wrap', fontSize: 13 }}>{JSON.stringify(brief, null, 2)}</pre>}
+          {brief.data_note && <p className="note">{brief.data_note}</p>}
         </div>
       )}
     </>
