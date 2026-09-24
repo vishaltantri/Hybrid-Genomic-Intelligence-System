@@ -12,9 +12,17 @@ The multiplicative prior is *the* India-specific contribution: two patients with
 same phenotype but different state/community get different ranked differentials.
 
 When PyTorch Geometric is available and a trained HAN checkpoint exists
-(models/gnn_han.pt), node embeddings from the GNN replace the similarity term; the
-training loop lives in ml_services/graph_ai/han_model.py. Without the checkpoint the
-engine runs the deterministic graph-scoring path so the API/demo/tests always work.
+(models/gnn_han.pt), the GNN can blend its scores into the ranking as a light,
+evidence-gated re-ranker (use_gnn=True). Training lives in
+ml_services/graph_ai/han_model.py.
+
+IMPORTANT (measured, not assumed): on the 400-case benchmark the GNN blend
+REDUCES hits@5 from 0.95 to ~0.44 even after hard-negative retraining and
+frozen-encoder retraining. The reason is structural: our synthetic training
+profiles are derived from the same graph the Resnik p-value scorer uses, so
+the head adds no signal beyond it — only noise inside phenotypic tie bands.
+Default is therefore use_gnn=False (deterministic path); revisit once real
+multi-hop evidence (patient outcomes, gene/drug response edges) exists.
 """
 from __future__ import annotations
 
@@ -42,7 +50,7 @@ BETA_PRIOR = 0.15
 
 
 class DifferentialDiagnosisEngine:
-    def __init__(self, graph: Optional[GraphData] = None, use_gnn: bool = True):
+    def __init__(self, graph: Optional[GraphData] = None, use_gnn: bool = False):
         self.graph = graph or load_processed()
         if self.graph is None:
             raise RuntimeError("Knowledge graph not built. Run: python -m ml_services.etl.kg_build")
@@ -202,9 +210,10 @@ class DifferentialDiagnosisEngine:
         sex = patient_context.get("sex", "")
 
         candidates: List[dict] = []
-        for disease_id in self.baseline.canonical_diseases():
-            sim = self.baseline.disease_score(hpo_ids, disease_id)
-            if sim <= 0:
+        canon = set(self.baseline.canonical_diseases())
+        all_scores = self.baseline.score_all(hpo_ids)
+        for disease_id, sim in all_scores.items():
+            if sim <= 0 or disease_id not in canon:
                 continue
             prior = self.population_prior(disease_id, state, community, sex)
             candidates.append({
@@ -240,6 +249,12 @@ class DifferentialDiagnosisEngine:
             rel = (c["prior"]["prior"] / median_prior) if median_prior > 0 else 1.0
             rel = max(rel, 1e-3)
             c["prior_relative"] = round(rel, 4)
+            # Gate: the India prior re-ranks only phenotypically plausible candidates
+            # (within 80% of the best similarity). Strong phenotype evidence wins outright;
+            # borderline profiles are exactly where consanguinity/founder knowledge helps.
+            close_call = c["similarity"] >= 0.80 * max_sim
+            exposure = BETA_PRIOR if close_call else 0.02
+            c["prior_applied"] = close_call
             if gnn_scores:
                 c["gnn_score"] = round(gnn_scores.get(c["disease_id"], 0.0), 4)
                 # logits at temperature T=0.25: the raw sigmoid compresses differences
@@ -248,13 +263,11 @@ class DifferentialDiagnosisEngine:
                 T = 0.25
                 logit = math.log(max(c["gnn_score"], 1e-6) / (1.0 - max(c["gnn_score"], 1e-6) if c["gnn_score"] < 1.0 else 1.0 - 1e-6))
                 c["gnn_relative"] = max(math.exp(T * logit), 1e-3)
-                likelihood = (likelihood ** (1.0 - GNN_WEIGHT)) * (c["gnn_relative"] ** GNN_WEIGHT)
-            # Gate: the India prior re-ranks only phenotypically plausible candidates
-            # (within 80% of the best similarity). Strong phenotype evidence wins outright;
-            # borderline profiles are exactly where consanguinity/founder knowledge helps.
-            close_call = c["similarity"] >= 0.80 * max_sim
-            exposure = BETA_PRIOR if close_call else 0.02
-            c["prior_applied"] = close_call
+                # Evidence-gated: the GNN re-ranks only inside phenotypic near-ties
+                # (same gate as the India prior), never overriding strong evidence.
+                gnn_exposure = GNN_WEIGHT if close_call else 0.0
+                c["gnn_applied"] = gnn_exposure > 0
+                likelihood = (likelihood ** (1.0 - gnn_exposure)) * (c["gnn_relative"] ** gnn_exposure)
             c["weighted_score"] = (likelihood ** ALPHA_PHENO) * (rel ** exposure)
 
         probs = softmax([math.log(c["weighted_score"]) if c["weighted_score"] > 0 else -50.0 for c in candidates])
@@ -330,6 +343,8 @@ class DifferentialDiagnosisEngine:
             truth = self.baseline.canonical_id(c.get("confirmed_diagnosis", ""))
             if truth in ids[:k]:
                 hits += 1
+            if truth in ids:
+                rr += 1.0 / (ids.index(truth) + 1)
             eng_rank = ids.index(truth) if truth in ids else None
             base_ids = [r["disease_id"] for r in self.baseline.diagnose(c.get("hpo", []), top_k=len(ids) or 10)]
             base_rank = base_ids.index(truth) if truth in base_ids else None

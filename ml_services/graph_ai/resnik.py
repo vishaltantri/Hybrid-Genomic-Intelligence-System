@@ -199,6 +199,103 @@ class PhenomizerBaseline:
         p_combined = max(p_combined, 1e-300)
         return -math.log10(p_combined)
 
+    def _term_index(self):
+        """Shared (row-map, ic-vector) over the ontology term vocabulary."""
+        if getattr(self, "_tidx", None) is None:
+            import numpy as np
+
+            terms = sorted(self.ic.keys())
+            row = {t: i for i, t in enumerate(terms)}
+            icv = np.zeros(len(terms), dtype=np.float64)
+            for t, v in self.ic.items():
+                icv[row[t]] = v
+            self._tidx = (row, icv)
+        return self._tidx
+
+    def _ensure_score_matrix(self):
+        """Lazy (term x disease) annotation matrix for vectorized scoring.
+
+        Column j marks the propagated profile of disease j. Combined with a
+        patient term's ancestor row-vector this yields, per disease, the best
+        MICA-IC — exactly what disease_score() computes per disease in a Python
+        loop (~46M pair evaluations per case at 12.9k diseases), but in one
+        matrix pass (~100x faster)."""
+        if getattr(self, "_score_mat", None) is not None:
+            return self._score_mat
+        import numpy as np
+        try:
+            from scipy import sparse
+            use_sparse = True
+        except ImportError:
+            sparse, use_sparse = None, False
+        row, icv = self._term_index()
+        disease_ids = list(self.propagated.keys())
+        rows, cols = [], []
+        for j, d in enumerate(disease_ids):
+            for t in self.propagated[d]:
+                i = row.get(t)
+                if i is not None:
+                    rows.append(i)
+                    cols.append(j)
+        if use_sparse:
+            A = sparse.csr_matrix((np.ones(len(rows)), (rows, cols)),
+                                  shape=(len(icv), len(disease_ids)))
+        else:
+            A = np.zeros((len(icv), len(disease_ids)), dtype=bool)
+            if rows:
+                A[rows, cols] = True
+        self._score_mat = (disease_ids, row, icv, A, use_sparse)
+        return self._score_mat
+
+    def score_all(self, patient_terms: List[str]) -> Dict[str, float]:
+        """Vectorized disease_score() for every canonical disease at once.
+
+        Same math, same p-values: per patient term the best MICA-IC per disease,
+        converted to a p-value against that term's term-generation null, combined
+        by the gamma product method. ~100x faster than the per-disease loop,
+        which makes corpus-scale evaluation (400 cases) feasible."""
+        import numpy as np
+        try:
+            from scipy.special import gammaincc as _gammaincc
+        except ImportError:
+            _gammaincc = None
+        all_ids, row, icv, A, is_sparse = self._ensure_score_matrix()
+        n_dis = len(all_ids)
+        log_sum = np.zeros(n_dis, dtype=np.float64)
+        used = np.zeros(n_dis, dtype=np.float64)
+        for pt in patient_terms:
+            anc = self._anc.get(pt)
+            if not anc:
+                continue  # unannotated finding: uninformative everywhere
+            sel = [row[t] for t in anc if t in row]
+            if not sel:
+                continue
+            sub = A[sel, :]
+            sub = sub.toarray() if is_sparse else sub
+            best = (icv[sel][:, None] * sub).max(axis=0)  # best MICA-IC per disease
+            dist = self._null_dist.get(pt)
+            if dist is None:
+                dist = self._null_distribution(anc)
+                self._null_dist[pt] = dist
+            arr = np.asarray(dist, dtype=np.float64)
+            idx = np.searchsorted(arr, best - 1e-9, side="left")
+            p = (len(arr) - idx) / len(arr)
+            p = np.maximum(p, 1.0 / self._universe_n)
+            mask = best > 0.0  # matches disease_score's `best <= 0: continue`
+            log_sum += np.where(mask, -np.log(p), 0.0)
+            used += mask
+        if _gammaincc is not None:
+            pc = np.where(used > 0, _gammaincc(used, log_sum), 1.0)
+        else:
+            z = (log_sum - used) / np.sqrt(2.0 * np.maximum(used, 1.0))
+            pc = np.where(used > 0,
+                          0.5 * np.frompyfunc(math.erfc, 1, 1)(z / math.sqrt(2.0)).astype(float),
+                          1.0)
+        pc = np.maximum(pc, 1e-300)
+        scores = -np.log10(pc)
+        scores[used == 0] = 0.0
+        return dict(zip(all_ids, scores.round(10).tolist()))
+
     def _p_at_least(self, patient_term: str, ic_value: float) -> float:
         """P(random annotated term u has IC(MICA(patient_term, u)) >= ic_value).
 
@@ -262,10 +359,8 @@ class PhenomizerBaseline:
     # --------------------------- diagnosis ---------------------------
 
     def diagnose(self, hpo_ids: List[str], top_k: int = 10) -> List[dict]:
-        scores = []
-        for disease_id in self.canonical_diseases():
-            s = self.disease_score(hpo_ids, disease_id)
-            scores.append((disease_id, s))
+        canon = set(self.canonical_diseases())
+        scores = [(d, s) for d, s in self.score_all(hpo_ids).items() if d in canon]
         scores.sort(key=lambda x: x[1], reverse=True)
         out = []
         for disease_id, s in scores[:top_k]:

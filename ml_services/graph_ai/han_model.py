@@ -149,7 +149,6 @@ def train(graph=None, epochs: int = 60, lr: float = 1e-3, seed: int = 7, out_pat
     data = build_hetero_data(graph)
     index = data._index
     model = build_model(data.metadata())
-    opt = torch.optim.Adam(model.parameters(), lr=lr)
     bce = torch.nn.BCEWithLogitsLoss()
 
     disease_ids = [n["id"] for n in graph.by_type("Disease")]
@@ -207,27 +206,44 @@ def train(graph=None, epochs: int = 60, lr: float = 1e-3, seed: int = 7, out_pat
     hardneg = torch.tensor(hardneg_rows, dtype=torch.long, device=device)  # P x HARD_K
 
     history = []
-    n_neg = 3
-    for epoch in range(epochs):
-        model.train()
-        opt.zero_grad()
+    n_prof = dpos_local.shape[0]
+    K = hardneg.shape[1]
+    CHUNK = 2048  # anchors per micro-batch: the full 12880x32 bilinear pass OOMs 6GB
+    n_chunks = (n_prof + CHUNK - 1) // CHUNK
+    # Frozen-encoder recipe (same as the HPO bi-encoder): the HAN encodes the graph
+    # ONCE under no_grad; only the bilinear head trains on cached embeddings. This
+    # fits 6GB, runs 100 epochs in seconds, and empirically generalizes better than
+    # end-to-end training at our data scale.
+    model.eval()
+    with torch.no_grad():
         z = model.encode(data.x_dict, data.edge_index_dict)
         hpo_z = z["Hpo"]
-        gathered = hpo_z[pheno_padded.clamp(min=0)]            # P x T x hidden
-        mask = pheno_mask.unsqueeze(-1).float()
-        pvecs = (gathered * mask).sum(dim=1) / mask.sum(dim=1).clamp(min=1.0)
-        Dpos = z["Disease"][dpos_local]
-        pick = torch.randint(0, HARD_K, (pvecs.shape[0], n_neg), device=device)
-        neg_local = hardneg[torch.arange(pvecs.shape[0], device=device).unsqueeze(1), pick]
-        Dneg = z["Disease"][neg_local]                         # P x n_neg x hidden
-        pos_logits = model.score(pvecs, Dpos)
-        neg_logits = model.score(pvecs.repeat_interleave(n_neg, dim=0),
-                                 Dneg.reshape(-1, Dneg.shape[-1]))
-        labels = torch.cat([torch.ones_like(pos_logits), torch.zeros_like(neg_logits)])
-        loss = bce(torch.cat([pos_logits, neg_logits]), labels)
-        loss.backward()
+        Disease_z = z["Disease"]
+        pvecs_all = torch.empty(n_prof, hpo_z.shape[1], device=device)
+        for s in range(0, n_prof, CHUNK):
+            e = min(s + CHUNK, n_prof)
+            ph = pheno_padded[s:e].clamp(min=0)
+            mk = pheno_mask[s:e].unsqueeze(-1).float()
+            pvecs_all[s:e] = (hpo_z[ph] * mk).sum(dim=1) / mk.sum(dim=1).clamp(min=1.0)
+        Dpos_all = Disease_z[dpos_local]
+        Dneg_all = Disease_z[hardneg]                       # P x K x hidden
+    head_params = [p for p in model.head.parameters()]
+    opt = torch.optim.Adam(head_params, lr=lr)
+    for epoch in range(epochs):
+        model.head.train()
+        opt.zero_grad()
+        epoch_loss = 0.0
+        for s in range(0, n_prof, CHUNK):
+            e = min(s + CHUNK, n_prof)
+            pos_logits = model.head(pvecs_all[s:e], Dpos_all[s:e]).squeeze(-1)
+            neg_logits = model.head(pvecs_all[s:e].repeat_interleave(K, dim=0),
+                                    Dneg_all[s:e].reshape(-1, Dneg_all.shape[-1])).squeeze(-1)
+            labels = torch.cat([torch.ones_like(pos_logits), torch.zeros_like(neg_logits)])
+            loss = bce(torch.cat([pos_logits, neg_logits]), labels) / n_chunks
+            loss.backward()
+            epoch_loss += float(loss.item())
         opt.step()
-        history.append(float(loss.item()))
+        history.append(epoch_loss)
 
     MODELS_DIR.mkdir(parents=True, exist_ok=True)
     out_path = out_path or (MODELS_DIR / "gnn_han.pt")
