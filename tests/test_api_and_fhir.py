@@ -72,8 +72,14 @@ def test_clinical_extract_and_hpo_map(client, doctor_headers):
 
 
 def test_diagnosis_endpoint(client, doctor_headers):
+    # realistic Wilson profile: vignette terms alone cannot identify a disease
+    # among the 12,880 in the real hpoa-backed graph (see seed_cases C001)
+    from ml_services.config import SEEDS_DIR
+    from ml_services.utils import read_jsonl
+
+    hpo = read_jsonl(SEEDS_DIR / "seed_cases.jsonl")[0]["hpo"]
     r = client.post("/api/v1/diagnosis",
-                    json={"hpo_ids": ["HP:0000616", "HP:0001337", "HP:0001394"],
+                    json={"hpo_ids": hpo,
                           "state": "Andhra Pradesh", "explain": True}, headers=doctor_headers)
     assert r.status_code == 200
     body = r.json()

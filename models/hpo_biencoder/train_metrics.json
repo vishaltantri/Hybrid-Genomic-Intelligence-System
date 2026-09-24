@@ -1,0 +1,10 @@
+{
+ "base_model": "intfloat/multilingual-e5-base",
+ "train_pairs": 25046,
+ "eval_pairs": 300,
+ "corpus_terms": 20482,
+ "recall_at_1": 0.797,
+ "recall_at_5": 0.92,
+ "mrr": 0.854,
+ "device": "cuda"
+}

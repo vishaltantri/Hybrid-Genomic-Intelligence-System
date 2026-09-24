@@ -20,6 +20,23 @@ class GraphData:
         self.nodes: Dict[str, dict] = {}  # key = f"{type}::{id}"
         self.edges: List[dict] = []
         self._edge_keys: Set[tuple] = set()
+        # adjacency indexes (lazy, built on first query, invalidated on add_edge)
+        self._out_index: Optional[Dict[str, List[dict]]] = None
+        self._in_index: Optional[Dict[str, List[dict]]] = None
+        self._type_index: Optional[Dict[str, List[dict]]] = None
+
+    def _build_indexes(self) -> None:
+        if self._out_index is not None:
+            return
+        out_idx: Dict[str, List[dict]] = {}
+        in_idx: Dict[str, List[dict]] = {}
+        type_idx: Dict[str, List[dict]] = {}
+        for n in self.nodes.values():
+            type_idx.setdefault(n["type"], []).append(n)
+        for e in self.edges:
+            out_idx.setdefault(e["src"], []).append(e)
+            in_idx.setdefault(e["dst"], []).append(e)
+        self._out_index, self._in_index, self._type_index = out_idx, in_idx, type_idx
 
     @staticmethod
     def key(node_type: str, node_id: str) -> str:
@@ -36,6 +53,7 @@ class GraphData:
             node["id"] = nid
             node["type"] = ntype
             self.nodes[k] = node
+            self._type_index = None  # new node invalidates the by-type index
 
     def add_edge(self, src: str, dst: str, etype: str, src_type: str = "", dst_type: str = "", **attrs) -> None:
         k = (src, dst, etype)
@@ -43,31 +61,34 @@ class GraphData:
             return
         self._edge_keys.add(k)
         self.edges.append({"src": src, "dst": dst, "type": etype, "src_type": src_type, "dst_type": dst_type, "attrs": attrs})
+        self._out_index = self._in_index = self._type_index = None  # invalidate
 
     def node(self, node_type: str, node_id: str) -> Optional[dict]:
         return self.nodes.get(self.key(node_type, node_id))
 
     def neighbors(self, node_id: str, etype: Optional[str] = None) -> List[dict]:
+        self._build_indexes()
         out = []
-        for e in self.edges:
-            if e["src"] == node_id and (etype is None or e["type"] == etype):
-                n = self.nodes.get(self.key(e["dst_type"] or "", e["dst"]))
-                if n:
-                    out.append(n)
-            elif e["dst"] == node_id and (etype is None or e["type"] == etype):
-                n = self.nodes.get(self.key(e["src_type"] or "", e["src"]))
+        for e in self._out_index.get(node_id, []) + self._in_index.get(node_id, []):
+            if etype is None or e["type"] == etype:
+                other = e["dst"] if e["src"] == node_id else e["src"]
+                otype = e["dst_type"] if e["src"] == node_id else e["src_type"]
+                n = self.nodes.get(self.key(otype or "", other))
                 if n:
                     out.append(n)
         return out
 
     def edges_from(self, node_id: str, etype: Optional[str] = None) -> List[dict]:
-        return [e for e in self.edges if e["src"] == node_id and (etype is None or e["type"] == etype)]
+        self._build_indexes()
+        return [e for e in self._out_index.get(node_id, ()) if etype is None or e["type"] == etype]
 
     def edges_to(self, node_id: str, etype: Optional[str] = None) -> List[dict]:
-        return [e for e in self.edges if e["dst"] == node_id and (etype is None or e["type"] == etype)]
+        self._build_indexes()
+        return [e for e in self._in_index.get(node_id, ()) if etype is None or e["type"] == etype]
 
     def by_type(self, node_type: str) -> List[dict]:
-        return [n for n in self.nodes.values() if n["type"] == node_type]
+        self._build_indexes()
+        return list(self._type_index.get(node_type, ()))
 
     def dangling_references(self) -> List[dict]:
         """Edges whose endpoints are not declared nodes.
@@ -298,11 +319,47 @@ def _jsonish(v):
     return f'"{v}"'
 
 
+_PROCESSED_CACHE: dict = {}
+
+
+def canonical_disease_root(member_ids, graph: "GraphData") -> str:
+    """Pick the richest node of a SAME_AS name-group as the canonical identity.
+
+    hpoa annotates diseases under OMIM:/shadow-ORPHA: IDs with phenotype edges only,
+    while Orphanet nodes carry prevalence, inheritance and the confirmatory/referral
+    wiring the rest of the platform keys on (e.g. Wilson: rich ORPHA:915 vs sparse
+    ORPHA:905/OMIM:277900). Prefer orphanet-sourced nodes, then attribute richness,
+    then ORPHA namespace, then the smallest ID for determinism.
+    """
+    def richness(mid: str):
+        n = graph.node("Disease", mid) or {}
+        return (1 if n.get("source") == "orphanet" else 0,
+                1 if n.get("prevalence_per_100k") else 0,
+                1 if n.get("inheritance") else 0,
+                1 if mid.startswith("ORPHA:") else 0,
+                [-ord(c) for c in mid])  # smaller ID wins the final tie-break
+    return max(member_ids, key=richness)
+
+
 def load_processed() -> Optional[GraphData]:
     path = PROCESSED_DIR / "kg.json"
     if not path.exists():
         return None
-    return GraphData.from_dict(read_json(path))
+    # kg.json can be ~100 MB (real HPO + hpoa); parsing it per call made every
+    # NER/diagnosis construction pay seconds. Cache by mtime+size so rebuilds
+    # invalidate naturally and tests that overwrite the file still see fresh data.
+    try:
+        st = path.stat()
+        key = (st.st_mtime_ns, st.st_size)
+    except OSError:
+        key = None
+    if key is not None and _PROCESSED_CACHE.get("key") == key:
+        return _PROCESSED_CACHE["graph"]
+    graph = GraphData.from_dict(read_json(path))
+    if key is not None:
+        _PROCESSED_CACHE["key"] = key
+        _PROCESSED_CACHE["graph"] = graph
+    return graph
 
 
 def save_processed(gd: GraphData) -> None:

@@ -16,6 +16,26 @@ from ml_services.etl.graph_store import build_graph, build_networkx, push_neo4j,
 def main() -> int:
     t0 = time.time()
     gd = build_graph()
+
+    # Link diseases that share a canonical name across sources (hpoa annotates under
+    # OMIM:/DECIPHER:, our seed + Orphanet data under ORPHA:) so phenotype evidence
+    # pools into one node instead of splitting a disease across namespaces.
+    by_name: dict = {}
+    same_as = []
+    for n in gd.nodes.values():
+        if n["type"] == "Disease" and n.get("name"):
+            by_name.setdefault(n["name"].strip().lower(), []).append(n["id"])
+    from ml_services.etl.graph_store import canonical_disease_root
+
+    for ids in by_name.values():
+        if 1 < len(ids) <= 6:  # skip pathological over-shared names
+            root = canonical_disease_root(ids, gd)
+            for other in ids:
+                if other != root:
+                    same_as.append({"src": root, "dst": other, "type": "SAME_AS", "attrs": {}})
+    for e in same_as:
+        gd.add_edge(e["src"], e["dst"], "SAME_AS")
+
     save_processed(gd)
 
     counts = {}

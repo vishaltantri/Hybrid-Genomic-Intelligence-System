@@ -272,10 +272,19 @@ class LexicalRuleNER:
         return lids.pop()
 
 
-class MuRILNER:
-    """Fine-tuned MuRIL token-classification backend (optional)."""
+class MuRILNER(LexicalRuleNER):
+    """Fine-tuned MuRIL token-classification backend (optional), run HYBRID.
+
+    Inherits the lexical backend's post-processing (token LID, negation,
+    onset-duration attachment) so both backends return the same output contract.
+    Extraction merges: (a) lexical spans — exact, high-precision on known phrases,
+    and (b) model-predicted spans the lexicon does not cover — generalisation to
+    unseen surface forms. With only ~25 hand-labelled sentences the pure model
+    underperforms the lexicon; the hybrid beats either alone.
+    """
 
     def __init__(self, model_dir=None):
+        super().__init__()  # lexicons power LID vocab + negation/duration helpers
         from transformers import AutoModelForTokenClassification, AutoTokenizer  # requires transformers
 
         model_dir = model_dir or (MODELS_DIR / "clinical_ner_muril")
@@ -287,6 +296,28 @@ class MuRILNER:
             self.label_list: List[str] = json.load(f)
 
     def extract(self, text: str) -> dict:
+        result = self._model_extract(text)
+        lex = super().extract(text)
+        # hybrid merge: keep every lexical span; add model spans that neither overlap
+        # a lexical span nor fall below the confidence bar (unseen surface forms are
+        # exactly where the model earns its keep; low-confidence guesses are noise)
+        import os
+
+        min_conf = float(os.environ.get("GENOMIND_HYBRID_MIN_CONF", "0.90"))
+        lex_spans = [(e["start"], e["end"]) for e in lex["entities"]]
+        merged = list(lex["entities"])
+        for e in result["entities"]:
+            if e.get("confidence", 0.0) < min_conf:
+                continue
+            if any(e["start"] < b and e["end"] > a for a, b in lex_spans):
+                continue
+            merged.append(e)
+        merged.sort(key=lambda x: x["start"])
+        lex["entities"] = merged
+        lex["engine"] = "hybrid_muril+lexical"
+        return lex
+
+    def _model_extract(self, text: str) -> dict:
         import torch
 
         tokens = text.split()
@@ -294,6 +325,7 @@ class MuRILNER:
         with torch.no_grad():
             logits = self.model(**enc).logits[0]
         word_ids = enc.word_ids(0)
+        probs = torch.softmax(logits, dim=-1)
         preds = logits.argmax(-1).tolist()
         entities = []
         seen_word: Dict[int, dict] = {}
@@ -303,37 +335,69 @@ class MuRILNER:
             label = self.label_list[preds[i]]
             if label == "O" or wid in seen_word:
                 continue
-            seen_word[wid] = {"token_index": wid, "label": label.replace("B-", "").replace("I-", "")}
+            seen_word[wid] = {"token_index": wid, "label": label.replace("B-", "").replace("I-", ""),
+                              "prob": float(probs[i, preds[i]])}
         # group consecutive tokens of same label into spans (whitespace tokens)
         cur_label, cur_start = None, None
+        span_probs: List[float] = []
         for wid in sorted(seen_word):
-            lab = seen_word[wid]["label"]
-            tok = tokens[wid]
+            info = seen_word[wid]
+            lab, tok = info["label"], tokens[wid]
             start = len(" ".join(tokens[:wid])) + (1 if wid else 0)
             end = start + len(tok)
             if lab != cur_label:
                 if cur_label is not None:
+                    conf = sum(span_probs) / max(1, len(span_probs))
                     entities.append({"start": cur_start, "end": prev_end, "text": text[cur_start:prev_end],
-                                     "label": cur_label, "lid": "MIXED", "source": "muril"})
-                cur_label, cur_start = lab, start
+                                     "label": cur_label, "lid": self._span_lid(text, cur_start, prev_end),
+                                     "source": "muril", "confidence": round(conf, 4)})
+                cur_label, cur_start, span_probs = lab, start, [info["prob"]]
+            else:
+                span_probs.append(info["prob"])
             prev_end = end
         if cur_label is not None:
+            conf = sum(span_probs) / max(1, len(span_probs))
             entities.append({"start": cur_start, "end": prev_end, "text": text[cur_start:prev_end],
-                             "label": cur_label, "lid": "MIXED", "source": "muril"})
-        tokens_lid = [{"text": t, "lid": token_language(t)} for t in tokens]
+                             "label": cur_label, "lid": self._span_lid(text, cur_start, prev_end),
+                             "source": "muril", "confidence": round(conf, 4)})
+        for e in entities:
+            e.setdefault("confidence", _CONF_BY_SOURCE.get(e.get("source", ""), 0.5))
+        self._annotate_negation(text, entities)
+        self._attach_durations(text, entities)
+        tokens_lid = [{"text": t, "lid": token_language(t, self.romanized_vocab)} for t in tokens]
+        lid_counts: Dict[str, int] = {}
+        for t in tokens_lid:
+            lid_counts[t["lid"]] = lid_counts.get(t["lid"], 0) + 1
         return {"text": text, "entities": sorted(entities, key=lambda x: x["start"]),
-                "tokens": tokens_lid, "lid_counts": {}, "is_code_mixed": True}
+                "tokens": tokens_lid, "lid_counts": lid_counts,
+                "is_code_mixed": len([k for k in lid_counts if lid_counts[k] > 0]) > 1,
+                "romanised_hindi_tokens": sum(1 for t in tokens_lid if t["lid"] == "HI-LATN"),
+                "engine": "muril_ner",
+                "negated_symptoms": [e["text"] for e in entities if e.get("negated")],
+                "onset_durations": {e["text"]: e["duration"] for e in entities if e.get("duration")}}
+
+
+_NER_SINGLETON: Optional["LexicalRuleNER"] = None
 
 
 def get_ner():
-    """Pick the best available backend: fine-tuned MuRIL if present, else lexical."""
+    """Pick the best available backend: fine-tuned MuRIL if present, else lexical.
+
+    Cached: construction loads lexicons + the ~100 MB KG snapshot for English HPO
+    names, which is too expensive to repeat per request.
+    """
+    global _NER_SINGLETON
+    if _NER_SINGLETON is not None:
+        return _NER_SINGLETON
     model_dir = MODELS_DIR / "clinical_ner_muril"
     if (model_dir / "config.json").exists():
         try:
-            return MuRILNER(model_dir)
+            _NER_SINGLETON = MuRILNER(model_dir)
+            return _NER_SINGLETON
         except Exception:
             pass
-    return LexicalRuleNER()
+    _NER_SINGLETON = LexicalRuleNER()
+    return _NER_SINGLETON
 
 
 ClinicalNER = LexicalRuleNER  # public alias

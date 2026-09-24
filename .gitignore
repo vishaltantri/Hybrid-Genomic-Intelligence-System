@@ -16,6 +16,7 @@ reports/
 models/**/*.safetensors
 models/**/*.bin
 models/**/*.onnx
+models/**/tokenizer.json
 
 .env
 *.log

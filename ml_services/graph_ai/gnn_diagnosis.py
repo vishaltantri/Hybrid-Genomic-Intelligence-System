@@ -31,6 +31,11 @@ from ml_services.utils import read_csv_rows, softmax
 NOISE = 0.05
 # blend exponents: how much phenotype evidence vs population prior weighs
 ALPHA_PHENO = 1.0
+# GNN blend weight: final likelihood = sim^(1-w) * gnn_relative^w. The GNN captures
+# multi-hop structure the pairwise Resnik score misses, but it is trained on synthetic
+# pairs only — so it enters as a light re-ranker (w=0.1) that must not override strong
+# phenotype + population-prior evidence. Degrades to pure Phenomizer without a checkpoint.
+GNN_WEIGHT = 0.1
 # The India prior enters as a *relative* weight around the cohort median, so it re-ranks
 # phenotypically plausible candidates instead of overriding strong phenotype evidence.
 BETA_PRIOR = 0.15
@@ -197,7 +202,7 @@ class DifferentialDiagnosisEngine:
         sex = patient_context.get("sex", "")
 
         candidates: List[dict] = []
-        for disease_id in self.baseline.disease_terms:
+        for disease_id in self.baseline.canonical_diseases():
             sim = self.baseline.disease_score(hpo_ids, disease_id)
             if sim <= 0:
                 continue
@@ -218,6 +223,12 @@ class DifferentialDiagnosisEngine:
                          "Add HPO terms or extend the graph."),
             }
 
+        # GNN blend: one batched pass over all candidates; their sigmoid scores are
+        # normalised against the best candidate so only *relative* GNN evidence re-ranks.
+        gnn = self._maybe_load_gnn()
+        gnn_scores = gnn.score(hpo_ids, [c["disease_id"] for c in candidates]) if gnn else {}
+        max_gnn = max(gnn_scores.values(), default=0.0)
+
         # Relative Indian prior: normalise across the candidate set so prevalence scale
         # cancels out and only India-specific *differences* (consanguinity, founder,
         # sex, relative prevalence) re-rank the differential.
@@ -229,9 +240,19 @@ class DifferentialDiagnosisEngine:
             rel = (c["prior"]["prior"] / median_prior) if median_prior > 0 else 1.0
             rel = max(rel, 1e-3)
             c["prior_relative"] = round(rel, 4)
+            if gnn_scores:
+                c["gnn_score"] = round(gnn_scores.get(c["disease_id"], 0.0), 4)
+                # logits at temperature T=0.25: the raw sigmoid compresses differences
+                # (two decimals of p = 10x odds), so identical-ish outputs would drown
+                # the phenotype signal. Temperature restores usable separations.
+                T = 0.25
+                logit = math.log(max(c["gnn_score"], 1e-6) / (1.0 - max(c["gnn_score"], 1e-6) if c["gnn_score"] < 1.0 else 1.0 - 1e-6))
+                c["gnn_relative"] = max(math.exp(T * logit), 1e-3)
+                likelihood = (likelihood ** (1.0 - GNN_WEIGHT)) * (c["gnn_relative"] ** GNN_WEIGHT)
             # Gate: the India prior re-ranks only phenotypically plausible candidates
-            # (within 90% of the best similarity). Strong phenotype evidence wins outright.
-            close_call = c["similarity"] >= 0.90 * max_sim
+            # (within 80% of the best similarity). Strong phenotype evidence wins outright;
+            # borderline profiles are exactly where consanguinity/founder knowledge helps.
+            close_call = c["similarity"] >= 0.80 * max_sim
             exposure = BETA_PRIOR if close_call else 0.02
             c["prior_applied"] = close_call
             c["weighted_score"] = (likelihood ** ALPHA_PHENO) * (rel ** exposure)
@@ -251,6 +272,7 @@ class DifferentialDiagnosisEngine:
                 "disease_name": node.get("name", disease_id),
                 "probability": round(c["probability"], 4),
                 "phenotype_similarity": round(c["similarity"], 4),
+                "gnn_score": c.get("gnn_score"),
                 "inheritance": node.get("inheritance", ""),
                 "population_prior": {
                     "prevalence_per_100k": c["prior"]["prevalence_per_100k"],
@@ -305,13 +327,13 @@ class DifferentialDiagnosisEngine:
         for c in cases:
             ranked = self.diagnose(c.get("hpo", []), patient_context=c, top_k=10)["results"]
             ids = [r["disease_id"] for r in ranked]
-            truth = c.get("confirmed_diagnosis")
+            truth = self.baseline.canonical_id(c.get("confirmed_diagnosis", ""))
             if truth in ids[:k]:
                 hits += 1
-            if truth in ids:
-                rr += 1.0 / (ids.index(truth) + 1)
+            eng_rank = ids.index(truth) if truth in ids else None
             base_ids = [r["disease_id"] for r in self.baseline.diagnose(c.get("hpo", []), top_k=len(ids) or 10)]
-            if truth in base_ids and ids and base_ids.index(truth) > ids.index(truth):
+            base_rank = base_ids.index(truth) if truth in base_ids else None
+            if eng_rank is not None and (base_rank is None or eng_rank < base_rank):
                 improved += 1
         n = max(1, len(cases))
         return {

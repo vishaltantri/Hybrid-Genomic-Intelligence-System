@@ -1,0 +1,14 @@
+[
+ "O",
+ "B-AGE",
+ "B-DRUG",
+ "B-DURATION",
+ "B-FAMILY_HISTORY",
+ "B-LAB_VALUE",
+ "B-SYMPTOM",
+ "I-AGE",
+ "I-DURATION",
+ "I-FAMILY_HISTORY",
+ "I-LAB_VALUE",
+ "I-SYMPTOM"
+]

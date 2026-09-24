@@ -153,39 +153,78 @@ def train(graph=None, epochs: int = 60, lr: float = 1e-3, seed: int = 7, out_pat
     bce = torch.nn.BCEWithLogitsLoss()
 
     disease_ids = [n["id"] for n in graph.by_type("Disease")]
-    profiles = {
-        d: [index[("Hpo", h)] for h in graph.edges_from(d, "HAS_PHENOTYPE") and
-            [e["dst"] for e in graph.edges_from(d, "HAS_PHENOTYPE")] if ("Hpo", h) in index]
-        for d in disease_ids
-    }
-    profiles = {d: v for d, v in profiles.items() if v}
+    prof_list = []
+    for d in disease_ids:
+        if ("Disease", d) not in index:
+            continue
+        pheno = [index[("Hpo", e["dst"])] for e in graph.edges_from(d, "HAS_PHENOTYPE")
+                 if ("Hpo", e["dst"]) in index]
+        if pheno:
+            prof_list.append((index[("Disease", d)], pheno))
+    if not prof_list:
+        raise RuntimeError("No disease has mapped phenotypes — is the KG built?")
+
+    # GPU placement + fully vectorised pair scoring: the old per-disease Python loop
+    # (12.8k forward/backwards per epoch) made training take hours on CPU.
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    data = data.to(device)
+    model = model.to(device)
+
+    all_local_cpu = sorted(index[("Disease", d)] for d in disease_ids if ("Disease", d) in index)
+    all_disease_local = torch.tensor(all_local_cpu, dtype=torch.long, device=device)
+    dpos_local = torch.tensor([p[0] for p in prof_list], dtype=torch.long, device=device)
+    pheno_padded = torch.nn.utils.rnn.pad_sequence(
+        [torch.tensor(p[1], dtype=torch.long, device=device) for p in prof_list], batch_first=True)
+    lengths = torch.tensor([len(p[1]) for p in prof_list], device=device)
+    pheno_mask = torch.arange(pheno_padded.shape[1], device=device).unsqueeze(0) < lengths.unsqueeze(1)
+
+    # Hard negatives: diseases sharing >=1 phenotype term with the anchor are the
+    # real look-alikes. Uniformly random negatives only teach the head profile-size
+    # bias (big profiles score high against everything); confusable negatives force
+    # it to learn fine phenotypic distinctions, which is what ranking needs.
+    term2dis: dict = {}
+    for d in disease_ids:
+        if ("Disease", d) not in index:
+            continue
+        for e in graph.edges_from(d, "HAS_PHENOTYPE"):
+            if ("Hpo", e["dst"]) in index:
+                term2dis.setdefault(index[("Hpo", e["dst"])], set()).add(index[("Disease", d)])
+    rng = random.Random(seed)
+    HARD_K = 32
+    hardneg_rows = []
+    for dpos, pheno_idx in prof_list:
+        cands: set = set()
+        for t in pheno_idx:
+            cands |= term2dis.get(t, set())
+        cands.discard(dpos)
+        cands = sorted(cands)
+        rng.shuffle(cands)
+        while len(cands) < HARD_K:
+            r = rng.choice(all_local_cpu)
+            if r != dpos:
+                cands.append(r)
+        hardneg_rows.append(cands[:HARD_K])
+    hardneg = torch.tensor(hardneg_rows, dtype=torch.long, device=device)  # P x HARD_K
 
     history = []
+    n_neg = 3
     for epoch in range(epochs):
         model.train()
         opt.zero_grad()
         z = model.encode(data.x_dict, data.edge_index_dict)
-        loss = torch.tensor(0.0)
-        n_pairs = 0
-        for d, pheno_idx in profiles.items():
-            if ("Disease", d) not in index:
-                continue
-            pvec = _patient_vector(z, pheno_idx).unsqueeze(0)
-            pos_idx = index[("Disease", d)]
-            dvec = z["Disease"][pos_idx].unsqueeze(0)
-            logits = model.score(pvec, dvec)
-            loss = loss + bce(logits, torch.ones_like(logits))
-            for _ in range(3):  # negatives: 1 random + 2 phenotypically close
-                neg_d = random.choice(disease_ids)
-                if neg_d == d or ("Disease", neg_d) not in index:
-                    continue
-                nvec = z["Disease"][index[("Disease", neg_d)]].unsqueeze(0)
-                nlog = model.score(pvec, nvec)
-                loss = loss + bce(nlog, torch.zeros_like(nlog))
-                n_pairs += 1
-        if n_pairs == 0:
-            break
-        loss = loss / (len(profiles) + n_pairs)
+        hpo_z = z["Hpo"]
+        gathered = hpo_z[pheno_padded.clamp(min=0)]            # P x T x hidden
+        mask = pheno_mask.unsqueeze(-1).float()
+        pvecs = (gathered * mask).sum(dim=1) / mask.sum(dim=1).clamp(min=1.0)
+        Dpos = z["Disease"][dpos_local]
+        pick = torch.randint(0, HARD_K, (pvecs.shape[0], n_neg), device=device)
+        neg_local = hardneg[torch.arange(pvecs.shape[0], device=device).unsqueeze(1), pick]
+        Dneg = z["Disease"][neg_local]                         # P x n_neg x hidden
+        pos_logits = model.score(pvecs, Dpos)
+        neg_logits = model.score(pvecs.repeat_interleave(n_neg, dim=0),
+                                 Dneg.reshape(-1, Dneg.shape[-1]))
+        labels = torch.cat([torch.ones_like(pos_logits), torch.zeros_like(neg_logits)])
+        loss = bce(torch.cat([pos_logits, neg_logits]), labels)
         loss.backward()
         opt.step()
         history.append(float(loss.item()))
@@ -195,7 +234,7 @@ def train(graph=None, epochs: int = 60, lr: float = 1e-3, seed: int = 7, out_pat
     torch.save({"state_dict": model.state_dict(), "hidden": 64, "heads": 4,
                 "metadata": str(data.metadata()), "loss_history": history}, out_path)
     return {"epochs": len(history), "final_loss": round(history[-1], 4) if history else None,
-            "n_profiles": len(profiles), "checkpoint": str(out_path)}
+            "n_profiles": len(prof_list), "device": device, "checkpoint": str(out_path)}
 
 
 class LoadedHAN:
@@ -206,23 +245,31 @@ class LoadedHAN:
         self.model = model
         self.data = data
         self.index = index
+        self._z = None  # cached graph encoding: the graph is static after load
+
+    def _ensure_z(self):
+        import torch
+
+        if self._z is None:
+            self.model.eval()
+            with torch.no_grad():
+                self._z = self.model.encode(self.data.x_dict, self.data.edge_index_dict)
+        return self._z
 
     def score(self, hpo_ids: List[str], disease_ids: List[str]) -> Dict[str, float]:
         import torch
 
-        self.model.eval()
-        with torch.no_grad():
-            z = self.model.encode(self.data.x_dict, self.data.edge_index_dict)
-            pheno_idx = [self.index[("Hpo", h)] for h in hpo_ids if ("Hpo", h) in self.index]
-            pvec = _patient_vector(z, pheno_idx).unsqueeze(0)
-            out = {}
-            for d in disease_ids:
-                key = ("Disease", d)
-                if key not in self.index:
-                    continue
-                score = self.model.score(pvec, z["Disease"][self.index[key]].unsqueeze(0))
-                out[d] = float(torch.sigmoid(score).item())
-            return out
+        z = self._ensure_z()
+        pheno_idx = [self.index[("Hpo", h)] for h in hpo_ids if ("Hpo", h) in self.index]
+        pvec = _patient_vector(z, pheno_idx).unsqueeze(0)
+        local = [self.index[("Disease", d)] for d in disease_ids if ("Disease", d) in self.index]
+        if not local:
+            return {}
+        # one batched bilinear pass instead of 12.8k python-loop scores
+        D = z["Disease"][torch.tensor(local, dtype=torch.long, device=z["Disease"].device)]
+        s = self.model.score(pvec.expand(D.shape[0], -1), D)
+        probs = torch.sigmoid(s).tolist()
+        return {d: p for d, p in zip((d for d in disease_ids if ("Disease", d) in self.index), probs)}
 
 
 def load_han(checkpoint, graph=None):

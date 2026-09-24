@@ -25,6 +25,15 @@ from ml_services.utils import cosine, write_jsonl
 
 SYMPTOM_LABELS = {"SYMPTOM", "BODY_PART"}
 EMBED_MODEL = os.environ.get("GENOMIND_EMBED_MODEL", "intfloat/multilingual-e5-base")
+BIENCODER_DIR = os.environ.get("GENOMIND_BIENCODER_DIR", "models/hpo_biencoder")
+
+
+def _embeddings_enabled() -> bool:
+    """Embedding rerank is opt-in: set GENOMIND_EMBED_MODEL=none to disable
+    (tests do this — a 1.1 GB model download must never happen mid-test),
+    leave unset for auto: use the trained bi-encoder when present, else e5.
+    """
+    return EMBED_MODEL.strip().lower() not in ("", "none", "off", "0", "false")
 
 
 class HPOMapper:
@@ -34,18 +43,22 @@ class HPOMapper:
         self._embedder = None
         self._hpo_matrix = None
         self._hpo_ids: List[str] = []
-        self.use_embeddings = use_embeddings
+        self.use_embeddings = use_embeddings and _embeddings_enabled()
         self._review_queue: List[dict] = []
 
     # ------------------------- embeddings (optional) -------------------------
 
     def _load_embedder(self):
-        if self._embedder is not None or not self.use_embeddings:
+        if self._embedder is not None or not self.use_embeddings or not _embeddings_enabled():
             return self._embedder
         try:
             from sentence_transformers import SentenceTransformer
 
-            self._embedder = SentenceTransformer(EMBED_MODEL)
+            import ml_services.config as _cfg
+
+            bi = (_cfg.REPO_ROOT / BIENCODER_DIR)
+            source = str(bi) if (bi / "config.json").exists() else EMBED_MODEL
+            self._embedder = SentenceTransformer(source)
         except Exception:
             self._embedder = False  # sentinel: unavailable
         return self._embedder

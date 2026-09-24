@@ -47,9 +47,18 @@ DEFAULT_AGE = (2, 30)
 
 
 def _disease_profiles(graph) -> List[dict]:
-    """Disease -> {phenotypes, prevalence, founder communities, inheritance, gene}."""
+    """Disease -> {phenotypes, prevalence, founder communities, inheritance, gene}.
+
+    Restricted to canonical Orphanet identities: they carry the prevalence,
+    inheritance and founder/community wiring the corpus simulates, while raw hpoa
+    OMIM:/shadow nodes are phenotype-only shells (their evidence is pooled into the
+    ORPHA: canonical node via SAME_AS).
+    """
     profiles: List[dict] = []
     for disease in graph.by_type("Disease"):
+        did = disease["id"]
+        if not did.startswith("ORPHA:"):
+            continue
         did = disease["id"]
         phenos = [n["id"] for n in graph.neighbors(did, "HAS_PHENOTYPE")]
         if len(phenos) < 2:
@@ -116,10 +125,16 @@ def generate(n: int = 300, seed: int = 42, out_path: Path | None = None) -> dict
     # compressed (sqrt, capped at 80/100k) because a country-scale G6PD rate of 4% would
     # otherwise swamp the corpus and make the diagnosis benchmark trivially unbalanced.
     weights = [min(max(p["prevalence"], 0.05), 80.0) ** 0.5 for p in profiles]
-    mimic_pool = {p["disease_id"]: [q["disease_id"] for q in profiles
-                                    if q["disease_id"] != p["disease_id"]
-                                    and set(q["phenotypes"]) & set(p["phenotypes"])]
-                  for p in profiles}
+    # Mimic pool via an inverted phenotype index (O(annotations), not O(D^2):
+    # the naive all-pairs intersection hung for minutes on the 30k-node graph).
+    by_pheno: Dict[str, List[str]] = {}
+    for p in profiles:
+        for h in p["phenotypes"]:
+            by_pheno.setdefault(h, []).append(p["disease_id"])
+    mimic_pool = {}
+    for p in profiles:
+        mimics = {q for h in p["phenotypes"] for q in by_pheno.get(h, ()) if q != p["disease_id"]}
+        mimic_pool[p["disease_id"]] = sorted(mimics)
 
     cases: List[dict] = []
     for i in range(n):
@@ -134,6 +149,10 @@ def generate(n: int = 300, seed: int = 42, out_path: Path | None = None) -> dict
         observed = [h for h in actual["phenotypes"] if rng.random() > DROP_PROB]
         if not observed:
             observed = [rng.choice(actual["phenotypes"])]
+        # Real hpoa profiles can list hundreds of findings; a clinical vignette
+        # carries a handful. Keep the vignette realistic (and evaluation tractable).
+        if len(observed) > 12:
+            observed = rng.sample(observed, 12)
         observed = list(dict.fromkeys(observed))
         own = set(actual["phenotypes"])
         if rng.random() < NOISE_PROB:

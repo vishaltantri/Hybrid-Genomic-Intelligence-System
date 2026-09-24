@@ -1,0 +1,11 @@
+{
+ "base_model": "google/muril-base-cased",
+ "train_sentences": 384,
+ "holdout": 40,
+ "labels": 12,
+ "span_precision": 0.986,
+ "span_recall": 0.986,
+ "span_f1": 0.986,
+ "device": "cuda",
+ "checkpoint": "/home/vct/Desktop/cloud-opencode/models/clinical_ner_muril"
+}
