@@ -53,20 +53,30 @@ export const api = {
   kgStats: () => request('/kg/stats'),
 
   // clinical
-  ner: (body) => request('/clinical/ner', { method: 'POST', body }),
-  mapHpo: (body) => request('/clinical/map-hpo', { method: 'POST', body }),
+  ner: (body) => request('/clinical/extract', { method: 'POST', body }),
+  mapHpo: (body) => request('/clinical/hpo-map', { method: 'POST', body }),
 
-  // pharmacogenomics / reproductive / triage
-  pgx: (body) => request('/pgx/assess', { method: 'POST', body }),
-  counsel: (body) => request('/reproductive/counsel', { method: 'POST', body }),
-  triage: (body) => request('/triage', { method: 'POST', body }),
+  // pharmacogenomics: POST /pgx/check { drugs[], state, ethnicity, sex, age, known_genotypes, lang }
+  pgxCheck: (body) => request('/pgx/check', { method: 'POST', body }),
+  pgxCoverage: () => request('/pgx/coverage'),
+  pgxAlleleFreqs: (params = '') => request(`/pgx/allele-frequencies${params}`),
+
+  // reproductive: POST /reproductive/couple-risk { partner_a: PartnerIn, partner_b: PartnerIn, lang }
+  counsel: (body) => request('/reproductive/couple-risk', { method: 'POST', body }),
+  counselConditions: () => request('/reproductive/conditions'),
 
   // dashboard
   national: () => request('/dashboard/national'),
   policyBrief: () => request('/dashboard/policy-brief'),
   researchGap: () => request('/dashboard/research-gap'),
 
-  // learning / federated
-  learningIngest: (body) => request('/learning/ingest', { method: 'POST', body }),
-  federatedRun: (body) => request('/federated/train', { method: 'POST', body }),
+  // continuous learning (Module 10)
+  learningQueue: () => request('/learning/queue'),
+  learningDrift: () => request('/learning/drift'),
+  kgProposals: (body) => request('/learning/kg-proposals', { method: 'POST', body }),
+
+  // federated learning (Module 8)
+  federatedArchetypes: () => request('/federated/archetypes'),
+  federatedSimulate: (rounds = 8) =>
+    request(`/federated/simulate?rounds=${rounds}`, { method: 'POST' }),
 }

@@ -35,14 +35,15 @@ Services:
 |---|---|
 | `POST /api/v1/auth/token` | OAuth2 login (form) → JWT. Dev users: `admin`/`admin-password-change-me`, `clinician`/`changeme`, `asha1`/`changeme` |
 | `POST /api/v1/diagnosis` | Symptoms (text or hpo_ids, + state/community/sex) → ranked differential with uncertainty and explanations |
-| `POST /api/v1/clinical/ner` | Text → structured findings (Hindi/Hinglish/English) |
-| `POST /api/v1/pgx/assess` | Patient variants/genes → drug safety flags |
-| `POST /api/v1/reproductive/counsel` | Couple + community → child risk + multilingual report |
+| `POST /api/v1/clinical/extract` | Text → structured findings (Hindi/Hinglish/English) |
+| `POST /api/v1/pgx/check` | Prescription (drugs[], known_genotypes, state/community) → drug–gene alerts with Indian allele frequencies |
+| `POST /api/v1/reproductive/couple-risk` | Two partners (community, state, relation) → carrier risk table + multilingual report |
 | `GET  /api/v1/triage/questionnaire` | ASHA questionnaire (cached by the Flutter app for offline use) |
 | `POST /api/v1/triage/answers` / `/text` | Questionnaire answers or ASR transcript → red/amber/green referral |
 | `POST /api/v1/triage/sync` | Batched offline ASHA records → community alerts |
-| `GET  /api/v1/dashboard/national` | State-wise rare disease map (labelled simulated) |
-| `POST /api/v1/learning/ingest` | Pull new PubMed papers → KG update proposals |
+| `GET  /api/v1/dashboard/national` | State-wise cases, access gaps, consanguinity rates (labelled simulated) |
+| `GET  /api/v1/learning/queue` · `/drift` | Active-learning queue and model-drift status |
+| `POST /api/v1/federated/simulate?rounds=N` | Multi-hospital federated training simulation |
 | `POST /api/v1/emr/fhir` | FHIR bundle → engine input |
 | `GET  /health` | Service + module status |
 

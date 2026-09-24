@@ -23,19 +23,20 @@ export default function NationalView() {
 
       {rows.length > 0 && (
         <div className="panel">
-          <h3>Estimated cases by state</h3>
+          <h3>Cases by state (month: {nat?.month ?? '—'})</h3>
           <table>
-            <thead><tr><th>State</th><th>Cases</th><th>Top disease groups</th></tr></thead>
+            <thead><tr><th>State</th><th>Cases</th><th>Detail</th></tr></thead>
             <tbody>
               {rows.slice(0, 15).map(r => (
                 <tr key={r.state}>
                   <td><b>{r.state}</b></td>
                   <td>{typeof r.cases === 'number' ? r.cases.toLocaleString('en-IN') : r.cases}</td>
-                  <td className="note">{r.top || ''}</td>
+                  <td className="note">{r.top}</td>
                 </tr>
               ))}
             </tbody>
           </table>
+          {nat?.totals && <p className="note">Total {nat.totals.cases?.toLocaleString?.('en-IN') ?? nat.totals.cases} cases across {nat.totals.states_reporting} states.</p>}
         </div>
       )}
 
@@ -51,21 +52,17 @@ export default function NationalView() {
   )
 }
 
-// The national payload shape varies (states list / dict); normalize defensively.
+// Real payload shape: { month, states: [{state, cases, confirmed, red_flagged,
+// access_gap_score, gap_label, consanguinity_rate}], totals, data_note }.
 function extractRows(nat) {
   if (!nat) return []
-  const list = nat.states || nat.rows || nat.data || (typeof nat === 'object' ? null : null)
-  if (Array.isArray(list)) {
-    return list.map(x => ({
-      state: x.state || x.name || x.state_name || '—',
-      cases: x.cases ?? x.estimated_cases ?? x.total ?? '—',
-      top: x.top_diseases?.join?.(', ') || x.top_group || '',
-    }))
-  }
-  if (typeof nat === 'object') {
-    return Object.entries(nat).filter(([, v]) => typeof v === 'object').map(([k, v]) => ({
-      state: k, cases: v.cases ?? v.estimated_cases ?? v.total ?? '—', top: v.top_diseases?.join?.(', ') || '',
-    }))
-  }
-  return []
+  const list = nat.states || nat.rows || []
+  return (Array.isArray(list) ? list : []).map(x => ({
+    state: x.state || x.name || '—',
+    cases: x.cases ?? x.estimated_cases ?? x.total ?? '—',
+    top: [x.gap_label, x.confirmed != null ? `${x.confirmed} confirmed` : null,
+          x.red_flagged != null ? `${x.red_flagged} red-flagged` : null,
+          x.consanguinity_rate != null ? `consanguinity ${x.consanguinity_rate}%` : null]
+      .filter(Boolean).join(' · '),
+  }))
 }

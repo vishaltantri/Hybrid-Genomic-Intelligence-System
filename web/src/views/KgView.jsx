@@ -9,11 +9,16 @@ export default function KgView() {
 
   useEffect(() => { api.kgStats().then(setStats).catch(ex => setErr(ex.message)) }, [])
 
-  async function ingest() {
+  async function fetchLearning() {
     setBusy(true); setMsg(null); setErr(null)
     try {
-      const r = await api.learningIngest({ max_papers: 10 })
-      setMsg(`Ingested ${r.papers_fetched ?? '?'} papers → ${r.updates_proposed ?? '?'} KG update proposals (awaiting clinician review).`)
+      const [q, drift] = await Promise.all([api.learningQueue(), api.learningDrift().catch(() => null)])
+      const n = q?.n_pending ?? q?.queue?.length ?? (Array.isArray(q) ? q.length : 0)
+      const proposals = q?.kg_proposals ?? q?.proposals ?? []
+      setMsg(`${n} correction(s) in the active-learning queue` +
+        (proposals.length ? `, ${proposals.length} KG update proposal(s) awaiting review` : '') +
+        (drift ? ` · drift status: ${drift.status ?? JSON.stringify(drift).slice(0, 60)}` : '') +
+        ' — corrections come from clinician feedback on real cases.')
     } catch (ex) { setErr(ex.message) } finally { setBusy(false) }
   }
 
@@ -61,10 +66,11 @@ export default function KgView() {
       <div className="panel">
         <h3>Continuous learning</h3>
         <p className="kv" style={{ marginBottom: 12 }}>
-          Pulls the latest rare-disease literature from PubMed and proposes knowledge-graph updates.
-          Proposals wait for clinician review before entering the graph.
+          The system improves from clinician corrections: feedback on cases builds the
+          active-learning queue, produces KG update proposals (pending review), and is
+          monitored for drift. New literature flows in via the PubMed pipeline in the API.
         </p>
-        <button className="primary" onClick={ingest} disabled={busy}>{busy ? 'Fetching…' : 'Fetch new papers'}</button>
+        <button className="primary" onClick={fetchLearning} disabled={busy}>{busy ? 'Checking…' : 'Check learning status'}</button>
         {msg && <div className="alert info" style={{ marginTop: 12 }}>{msg}</div>}
       </div>
     </>
