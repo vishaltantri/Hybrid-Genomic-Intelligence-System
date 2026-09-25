@@ -66,6 +66,25 @@ class DifferentialDiagnosisEngine:
 
     # --------------------------- loading helpers ---------------------------
 
+    def _match_state(self, state: str) -> str:
+        """Tolerant state lookup: 'tamil nadu'/'Tamil nadu'/'TN-style' variants must hit
+        the graph's canonical state ids, else the consanguinity prior silently zeroes."""
+        raw = (state or "").strip()
+        if not raw:
+            return ""
+        if raw in self.state_consanguinity:
+            return raw
+        low = raw.lower()
+        for sid in self.state_consanguinity:
+            if sid.lower() == low or sid.lower().replace(" ", "") == low.replace(" ", ""):
+                return sid
+        node = self.graph.node("State", raw) or {}
+        name = (node.get("name") or "").lower()
+        for sid in self.state_consanguinity:
+            if sid.lower() == name:
+                return sid
+        return raw  # unknown state: keep as-is, prior treats it as absent
+
     def _load_confirmatory_tests(self) -> Dict[str, dict]:
         path = SEEDS_DIR / "confirmatory_tests.csv"
         if not path.exists():
@@ -205,7 +224,7 @@ class DifferentialDiagnosisEngine:
         uncertainty: bool = True,
     ) -> dict:
         patient_context = patient_context or {}
-        state = patient_context.get("state", "")
+        state = self._match_state(patient_context.get("state", ""))
         community = patient_context.get("community", "")
         sex = patient_context.get("sex", "")
 

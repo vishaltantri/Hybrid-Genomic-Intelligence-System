@@ -55,6 +55,7 @@ export const api = {
   // clinical
   ner: (body) => request('/clinical/extract', { method: 'POST', body }),
   mapHpo: (body) => request('/clinical/hpo-map', { method: 'POST', body }),
+  reference: () => request('/reference'),
 
   // pharmacogenomics: POST /pgx/check { drugs[], state, ethnicity, sex, age, known_genotypes, lang }
   pgxCheck: (body) => request('/pgx/check', { method: 'POST', body }),

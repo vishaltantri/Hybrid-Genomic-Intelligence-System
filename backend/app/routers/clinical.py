@@ -13,6 +13,25 @@ from backend.app.services import registry
 router = APIRouter(prefix="/api/v1", tags=["clinical"])
 
 
+@router.get("/reference")
+def reference_data(user: dict = Depends(require("clinical:read"))):
+    """Dropdown data for the frontends: Indian states (with consanguinity rates)
+    and communities with documented founder risks. Keeps UI selects consistent
+    with the graph's canonical ids so population priors always fire."""
+    graph = registry.graph
+    states = sorted(
+        ({"id": s["id"], "name": s.get("name") or s["id"],
+          "consanguinity_rate": s.get("consanguinity_rate")}
+         for s in graph.by_type("State")),
+        key=lambda x: x["name"])
+    communities = sorted(
+        ({"id": e["id"], "name": e.get("name") or e["id"],
+          "founder_disease": e.get("founder_disease_id")}
+         for e in graph.by_type("Ethnicity")),
+        key=lambda x: x["name"])
+    return {"states": states, "communities": communities}
+
+
 @router.post("/patients", response_model=PatientOut)
 def create_patient(payload: PatientCreate, user: dict = Depends(require("clinical:write"))):
     created = store.create_patient(payload.model_dump(), user["username"])

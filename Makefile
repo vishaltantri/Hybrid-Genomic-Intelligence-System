@@ -33,7 +33,7 @@ api:
 	.venv/bin/uvicorn backend.app.main:app --reload --port 8000
 
 demo:
-	.venv/bin/python scripts/run_demo.py
+	.venv/bin/python -m demo.run_demo
 
 tests:
 	.venv/bin/python -m pytest -q

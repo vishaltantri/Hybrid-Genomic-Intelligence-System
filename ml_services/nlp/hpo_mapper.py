@@ -135,6 +135,19 @@ class HPOMapper:
                 unmapped.append(ent["text"])
 
         items = sorted(profile.values(), key=lambda d: d["confidence"], reverse=True)
+
+        # Whole-phrase fallback: when the NER finds nothing (unusual word order,
+        # extra adjectives like "dark BLACK circles"), fuzzy-match the full text
+        # against the dictionary so free-form phrasing still lands somewhere.
+        full_text = (ner_result.get("text") or "").strip()
+        if not items and full_text:
+            ranked = self.map_phrase(full_text)
+            if ranked and ranked[0]["score"] >= 0.5:
+                top = ranked[0]
+                self._add(profile, top["hpo_id"], top.get("matched_text", full_text),
+                          top["score"] * 0.9, full_text, "whole_phrase_fuzzy")
+                items = sorted(profile.values(), key=lambda d: d["confidence"], reverse=True)
+
         low_confidence = [i for i in items if i["confidence"] < 0.55]
         if low_confidence:
             for i in low_confidence:

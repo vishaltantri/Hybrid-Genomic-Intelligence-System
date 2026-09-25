@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { api } from '../api.js'
 
 export default function DiagnosisView() {
@@ -6,16 +6,28 @@ export default function DiagnosisView() {
   const [state, setState] = useState('Andhra Pradesh')
   const [community, setCommunity] = useState('')
   const [sex, setSex] = useState('')
+  const [states, setStates] = useState([])
+  const [communities, setCommunities] = useState([])
   const [res, setRes] = useState(null)
-  const [xai, setXai] = useState(null)      // /xai/explain bundle: {diagnosis, explanation}
-  const [detail, setDetail] = useState(null) // /diseases/{id}: {disease, phenotypes, genes, founder_risk}
+  const [mapped, setMapped] = useState(null)  // what the NER understood: hpo terms + unmapped
+  const [xai, setXai] = useState(null)        // /xai/explain bundle: {diagnosis, explanation}
+  const [detail, setDetail] = useState(null)  // /diseases/{id}: {disease, phenotypes, genes, founder_risk}
   const [err, setErr] = useState(null)
   const [busy, setBusy] = useState(false)
 
+  useEffect(() => {
+    api.reference().then(r => { setStates(r.states || []); setCommunities(r.communities || []) }).catch(() => {})
+  }, [])
+
   async function run() {
-    setBusy(true); setErr(null); setRes(null); setXai(null); setDetail(null)
+    setBusy(true); setErr(null); setRes(null); setXai(null); setDetail(null); setMapped(null)
     try {
       const body = { text, state, community, sex, top_k: 10 }
+      // show what the system understood, even when it finds nothing
+      try {
+        const m = await api.mapHpo({ text })
+        setMapped(m)
+      } catch { /* non-fatal */ }
       const r = await api.diagnose(body)
       setRes(r)
       if (r.results?.length) {
@@ -38,10 +50,16 @@ export default function DiagnosisView() {
         <label>Clinical note / symptoms</label>
         <textarea value={text} onChange={e => setText(e.target.value)} />
         <div className="row" style={{ marginTop: 12 }}>
-          <div><label>Patient state</label>
-            <input value={state} onChange={e => setState(e.target.value)} placeholder="e.g. Andhra Pradesh" /></div>
-          <div><label>Community (optional)</label>
-            <input value={community} onChange={e => setCommunity(e.target.value)} placeholder="e.g. Gond" /></div>
+          <div><label>Patient state (sets consanguinity prior)</label>
+            <select value={state} onChange={e => setState(e.target.value)}>
+              <option value="">Not stated</option>
+              {states.map(s => <option key={s.id} value={s.id}>{s.name}{s.consanguinity_rate ? ` (${s.consanguinity_rate}%)` : ''}</option>)}
+            </select></div>
+          <div><label>Community (optional, sets founder prior)</label>
+            <select value={community} onChange={e => setCommunity(e.target.value)}>
+              <option value="">Not stated</option>
+              {communities.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select></div>
           <div><label>Sex</label>
             <select value={sex} onChange={e => setSex(e.target.value)}>
               <option value="">Not stated</option><option>M</option><option>F</option>
@@ -54,6 +72,18 @@ export default function DiagnosisView() {
           </div>
         </div>
       </div>
+
+      {mapped && (
+        <div className="alert info">
+          <b>Understood findings:</b>{' '}
+          {mapped.hpo_profile?.length
+            ? mapped.hpo_profile.map(h => `${h.hpo_name || h.hpo_id} (${Math.round((h.confidence || 0) * 100)}%)`).join(' · ')
+            : 'none — try describing symptoms differently (e.g. “piliya”, “daure”, “pet mein dard”)'}
+          {mapped.unmapped_symptoms?.length > 0 && (
+            <div className="note">Could not map: {mapped.unmapped_symptoms.join(', ')}</div>
+          )}
+        </div>
+      )}
 
       {err && <div className="alert error">{err}</div>}
       {res && res.engine && (

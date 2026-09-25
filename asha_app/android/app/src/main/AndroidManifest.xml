@@ -1,5 +1,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Field workers sync over plain-HTTP LAN APIs (e.g. http://<clinic-server>:8000);
+         production deployments should switch to HTTPS + networkSecurityConfig. -->
+    <uses-permission android:name="android.permission.INTERNET"/>
     <application
+        android:usesCleartextTraffic="true"
         android:label="asha_app"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
