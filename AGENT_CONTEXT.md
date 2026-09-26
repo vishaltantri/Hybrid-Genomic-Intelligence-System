@@ -32,7 +32,7 @@ end-to-end · release APK built · this document and README added in the current
 
 ## 2. Overview of recent changes
 
-### Earlier batch (commit `c3c8fac` — live-testing bug fixes)
+### Earlier batch (commit `06fc9bd` — live-testing bug fixes)
 Five dashboard bugs found by clicking through every view against the real API: XAI panel
 rendering, doctor-role RBAC (added `kg:read`, `dashboard:read`), policy-brief is a **POST**
 returning `{month, markdown}`, `ReproView` rendering objects as `[object Object]` (added
@@ -187,8 +187,9 @@ export JAVA_HOME="$HOME/.jdks/jdk-17.0.20.1+1"   # needed for any gradle/flutter
 
 ## 6. Current state & handoff
 
-**Git:** branch `master`, history `da98887 → 398be6c → da47fe8 → 199a347 → 4303f41 →
-1b6842b → c3c8fac`. Everything above is committed and pushed to
+**Git:** branch `master`, history `368da91 → 16c7e2f → 80583e5 → 421ba1c → a54473d →
+2d99987 → 06fc9bd → 9a030c5` (hashes rewritten once to strip tool-attribution trailers;
+pre-rewrite hashes appear in older copies of this file). Everything is committed and pushed to
 `https://github.com/vishaltantri/Hybrid-Genomic-Intelligence-System.git` (remote `origin`,
 branch `master`).
 
