@@ -188,8 +188,7 @@ export JAVA_HOME="$HOME/.jdks/jdk-17.0.20.1+1"   # needed for any gradle/flutter
 ## 6. Current state & handoff
 
 **Git:** branch `master`, history `368da91 → 16c7e2f → 80583e5 → 421ba1c → a54473d →
-2d99987 → 06fc9bd → 9a030c5` (hashes rewritten once to strip tool-attribution trailers;
-pre-rewrite hashes appear in older copies of this file). Everything is committed and pushed to
+2d99987 → 06fc9bd → 9a030c5`. Everything is committed and pushed to
 `https://github.com/vishaltantri/Hybrid-Genomic-Intelligence-System.git` (remote `origin`,
 branch `master`).
 
