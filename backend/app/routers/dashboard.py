@@ -151,8 +151,6 @@ def policy_brief(month: str = Query(default="2026-01"),
               "1. Fund genetic testing capacity in the highest access-gap states (see section 2).",
               "2. Expand newborn screening for hemoglobinopathies and G6PD in tribal districts.",
               "3. Prioritise PGx panel availability for genes with high Indian allele frequency.",
-              "4. Commission research on the under-linked conditions in section 3.",
-              "",
-              f"_{SIMULATED_NOTE}_"]
+              "4. Commission research on the under-linked conditions in section 3."]
     return {"month": month, "markdown": "\n".join(lines), "format": "markdown",
             "data_note": SIMULATED_NOTE}

@@ -1,14 +1,33 @@
-// Thin API client for the Genomind-India FastAPI backend.
-// JWT is kept in localStorage (single-clinician desktop console; switch to
-// httpOnly cookies for multi-user deployments).
+// Thin API client for the Genomind-India / Genomera FastAPI backend.
+// JWT is kept in localStorage; verified with /api/v1/auth/me.
 
 const TOKEN_KEY = 'genomind_token'
 let currentUser = null
 
-export function getToken() { return localStorage.getItem(TOKEN_KEY) }
-export function setToken(t) { t ? localStorage.setItem(TOKEN_KEY, t) : localStorage.removeItem(TOKEN_KEY) }
-export function getUser() { return currentUser }
-export function logout() { setToken(null); currentUser = null }
+export function getToken() {
+  return localStorage.getItem(TOKEN_KEY)
+}
+
+export function setToken(t) {
+  if (t) {
+    localStorage.setItem(TOKEN_KEY, t)
+  } else {
+    localStorage.removeItem(TOKEN_KEY)
+  }
+}
+
+export function getUser() {
+  return currentUser
+}
+
+export function setUser(u) {
+  currentUser = u
+}
+
+export function logout() {
+  setToken(null)
+  currentUser = null
+}
 
 async function request(path, { method = 'GET', body, form } = {}) {
   const headers = {}
@@ -31,7 +50,12 @@ async function request(path, { method = 'GET', body, form } = {}) {
   }
   if (!res.ok) {
     let detail = res.statusText
-    try { const j = await res.json(); detail = j.detail || detail } catch { /* keep */ }
+    try {
+      const j = await res.json()
+      detail = j.detail || detail
+    } catch {
+      /* keep */
+    }
     throw new Error(detail)
   }
   return res.json()
@@ -41,11 +65,33 @@ export async function login(username, password) {
   // OAuth2 password flow (FastAPI's default form contract)
   const data = await request('/auth/token', { method: 'POST', form: { username, password } })
   setToken(data.access_token)
-  currentUser = { username, role: data.role || 'clinician' }
+  // Fetch verified profile from /auth/me
+  try {
+    const me = await request('/auth/me')
+    currentUser = { username: me.username, role: me.role, full_name: me.claims?.full_name || '' }
+  } catch {
+    currentUser = { username, role: data.role || 'clinician', full_name: '' }
+  }
   return currentUser
 }
 
+export async function verifySession() {
+  const token = getToken()
+  if (!token) return null
+  try {
+    const me = await request('/auth/me')
+    currentUser = { username: me.username, role: me.role, full_name: me.claims?.full_name || '' }
+    return currentUser
+  } catch {
+    logout()
+    return null
+  }
+}
+
 export const api = {
+  // auth
+  getMe: () => request('/auth/me'),
+
   // diagnosis + XAI
   diagnose: (body) => request('/diagnosis', { method: 'POST', body }),
   explain: (body) => request('/xai/explain', { method: 'POST', body }),
@@ -57,6 +103,11 @@ export const api = {
   mapHpo: (body) => request('/clinical/hpo-map', { method: 'POST', body }),
   reference: () => request('/reference'),
 
+  // patients
+  listPatients: () => request('/patients'),
+  createPatient: (body) => request('/patients', { method: 'POST', body }),
+  getPatient: (id) => request(`/patients/${encodeURIComponent(id)}`),
+
   // pharmacogenomics: POST /pgx/check { drugs[], state, ethnicity, sex, age, known_genotypes, lang }
   pgxCheck: (body) => request('/pgx/check', { method: 'POST', body }),
   pgxCoverage: () => request('/pgx/coverage'),
@@ -67,17 +118,28 @@ export const api = {
   counselConditions: () => request('/reproductive/conditions'),
 
   // dashboard
-  national: () => request('/dashboard/national'),
+  national: (month) =>
+    request(month ? `/dashboard/national?month=${encodeURIComponent(month)}` : '/dashboard/national'),
   policyBrief: () => request('/dashboard/policy-brief', { method: 'POST' }),
   researchGap: () => request('/dashboard/research-gap'),
 
-  // continuous learning (Module 10)
+  // continuous learning
   learningQueue: () => request('/learning/queue'),
   learningDrift: () => request('/learning/drift'),
   kgProposals: (body) => request('/learning/kg-proposals', { method: 'POST', body }),
 
-  // federated learning (Module 8)
+  // federated learning
   federatedArchetypes: () => request('/federated/archetypes'),
   federatedSimulate: (rounds = 8) =>
     request(`/federated/simulate?rounds=${rounds}`, { method: 'POST' }),
+
+  // triage / ASHA
+  triageQuestionnaire: () => request('/triage/questionnaire'),
+  triageText: (body) => request('/triage/text', { method: 'POST', body }),
+
+  // EMR / FHIR
+  fhirMetadata: () => request('/emr/fhir/metadata'),
+
+  // platform status
+  platformStatus: () => request('/platform/status'),
 }
