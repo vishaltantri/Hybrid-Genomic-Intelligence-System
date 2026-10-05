@@ -1057,3 +1057,245 @@ three.js lives in a separate lazily-loaded chunk (not in the main bundle); the b
 - Legend: grey-blue = no case data (reference), blue = case data mapped, cyan = linked to selection, mint = selected. No red; highlighting is not damage.
 - 2D fallback restyled to match. Genome and Timeline views stay light for legibility.
 - The 3D chunk is now ~926 kB (251 kB gzip) and still lazy-loaded.
+
+## 31. Phase 3E: Functional Pedigree & Inheritance Intelligence
+
+### 31.1 Audit result
+Before this phase the repository had only (a) free-text family fields on the patient record (`family_history`, `known_carrier`, `known_affected`), (b) the reproductive module's sample pedigree *text/Mermaid generator* (`ml_services/reproductive/pedigree.py`, no persistence, no genotypes) and (c) first-sample-only genotypes in Variant Intelligence. No pedigree store, no per-member genotypes, no segregation/de novo logic existed, so a new pedigree subsystem was added and the existing modules were *connected to it* rather than duplicated. A case is a patient record (`case_id == patient_id`).
+
+### 31.2 Data model (new tables, `CREATE TABLE IF NOT EXISTS`; no existing table changed)
+- `pedigree_members`: member_id, case_id, label (anonymised), sex M/F/U, age_years, deceased, affected (affected/unaffected/unknown), is_proband, vcf_sample, hpo_ids (existing HPO graph ids), notes, synthetic, layout_x/y (saved drag position).
+- `pedigree_relationships`: only canonical edges are stored — `parent_of` (a is parent of b) and `partner`. Child, sibling, half-sibling, grandparent, aunt/uncle, niece/nephew, cousin and grandchild are **derived** (`structure.derive_relations`), so relationships are consistent both ways by construction.
+- `pedigree_variants` (variant metadata + stored ACMG "Met" criteria so PP1 can be recombined after an API restart) and `pedigree_genotypes` (member × variant: `0/0`, `0/1`, `1/1`, `hemizygous`, `unknown`, with source `manual` or `vcf:<analysis>:<sample>`).
+- Genotypes can be assigned manually, from a Variant Intelligence variant, or **imported from a VCF sample column**: Phase 3B now keeps every sample's genotype per variant (`analysis["sample_genotypes"]`, multi-allelic aware, `.` = unknown).
+
+### 31.3 Validation (`structure.validate`, enforced on every write)
+Self-relation, unknown member, duplicate edge, ancestor cycle, partner who is also a parent/child/lineal relative, >2 parents, same-sex biological parents (warning), parent not older than child (error) or implausible gap <12 y (warning), multiple probands (error), no proband (warning), unaffected proband (warning), missing parent (info), partners where only one has recorded parents (info), consanguineous partners (info). A mutation that would introduce a *new* error is refused (HTTP 422) and nothing is persisted. Deleting the proband while others exist is refused (409); deleting a member cascades its edges and genotypes and is audit-logged with the counts.
+
+### 31.4 Analysis engine (`ml_services/pedigree/analysis.py`) — all computed from recorded genotypes, affected status and parent-child links
+- **Trio table** (father / mother / proband states, "not recorded" if a parent is absent from the pedigree).
+- **Models**: AD and AR for autosomal variants, X-linked for `chrX` (hemizygous males, father-to-son transmission is a conflict), mitochondrial for `chrM` (maternal pattern; heteroplasmy not modelled). Each model returns a verdict (`consistent` / `possible` / `not_consistent` / `inconclusive`), typed evidence (supports / conflicts / unknown / note) and a shared **evidence completeness** (Low / Moderate / High from parent genotypes and informative relatives). A single heterozygous variant is never called recessive; weak "possible" support for a model that contradicts the knowledge-graph reference inheritance is not headlined; "Inheritance pattern inconclusive." is returned rather than forcing a model.
+- **Segregation**: affected/unaffected × carrier/non-carrier counts (plus biallelic counts for recessive), members excluded for unknown genotype or unknown status are listed, and fewer than 3 informative members yields "Insufficient family members for a segregation assessment."
+- **De novo**: candidate only when the proband carries and **both** parents have a recorded negative genotype (mother only for an X-linked male); a missing parent genotype gives "cannot assess: Father genotype unavailable"; the result always carries the caveat that parentage, depth/GQ and mosaicism are not assessed and confirmation is recommended.
+- **Compound heterozygosity**: per gene, per pair of heterozygous non-benign variants — *in trans* only if parental genotypes place one allele on each side, *in cis* if both come from one parent, otherwise "Phase unavailable" (two heterozygous variants alone are not called compound heterozygous).
+- **PP1** (`pp1_assessment`): supported / not supported / insufficient with reason and source "Pedigree segregation analysis". Strength is a *documented heuristic* (affected carriers incl. proband: 3+ Supporting, 5+ Moderate, 7+ Strong; thresholds configurable at the top of `analysis.py`) assuming full penetrance; any contradicting member makes it not supported. It is **not** applied automatically.
+- **ACMG integration**: the combination matrix in `ml_services/variants/acmg_engine.py` was extracted unchanged into `combine_criteria()` (used by `evaluate()` and covered by the existing ACMG tests) and `reclassify_with_extra_criterion()` re-combines a stored variant's met criteria with PP1 — so the pedigree module reuses the same rules. The result is a *preview* (stored class, class with PP1, changed?); the Variant Intelligence classification is never modified.
+- **Prioritisation**: `family_prioritisation` returns the stored base priority score plus listed adjustments (de novo candidate +8, segregation supported +6, homozygous proband with both parents carriers +6, compound het in trans +6, affected non-carrier -10, unaffected biallelic -8, recessive single het -6; weights exported with the API). The stored score is never changed.
+- **Diagnosis**: the diagnosis engine is run on the proband's recorded HPO terms and its ranking is returned unchanged, annotated with whether a family variant lies in each candidate's genes and whether the candidate's knowledge-graph inheritance matches the family-supported model.
+
+### 31.5 API (`backend/app/routers/pedigree.py`, permissions `pedigree:read` / `pedigree:write` for doctor + admin)
+`GET /api/v1/pedigree/{case}`; `POST|PATCH|DELETE …/members[/{id}]`; `POST …/members/{id}/proband`; `PUT …/phenotypes`; `POST|DELETE …/relationships`; `POST …/members/{id}/genotypes` (+ `/import` from a VCF sample, `DELETE …/{variant_key}`); `GET …/analysis?variant_key=`; `GET …/overview`; `GET …/prioritization`; `GET …/reproductive-context`; `POST …/demo-family`; `GET /pedigree/hpo-search`. Every query is scoped by `case_id` (a member/relationship/variant of another case is a 404; a VCF analysis must belong to the case); every mutation is audit-logged with the user. Like the rest of the platform, any doctor can open any case's pedigree; there is no per-user privacy on pedigrees (unlike Twin scenarios).
+
+### 31.6 UI (`web/src/views/PedigreeView.jsx`, `web/src/components/pedigree/`)
+- **Canvas** (custom SVG, no extra library): pan (drag the background), wheel/button zoom, fit-to-screen, node selection (mouse and keyboard), node dragging persisted through the backend and "reset layout", generation layout from the recorded structure (partners adjacent, sibships centred), standard symbols (square male, circle female, diamond unspecified; filled affected, open unaffected, `?` unknown; half-filled carrier only in variant mode; proband arrow; deceased slash) and a legend.
+- **Variant mode** ("Analyze variant in family"): colours/labels members by real genotype — homozygous/hemizygous filled, heterozygous half-filled, absent open, unknown muted/dashed, affected carriers ringed — and never infers a state for a member without a genotype.
+- **Editor**: add member (optionally linked to the selected member), edit, set proband, delete (confirmed), connect/disconnect, HPO search + assignment (existing HPO graph), genotype assignment (registered variant, manual variant, or import from a VCF sample). UI changes only after the backend confirms; backend validation messages are shown.
+- **Analysis panel**: Inheritance (verdict, why, per-model evidence, completeness, uncertainty), Segregation & trio (trio table, counts, de novo, compound heterozygosity), ACMG & diagnosis (PP1, ACMG preview, pedigree pattern + diagnosis candidates), Prioritisation, Reproductive. Buttons open Variant Intelligence, Knowledge Graph, Diagnosis and the Digital Twin with context.
+- **Synthetic data**: "Create synthetic demo family" builds Father/Mother/Proband from the verified demo trio VCF (`PROBAND`/`MOTHER`/`FATHER` columns) and marks every member `synthetic`; the page shows "Synthetic/Test Family — Not Clinical Data" and the AI context repeats it.
+
+### 31.7 Integrations
+Variant Intelligence (sample genotypes, ACMG recombination, hand-off buttons) · HPO (member phenotypes use the existing graph and search) · Diagnosis (context, ranking untouched) · Reproductive (`reproductive-context` converts recorded genotypes to `known_carrier` / `known_affected` via knowledge-graph gene→disease links, derives consanguinity (first cousins / uncle-niece / second cousins) from the pedigree, and calls the existing `CarrierCounselor.couple_assessment`; a "Use family inheritance data" panel was added to the Reproductive page) · Digital Twin (`twin.family.pedigree` summary read from the pedigree service — no second family representation) · Knowledge Graph (navigation with gene/disease context) · AI Assistant (`include_pedigree` / `pedigree_variant_key` on the chat API; the server builds the context from stored members, genotypes and computed results and cites it; requires `pedigree:read`).
+
+### 31.8 Tests and verification
+- `tests/test_pedigree.py` (41 tests): CRUD, relationship consistency/derivation, validation, proband rules, cascade delete + audit, phenotype/genotype validation, AD/AR/X-linked/mitochondrial assessments, de novo, compound het (trans/cis/unavailable), segregation counts, PP1 thresholds, ACMG recombination, VCF-sample import, demo family, transparent prioritisation, diagnosis context, reproductive hand-off, Twin and AI integration, RBAC and case isolation.
+- `web/src/__tests__/pedigree.test.jsx` (29 tests over fixtures captured from the live API): rendering and symbols, generation layout, zoom/fit/drag, selection, add member, relationship creation and rejection, phenotype/genotype assignment, proband, variant mode highlighting, unknown genotypes, inheritance/segregation/de novo/PP1 views, prioritisation, reproductive, navigation, AI request, empty/validation/error states, case switching.
+- Full suite: **213 backend tests passed** (`PYTHONUTF8=1 pytest`; default Windows console encoding still fails the two existing demo-subprocess tests), **64 frontend tests**, `npm run build` clean.
+- Live end-to-end (browser pane, synthetic demo case): login → open case → empty pedigree → add proband → add Mother and Father as parents through the form → connect partners → import genotypes from the VCF sample columns → add phenotypes via HPO search → select ATP7B (autosomal recessive "consistent", completeness Moderate, parents het/proband hom highlighted on the canvas) → segregation, de novo (VHL: candidate de novo with caveat), PP1 insufficient and not applied → Open Variant Intelligence → View Digital Twin (Family tab shows the pedigree summary) → AI Assistant answer grounded in the pedigree. A larger family (grandparents, aunt, cousin, brother) was rendered and checked at desktop and tablet width.
+
+### 31.9 Limitations
+- Genotype-driven only: affected statuses and genotypes must be recorded; unrecorded members stay "unknown". Penetrance, age of onset, expressivity, consanguinity loops and uniparental disomy are not modelled; PP1 strength is a heuristic, not a likelihood ratio.
+- Compound heterozygosity phase comes only from parental genotypes (no read-backed phasing). Mitochondrial analysis ignores heteroplasmy.
+- Variant Intelligence analyses live in memory (Phase 3B): after an API restart genotypes already stored in the pedigree remain, but new VCF imports/assignments from an analysis require the VCF to be re-uploaded; ACMG recombination uses the criteria stored when the variant was registered.
+- Pedigree access follows the platform's role model (any doctor / admin on any case); there is no per-user privacy on pedigrees.
+- The canvas lays out partner chains and sibships; unusual structures (multiple marriages across many generations, loops) may need manual dragging, and multiple gestations/adoptions are not represented.
+
+## 32. Phase 4: Clinical Evidence & Literature Intelligence
+
+### 32.1 What was built
+- **PubMed** through the official NCBI E-utilities (`ml_services/evidence/pubmed_client.py`): host-locked to `eutils.ncbi.nlm.nih.gov`, 3 req/s (10/s with optional `NCBI_API_KEY`; `NCBI_TOOL`, `NCBI_EMAIL` also optional), 15-minute in-memory cache, safe error messages, key never returned to the browser.
+- **Normalised evidence model** (`normalize.py`): source, source_id, title, authors, journal, publication_date, pmid, doi, gene, variant, disease, phenotype, evidence_type, evidence_strength, summary, url, retrieved_at, provenance. `evidence_strength` is the PubMed *publication-type tag* (study-design indicator) or `null`; it is never a quality grade.
+- **Relevance ranking** (title 0.45 + abstract 0.25 + design 0.2 + recency 0.1, components returned) labelled "relevance to the query, not certainty".
+- **Mention detection** (gene, HGVS c./p., rsID, transcript). A paper is linked to a case variant only if the variant's cDNA/protein/rsID is mentioned (plus the gene for cDNA/protein); a shared gene alone is not a link.
+- **Existing sources reused**: ClinVar and Orphanet records come from the in-app seed / knowledge graph and are labelled "local seed" (not live). ClinGen is reported "not configured".
+- **Variant evidence** (`GET /evidence/variant/{analysis}`): structured ClinVar + Orphanet records and PubMed literature using the variant's HGVS/rsID, with a labelled gene-level fallback.
+- **Case evidence**: table `case_evidence` (idempotent save, note, `in_report`, audit-logged); `GET /evidence/case/{id}/report` builds the report section.
+- **AI Assistant**: `include_evidence`, `evidence_query`, `evidence_gene` on chat/stream. Real abstracts are inserted as fenced *untrusted* text; instruction-like sentences are removed; only retrieved PMIDs may be cited; if PubMed is unreachable or has no match, the model is told not to cite anything.
+- **Security**: permissions `evidence:read` (doctor, researcher), `evidence:write` (doctor), admin `*`; 30 searches/min per user (429); query sanitising and 200-char limit; case existence checks; all actions audited.
+
+### 32.2 API
+`GET /api/v1/evidence/sources|search|pmid/{pmid}|variant/{analysis_id}`; `GET|POST /evidence/case/{id}`; `PATCH|DELETE /evidence/case/{id}/{evidence_id}`; `GET /evidence/case/{id}/report`.
+
+### 32.3 UI
+`web/src/views/EvidenceView.jsx`: source-status strip, search (type, year range, design filters), result cards (PMID, DOI, design badge, relevance, mention chips, linked-variant badge, abstract/provenance), save-to-case / add-to-report, saved-evidence panel, pagination, distinct idle / loading / unavailable / no-results / error states. Variant Intelligence has a "View Evidence" button (nav context carries analysis, variant, case). The Assistant has a "Literature" toggle.
+
+### 32.4 Tests
+`tests/test_evidence.py` (21, fake NCBI transport, no network) and `web/src/__tests__/evidence.test.jsx` (6, fixtures from live PubMed). Totals now: **234 backend**, **70 frontend**, `npm run build` clean. Live PubMed retrieval verified (ATP7B search, PMID parsing).
+
+### 32.5 Limitations
+Evidence type comes only from PubMed tags (many records are unclassified). ClinVar/Orphanet are seeds, not live. Abstract-level only (no full text). Cache and rate limiting are per process. The running API server must be restarted to load the new routes.
+
+
+## 33. Phase 5: Clinical Text Intelligence (NLP/NER)
+
+**Status: complete (backend 20 tests, frontend 4 tests, build clean).**
+
+- `ml_services/nlp/clinical_text.py` wraps the existing `LexicalRuleNER` and `HPOMapper` (no second similarity engine). Adds disease/gene/variant extraction (graph names, graph-member gene symbols, HGVS/rsID regexes), AGE vs ONSET classification, severity, and sentence-scoped assertion detection (present / absent / possible / historical, family experiencer + relation).
+- API: `POST /api/v1/nlp/analyze|entities|normalize`, `GET /nlp/capabilities` (`clinical:write`, 60/min, audited, nothing written to a case). Assistant accepts `clinical_text` and grounds on the structured result.
+- UI: *Clinical Text* (`ClinicalTextView.jsx`): paste/.txt upload, highlighted spans (struck = negated, dashed = uncertain, italic = history), entity table with HPO id/status, family findings, conflicts, unmapped list, hand-off to Phenotypes.
+- Limitations: PROCEDURE and ANATOMICAL_SITE are **not produced** (no lexicon/model); assertion is rule-based; coverage limited to the NER lexicon (e.g. "weakness" unmapped); labs are parsed but not normalized (no LOINC source); variant→gene link only when exactly one gene shares the sentence. "Not extracted" is never treated as "absent".
+
+
+## 34. Phase 6: Interactive Knowledge Graph Intelligence
+
+**Status: complete (backend 9 tests, frontend 6 tests, build clean).**
+
+- `ml_services/graph_ai/explorer.py` is a read-only layer over the existing `GraphData` (no second graph engine). Node keys are `Type::id`.
+- API (`kg:read`; case graph also needs `clinical:read`; audited): `GET /api/v1/kg/types|search|node|neighborhood|path`, `GET /kg/case/{patient_id}`. Hard caps: 150 nodes, depth 3, path length 6, search ≤ 50 per page; malformed keys/queries return 422, unknown nodes 404.
+- UI: the hard-coded "illustrative" subgraph in `KgView` was replaced by `KgExplorer`: debounced search, neighbourhood expand / 2-hop focus, type filters, zoom / pan / fit / reset, edge and node selection, node inspector, shortest-path finder, and a case-aware graph (patient selector). Nothing is drawn until the user picks a start.
+- Case graph = Patient, case phenotypes (HPO), case variants (+ gene), KG disease *candidates* that share a phenotype or gene (not diagnoses), pedigree members, saved literature. It reads one patient's stored data only (isolation tested).
+- Integrations: Variant Intelligence "View in Knowledge Graph"; existing Twin/Pedigree "Open Knowledge Graph" links now drive the explorer; AI Assistant accepts `graph_node` (server-side neighbourhood grounding) and the explorer's "Ask AI" passes it.
+- Limitations: **Pathway** has no data source and is declared unsupported; Publication nodes exist only for literature saved to a case; the global graph has no Drug-Gene beyond the PGx edges loaded; layout is client-side force-directed (≤ ~150 nodes per view).
+
+## 35. Phase 7 — Phenotype / HPO Intelligence (done)
+- `ml_services/phenotype/service.py` (`PhenotypeIntelligence`) + `backend/app/routers/phenotype.py` (`/api/v1/phenotype/*`: search, term/{id}, case/{pid}, case/{pid}/compare, case/{pid}/import). RBAC `clinical:read` / `clinical:write`; import is audited.
+- Search: id, name, synonym, Hindi/Indian synonym (MAPS_TO) and semantic phrase mapping through the existing `HPOMapper` (its own score/source shown; no invented scores).
+- Case workspace: observed (onset/severity or "Not documented"), explicitly absent, uncertain, expected-but-not-documented (engine `missing_terms`), conflicts only from explicit negation.
+- New event kind `phenotype_assertions`; `collect_phenotype_records` drops terms later marked absent/possible so negated/uncertain findings never feed the diagnosis engine or Twin.
+- Compare uses `attribute_symptoms` + engine score; phenotype→disease→gene→case-variant chain from the KG ("Not analyzed" when no variant analysis).
+- NLP import (from Clinical Text) requires explicit confirmation and a selected case.
+- Tests: `tests/test_phenotype.py` (9), `web/src/__tests__/phenotypes.test.jsx` (5). Totals: backend 260, frontend 85.
+- Limits: onset/severity only stored when supplied via import; Tamil/other languages only where the mapper's synonym lexicon has them.
+
+## 36. Phase 8 - Diagnosis Intelligence
+
+**Files:** `ml_services/diagnosis_intel/service.py`, `backend/app/routers/diagnosis_intel.py`, `web/src/views/DiagnosisIntelView.jsx`; assistant context in `routers/assistant.py` (`include_diagnosis_intel`); tests `tests/test_diagnosis_intel.py` (8), `tests/test_master_e2e.py` (1), `web/src/__tests__/diagnosisIntel.test.jsx` (5).
+
+**APIs (`/api/v1/dx`):** `GET case/{pid}` (workspace), `GET case/{pid}/why?disease_id=`, `GET case/{pid}/matrix`, `GET case/{pid}/discriminating`, `POST case/{pid}/whatif`. Reads need `diagnosis:run`; what-if needs `twin:write`; workspace and what-if are audited.
+
+**Behaviour:** every number is passed through from `DifferentialDiagnosisEngine` or from a real engine re-run; the ranking is not re-weighted. Variants appear as separate genomic support. Empty cases return an "Insufficient data" state rather than a ranking. What-if goes through the Twin scenario service and leaves the case unchanged.
+
+**Limitations:** the evidence "quality" label is a count of saved items, not grading; what-if runs are saved to the scenario list; discriminating probes are capped at 10 candidates; variant and pedigree contributions are not ranking inputs.
+
+**Totals:** backend 269 tests, frontend 90, production build clean.
+
+## 37. Phase 9 - Advanced Pharmacogenomics
+
+**Preserved:** `PGxEngine` (population inference, HWE, CPIC-style rules), `/api/v1/pgx/check|coverage|allele-frequencies|genes/*`, the original PgxView.
+
+**Added:** `ml_services/pharmacogenomics/case_pgx.py` (`CasePgx`, registry `case_pgx`). Pipeline: case variant analysis -> per-gene alleles -> diplotype -> predicted phenotype -> configured drug rule -> evidence.
+- Genotype comes only from variants with a PGx star allele; "PGx genotype unavailable" when no analysis / no pharmacogene alleles.
+- Diplotype: homozygous `*2/*2`; heterozygous `*2/other` (second allele not assumed); multiple alleles -> "cannot be confidently determined" (no phase inferred).
+- Phenotype: existing `metabolizer_status` (LoF + zygosity) plus CYP2C19*17 GoF (RM/UM); other functions are "not assigned".
+- Matrix rows come from `cpic_guidelines.csv` rows whose status code matches; `pharmgkb_pairs.csv` supplies evidence level; pairs without a matching rule show "No configured recommendation". Alternatives are shown only when the rule lists them, with source.
+- Population context: Indian allele frequency + expected HWE proportions, labelled as not individual risk. Cohort counts are aggregate carriers only; an observed-vs-expected HWE test is not performed (wild-type not determinable from sparse VCFs).
+- Saved Phase 4 evidence whose text mentions the gene/drug is attached to rows.
+
+**APIs:** `GET /api/v1/pgx/case/{pid}`, `GET /case/{pid}/drug?name=`, `GET /case/{pid}/report-section` (consumed by Phase 11). Permission `pgx:read`; audited. Assistant: `include_pgx` (`pgx:read`, 403 otherwise). Twin: existing PGx state verified to agree with the workspace.
+**UI:** `PgxCasePanel` inside PgxView. **DB changes:** none. **Tests:** `tests/test_pgx_case.py` (10), `pgxCase.test.jsx` (3).
+**Limitations:** rule tables are prototype CPIC-style seeds (no live CPIC/PharmGKB fetch); phenotype needs LoF/GoF function annotation; no activity-score model.
+
+## 38. Phase 10 - Advanced Reproductive Genetics (done)
+
+- `ml_services/reproductive/workspace.py` (`ReproWorkspace`, `registry.repro`) layers a case workspace over the existing `CarrierCounselor` and the Phase 3E `reproductive_context`; nothing existing was replaced.
+- API (`/api/v1/repro`, `reproductive:read`, audited): `GET /case/{pid}/members`, `GET /case/{pid}` (couple analysis), `POST /punnett`, `POST /case/{pid}/montecarlo`, `POST /case/{pid}/scenario` (what-if, never writes), `GET /case/{pid}/explain`, `GET /case/{pid}/report-section`. Assistant accepts `include_repro`.
+- Partner carrier tables come from pedigree genotypes; unrecorded genotypes are "cannot be determined", never normal. Punnett is built from the determined genotypes (AR, AD with an affected parent, X-linked recessive) and is withheld otherwise.
+- Bayesian panel shows the counselor's prior and posterior and states the likelihood is not separately computed. Monte Carlo (AR only) takes n (1k-200k), seed and probabilities, reports a Wilson 95% interval and the analytic value.
+- Unsupported inheritance (mitochondrial, X-linked dominant, multifactorial) is listed with an explicit "not supported" note and no probabilities.
+- UI: `ReproCasePanel` inside the existing Reproductive view. Tests: `tests/test_repro_workspace.py` (8), `reproCase.test.jsx` (4). Totals: backend 287, frontend 10 files / 97 tests, build clean.
+- Limitations: probabilities are calculated, not clinical predictions; AD Punnett needs one parent known affected; no likelihood ratio computed.
+
+## 39. Phase 11 - Clinical Reports and PDF Intelligence (done)
+
+- `ml_services/reports/service.py` (`ReportService`, `registry.reports`) assembles a structured report from stored case data and the existing engines (patient, phenotypes, variants, differential, pedigree, PGx, reproductive, saved evidence). Sections use distinct states: Not documented / Not analyzed / Insufficient data / No matching result.
+- Persistence: new table `case_reports` (versioned per case, draft/final, creator, finalizer, SHA-256 of the stored content). Finalized reports are immutable; regenerate for a new version. Reads recompute the hash and expose `integrity_ok`.
+- API (`/api/v1/reports`): `GET /sections`, `POST /case/{pid}`, `GET /case/{pid}` (versions), `GET /{id}`, `POST /{id}/refresh`, `POST /{id}/finalize`, `GET /{id}/pdf`, `GET /{id}/json`. Read = `clinical:read`; write = `clinical:write`. All mutating and export calls audited.
+- PDF is produced on the server with ReportLab from the stored content (not a screenshot or print of HTML); preview, JSON and PDF share one source. Tests open the PDF with PyMuPDF and compare section titles and variant genes to the preview. New requirements: `reportlab`, `pymupdf` (tests).
+- UI: `CaseReportPanel` in the Reports view (case, section selection, versions, preview, refresh, finalize, authenticated PDF/JSON download).
+- Limitations: English only; the PGx section lists genotype and configured-rule rows as text; no digital signature (hash only).
+
+## 40. Phase 12 - FHIR / EMR / ABDM (done)
+- `ml_services/fhir_case.py`: case Bundle export (Patient, HPO Observations, non-benign variant Observations, provisional top-differential Condition, finalized-report DiagnosticReport), structural R4 validator (required elements, status codes, id format, reference resolution, entry cap) and import preview (persists nothing).
+- Routes under `/api/v1/emr`: `GET /fhir/case/{pid}`, `POST /fhir/validate`, `POST /fhir/import-preview` (clinical:write), `GET /abdm/status`. Exports and previews are audited.
+- Limitations stated in the API and UI: validation is structural only, not NRCeS/ABDM profile validation. ABDM is reported "Not connected"; no ABHA verification, consent or HIE calls exist. Import into a case is not supported.
+- FhirView rewritten; the earlier "Active & Conforming" and "M1 / M2 Ready" badges were removed as unsupported claims.
+- Tests: `tests/test_fhir_case.py` (5), `web/src/__tests__/fhirView.test.jsx` (2).
+
+## 41. Phase 13 - ASHA / Community Genomics (done)
+- `referrals` and `referral_followups` tables. `backend/app/routers/community.py` (`/api/v1/community`): `POST /referrals/from-answers|from-text` (triage colour computed server-side by the existing engine; follow-up due 1/3/14 days for red/yellow/green), `GET /referrals`, `GET /referrals/{id}`, `POST /referrals/{id}/followup` (improved, unchanged, worse, visited_facility, unreachable), `POST /referrals/{id}/handoff` (clinician creates a case), `GET /summary` (counts, overdue, needs review).
+- New permissions: `referral:write|read` (asha), `referral:read|handoff` (doctor). ASHA workers only see their own referrals; foreign ids return 404.
+- Handoff attaches ASHA-reported symptoms as an `asha_referral` event and does NOT mark them as confirmed phenotypes; the clinician may confirm only HPO ids that were reported in the referral.
+- Hindi directive and referral letters come from the existing triage engine. No SMS/voice delivery is implemented.
+- UI: `ReferralsPanel` in AshaView. Tests: `tests/test_community.py` (6), `referrals.test.jsx` (2).
+
+## 42. Phase 14 - Notifications and clinical workflow (done)
+- Tables: `notifications`, `notification_reads` (read state per user, so role broadcasts are read independently), `case_workflow`, `workflow_history`. `backend/app/routers/workflow.py` (`/api/v1/workflow`): notifications list/count/read/read-all; `GET /case/{pid}`, `POST /case/{pid}/status` (new -> in_review -> awaiting_results/report_ready -> closed, invalid moves return 409), `POST /case/{pid}/assign` (assignee must be an existing doctor/admin account), `GET /queue`.
+- Real notification sources only: new red/yellow ASHA referral (to doctors), referral handoff (to the ASHA worker), case assignment and status change (to the assignee), report finalized (to the assignee). Nothing is simulated.
+- New permissions `workflow:read` (doctor, asha: notifications only) and `workflow:write` (doctor). Case workflow reads require `clinical:read`, so ASHA workers cannot see cases.
+- UI: `NotificationBell` replaces the static TopBar dot (polls every 60 s, no websocket/push/email/SMS), `CaseWorkflowPanel` in ReportsView.
+- Tests: `tests/test_workflow.py` (5), `workflow.test.jsx` (4).
+
+## 43. Phase 15 — Global Search and Command Center (DONE)
+- `GET /api/v1/search?q=&types=` (`backend/app/routers/search.py`, perm `search:read`, all roles). q is 2–80 chars; unknown types return 422.
+- Categories are gated per role: commands (role-filtered navigation), cases/reports (`clinical:read`), variants (`variants:read`, scans stored analyses), diseases/genes/phenotypes (`kg:read`, knowledge graph), referrals (ASHA sees only their own). Denied categories are listed in `not_permitted`; a failing source is listed in `unavailable`, never as a raw error.
+- States: results / "No matching result" / "Not available". Each query is audited (length, types, count only; the text is not stored).
+- UI: `GlobalSearchModal` is now the command palette (Ctrl/Cmd+K and the TopBar search box). Debounced, stale responses are ignored, Up/Down/Enter/Esc keyboard control, selection calls `setNavContext` and navigates. The old hard-coded disease list was removed.
+- Tests: `tests/test_search.py` (5), `web/src/__tests__/search.test.jsx` (2).
+- Limits: substring matching (no ranking or fuzzy search); variants are scanned in memory per query; case search covers up to 500 recent cases.
+- Master end-to-end: `tests/test_master_e2e.py` drives login, case search, phenotype, variant, evidence, diagnosis, pedigree, PGx, reproductive, workflow, report/PDF, finalize, FHIR export, notifications, search and command navigation over HTTP. Final totals: backend 313, frontend 110, build clean.
+
+## 44. Master plan: Phases 16 → 20 (audit baseline: backend 313 / frontend 110 tests, build clean)
+Dependency order: 16 analytics (reads store + variants) → 17 security (rate limits, headers, scoping; protects 16's endpoints) → 18 DB/backend (persist VCF analyses, DATABASE_URL, migrations; analytics then reads the persisted source) → 19 ML governance (inventory, baselines, registry; no default changes) → 20 QA gate (inventory, E2E, regression comparison).
+Baseline findings: DB is raw sqlite3 (no SQLAlchemy); VCF analyses are in memory only; `/variants/analyses` is not user-scoped; only the evidence router rate-limits; login has no throttle; CORS allows all methods/headers; default JWT secret and seeded passwords exist; no security headers; `.env.example` lists services that are not used (Postgres, Redis, Neo4j, MLflow).
+Risks: changing security defaults can break existing tests/dev flow (use env-driven switches); migrations must be additive.
+
+## 45. Phase 16 - Advanced analytics (done)
+- `backend/app/analytics.py` (pure aggregation, 15 s cache, small-cell suppression for the researcher role, CSV formula-injection neutralisation) and `backend/app/routers/analytics.py` (`/api/v1/analytics`: overview, timeseries, variants, phenotypes, diagnoses, pgx, reproductive, export). New permission `analytics:read` (doctor, researcher, admin; patient and ASHA get 403).
+- Every figure is a COUNT of stored rows within `from`/`to` (YYYY-MM-DD, validated, 422 on bad input). Time series use real timestamps only: cases, reports, diagnosis runs, referrals, closed cases, variant evidence; trends with fewer than 3 buckets are labelled "Insufficient data for a trend".
+- "Model score" (diagnosis engine rank/probability) is reported separately from "Clinical diagnosis status" (finalized report). Phenotype co-occurrence needs 10 phenotyped cases and is hidden from researchers. Phenotype clustering and phenotype-disease relationships are not computed (sample size would mislead).
+- PGx and reproductive analytics are counts from the audit log (results are computed on demand and not stored per patient). Variant analytics read the in-memory VCF analysis store until Phase 18 persistence.
+- Indexes added: `idx_audit_action_ts`, `idx_events_kind_created`, `idx_patients_created`.
+- UI: `AnalyticsView` (sidebar "Analytics"): date range, interval and metric selectors, accessible bar/trend charts with titles and units, loading/empty/error states, per-card CSV/JSON export through the audited backend endpoint.
+- Tests: `tests/test_analytics.py` (7), `web/src/__tests__/analytics.test.jsx` (3). Totals: backend 320, frontend 114, build clean.
+
+## 46. Phase 17 - Security Hardening & Privacy (done)
+
+**Implemented (all enforced at runtime)**
+- `backend/app/hardening.py`: rate limiter (AI 30/min, upload 20/min, search 120/min, report 60/min, export 20/min per user, 429 + Retry-After), login throttling (5 failures / 5 min per client+username, never blocks other accounts, cleared on success), security headers (nosniff, DENY framing, no-referrer, CSP `default-src 'none'` except on /docs, `no-store` on /api), request body cap (2 MB; 25 MB for VCF upload), strict CORS (explicit origins, `*` rejected), production startup check (default/short JWT secret refuses to start), admin-only `GET /api/v1/auth/security-posture` reporting real facts (default secret, accounts still on default passwords, CORS, limits, limitations).
+- Auth: tokens must carry exp/sub/role; `current_user` loads the user from the DB each request, so deleted users and role changes apply immediately and a token cannot claim a higher role than the DB. Constant-time-ish login (always one bcrypt verify), failed logins audited without the password. `/platform/status` now needs sign-in.
+- IDOR: VCF analyses are visible to the uploader, admins, and clinical:read users for case-linked analyses; others get the same 404 as a missing id. Applied to list/detail/variant/handoffs. The assistant (chat, stream, context) no longer pulls another user's analysis or any patient without `clinical:read`; it never falls back to another user's latest upload.
+- Validation: register payload (username charset/length, password 8-128, role enum), VCF upload (size cap, magic/header check, binary rejection, gzip check, filename stripped to basename).
+- Audit: fields clipped and single-line; clinical-note text no longer written to the audit log.
+- Tests: `tests/test_security.py` (36), `tests/conftest.py` (limiter reset; auto-provisions token users for legacy suites, opt-out marker `strict_auth`).
+- Env vars: GENOMERA_ENV, GENOMERA_CORS_ORIGINS, GENOMERA_MAX_BODY_MB, GENOMERA_BOOTSTRAP_ADMIN_PASSWORD (see .env.example).
+
+**Totals:** backend 356 passed, frontend 114 passed, build clean.
+
+**Limitations (honest)**: rate limits/login throttle are in-process (need Redis for multiple workers); JWTs are stateless (no per-token revoke before expiry); case access is clinician-wide (no care-team model); VCF analyses are still in memory (Phase 18); no virus scanning of uploads; no MFA; HTTPS/HSTS must be terminated by the deployment proxy.
+
+## 47. Phase 18 - Production Database & Backend Architecture (done)
+
+- Documented the real architecture (stdlib sqlite3, not SQLAlchemy): `docs/DATABASE.md`.
+- `DATABASE_URL` (sqlite only; other schemes fail loudly). WAL, busy_timeout, foreign_keys=ON on every connection.
+- `backend/app/migrations.py`: versioned additive migrations, per-step transactions, idempotent, tested on a legacy DB with data and for rollback on failure.
+- `store.transaction()` for atomic multi-step writes.
+- VCF analyses persisted (`variant_analyses`, repository functions in `store.py`); memory cache + DB fallback; analytics and assistant now see persisted analyses after restart.
+- OpenAPI: all operations tagged, unique operationIds (test-enforced).
+- Measured index effect with `scripts/db_benchmark.py` (e.g. patient events 15.9 ms -> 0.007 ms on 100k rows).
+- Tests: `tests/test_database.py` (10). Backend 366 passed.
+- Not done / limits: no PostgreSQL implementation; no FK constraints on legacy tables; no background job queue (analysis is synchronous); service layer remains incremental (repository functions in store, routers still hold some logic).
+
+## 48. Phase 19 — ML quality, benchmarking and model governance
+
+- `scripts/ml_benchmark.py` measures every ML component on repo data and writes `models/registry.json`, `models/benchmark.json`, `docs/ML_BENCHMARK.md`; model cards in `docs/model_cards/`.
+- Read-only API: `GET /api/v1/ml/registry`, `GET /api/v1/ml/benchmark` (`analytics:read`); returns an honest "not generated" state if files are absent.
+- Measured (default config, GNN off): diagnosis hits@1 0.9525 / hits@5 1.0 on 400 synthetic cases regenerated from the current graph (circular, upper bound); curated seed hits@1 0.9167 (n=12). Two runs are identical.
+- GNN: checkpoint present but cannot load here (torch_geometric missing), so enabling it silently falls back to the deterministic path. Recorded as "Not evaluated"; stays disabled. An earlier draft of the benchmark reported identical numbers for "GNN enabled"; that was wrong and is fixed.
+- The documented 0.92 hits@5 is not reproducible on this graph (shipped synthetic file targets a larger graph). Variant prioritizer, Digital Twin, reproductive risk, PGx: "Not evaluated - ground truth unavailable". NER is not held out.
+- No default changed. Tests: `tests/test_ml_registry.py` (4). Backend total 370 passed.
+
+## 49. Phase 20 — Comprehensive testing and QA (final gate)
+
+- `tests/test_phase20_qa.py` (7): case -> analytics -> ML registry workflow over HTTP, unauthenticated rejection, negative inputs (oversize params, unknown id, bad types, wrong password, junk token), latency budgets (overview < 2 s, registry < 0.5 s, patients < 1 s; passing).
+- Totals: backend 377 passed (was 313 before Phase 16), frontend 114 passed (was 110), `npm run build` clean (chunk-size warning only).
+- Phase 16-20 additions: 7 + 36 + 10 + 4 + 7 = 64 backend tests; 4 frontend tests.
+- Limits: frontend accessibility is covered only by role/aria queries in existing component tests, not an automated axe audit; no browser-driven E2E was run in this phase; performance numbers are from a single local SQLite machine.

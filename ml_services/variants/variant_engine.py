@@ -5,6 +5,7 @@ into a cohesive clinical analysis session.
 """
 from __future__ import annotations
 
+import logging
 import time
 import uuid
 from dataclasses import asdict
@@ -14,6 +15,25 @@ from ml_services.variants.acmg_engine import ACMGEngine
 from ml_services.variants.annotator import VariantAnnotator
 from ml_services.variants.prioritizer import PrioritizedVariant, VariantPrioritizer
 from ml_services.variants.vcf_parser import VariantRecord, parse_vcf_content
+
+logger = logging.getLogger("genomind.variants")
+
+
+def allele_genotype(gt: Any, allele_index: int) -> str:
+    """Normalise a sample GT to the state of ONE alt allele: '0/0', '0/1', '1/1' or 'unknown'.
+
+    `allele_index` is the 0-based alt index of the record (multi-allelic sites are decomposed upstream), so
+    the matching GT allele number is allele_index + 1. Missing calls ('.') are 'unknown', never reference.
+    """
+    if gt is None:
+        return "unknown"
+    alleles = [a for a in str(gt).replace("|", "/").split("/") if a != ""]
+    if not alleles or any(a == "." for a in alleles):
+        return "unknown"
+    n = sum(1 for a in alleles if a == str(allele_index + 1))
+    if len(alleles) == 1:           # haploid call (e.g. chrX/Y male, chrM)
+        return "1/1" if n == 1 else "0/0"
+    return {0: "0/0", 1: "0/1"}.get(n, "1/1")
 
 
 class VariantEngine:
@@ -47,7 +67,14 @@ class VariantEngine:
 
         # 2. Annotate & ACMG evaluate each variant
         evaluated_pairs: List[Tuple[VariantRecord, Any, Any]] = []
+        sample_genotypes: Dict[str, Dict[str, dict]] = {}
         for rec in records:
+            # per-sample genotypes (all VCF samples), used by the pedigree module for trio/family analysis
+            sample_genotypes[rec.variant_id] = {
+                name: {"genotype": allele_genotype(d.get("GT"), rec.allele_index), "raw": d.get("GT"),
+                       "depth": d.get("DP"), "gq": d.get("GQ")}
+                for name, d in (rec.samples or {}).items()
+            }
             ann = self.annotator.annotate(
                 chrom=rec.norm_chrom,
                 pos=rec.norm_pos,
@@ -96,17 +123,46 @@ class VariantEngine:
             "timestamp": time.time(),
             "qc_metrics": qc_metrics,
             "variants": [asdict(v) for v in prioritized],
+            "sample_genotypes": sample_genotypes,
         }
         self._analyses[analysis_id] = analysis_record
+        self._persist(analysis_record)
 
         return analysis_record
 
+    # Analyses are cached in memory for speed and persisted in the `variant_analyses` table (Phase 18) so they survive restarts.
+    def _persist(self, record: dict) -> None:
+        try:
+            from backend.app import store
+            store.save_analysis(record)
+        except Exception:
+            logger.exception("could not persist analysis %s; it is available in memory only", record.get("analysis_id"))
+
     def get_analysis(self, analysis_id: str) -> Optional[dict]:
-        return self._analyses.get(analysis_id)
+        hit = self._analyses.get(analysis_id)
+        if hit:
+            return hit
+        try:
+            from backend.app import store
+            hit = store.load_analysis(analysis_id)
+        except Exception:
+            logger.exception("could not read analysis %s from the database", analysis_id)
+            hit = None
+        if hit:
+            self._analyses[analysis_id] = hit
+        return hit
 
     def list_analyses(self) -> List[dict]:
         res = []
-        for aid, item in self._analyses.items():
+        merged = dict(self._analyses)
+        try:
+            from backend.app import store
+            for s in store.list_analysis_summaries():
+                if s["analysis_id"] not in merged:
+                    merged[s["analysis_id"]] = s
+        except Exception:
+            logger.exception("could not list persisted analyses")
+        for aid, item in merged.items():
             res.append({
                 "analysis_id": aid,
                 "filename": item["filename"],

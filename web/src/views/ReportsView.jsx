@@ -1,6 +1,8 @@
 import React, { useState } from 'react'
 import { api } from '../api.js'
 import { FileCheck, Download, Printer, RefreshCw } from 'lucide-react'
+import CaseWorkflowPanel from '../components/CaseWorkflowPanel.jsx'
+import CaseReportPanel from '../components/CaseReportPanel.jsx'
 import CaseBundlesPanel from '../components/twin/CaseBundlesPanel.jsx'
 
 export default function ReportsView() {
@@ -76,6 +78,8 @@ export default function ReportsView() {
         )}
       </div>
 
+      <CaseWorkflowPanel />
+      <CaseReportPanel />
       <CaseBundlesPanel />
     </div>
   )

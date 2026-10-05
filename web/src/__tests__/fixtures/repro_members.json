@@ -1,0 +1,31 @@
+{
+ "patient_id": "PT-C7A70649",
+ "members": [
+  {
+   "member_id": "MEM-AC982A4A",
+   "label": "Father",
+   "sex": "M",
+   "affected": "unaffected",
+   "is_proband": false
+  },
+  {
+   "member_id": "MEM-D25E1866",
+   "label": "Mother",
+   "sex": "F",
+   "affected": "unaffected",
+   "is_proband": false
+  },
+  {
+   "member_id": "MEM-18D32088",
+   "label": "Proband",
+   "sex": "F",
+   "affected": "affected",
+   "is_proband": true
+  }
+ ],
+ "default_couple": {
+  "partner_a": "MEM-AC982A4A",
+  "partner_b": "MEM-D25E1866"
+ },
+ "note": null
+}

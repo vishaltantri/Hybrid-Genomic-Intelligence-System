@@ -1,0 +1,99 @@
+{
+ "patient_id": "PT-3780FB12",
+ "current_top": "Wilson disease",
+ "current_probability": 0.1766,
+ "probes": [
+  {
+   "hpo_id": "HP:0001878",
+   "name": "Hemolytic anemia",
+   "status": "Not documented",
+   "top_after": "G6PD deficiency",
+   "top_probability_after": 0.2782,
+   "changes_top_diagnosis": true,
+   "top_probability_change": null
+  },
+  {
+   "hpo_id": "HP:0001903",
+   "name": "Anemia",
+   "status": "Not documented",
+   "top_after": "G6PD deficiency",
+   "top_probability_after": 0.2605,
+   "changes_top_diagnosis": true,
+   "top_probability_change": null
+  },
+  {
+   "hpo_id": "HP:0001744",
+   "name": "Splenomegaly",
+   "status": "Not documented",
+   "top_after": "Beta-thalassemia major",
+   "top_probability_after": 0.2218,
+   "changes_top_diagnosis": true,
+   "top_probability_change": null
+  },
+  {
+   "hpo_id": "HP:0001332",
+   "name": "Dystonia",
+   "status": "Not documented",
+   "top_after": "Wilson disease",
+   "top_probability_after": 0.2206,
+   "changes_top_diagnosis": false,
+   "top_probability_change": 0.044
+  },
+  {
+   "hpo_id": "HP:0001394",
+   "name": "Cirrhosis",
+   "status": "Not documented",
+   "top_after": "Wilson disease",
+   "top_probability_after": 0.2193,
+   "changes_top_diagnosis": false,
+   "top_probability_change": 0.0427
+  },
+  {
+   "hpo_id": "HP:0002240",
+   "name": "Hepatomegaly",
+   "status": "Not documented",
+   "top_after": "Wilson disease",
+   "top_probability_after": 0.2076,
+   "changes_top_diagnosis": false,
+   "top_probability_change": 0.031
+  },
+  {
+   "hpo_id": "HP:0000478",
+   "name": "Abnormality of the eye",
+   "status": "Not documented",
+   "top_after": "Wilson disease",
+   "top_probability_after": 0.1483,
+   "changes_top_diagnosis": false,
+   "top_probability_change": -0.0283
+  },
+  {
+   "hpo_id": "HP:0000951",
+   "name": "Abnormality of the skin",
+   "status": "Not documented",
+   "top_after": "Wilson disease",
+   "top_probability_after": 0.1641,
+   "changes_top_diagnosis": false,
+   "top_probability_change": -0.0125
+  },
+  {
+   "hpo_id": "HP:0001250",
+   "name": "Seizures",
+   "status": "Not documented",
+   "top_after": "Wilson disease",
+   "top_probability_after": 0.1883,
+   "changes_top_diagnosis": false,
+   "top_probability_change": 0.0117
+  },
+  {
+   "hpo_id": "HP:0000616",
+   "name": "Kayser-Fleischer ring",
+   "status": "Not documented",
+   "top_after": "Wilson disease",
+   "top_probability_after": 0.187,
+   "changes_top_diagnosis": false,
+   "top_probability_change": 0.0104
+  }
+ ],
+ "note": "Each row is a real re-run of the diagnosis engine as if the finding were present. Confirm the finding clinically before recording it.",
+ "disclaimer": "Clinical Decision Support. Computational ranking for clinician review; it is not a diagnosis."
+}

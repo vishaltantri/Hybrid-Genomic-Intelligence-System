@@ -47,3 +47,7 @@ pyyaml>=6.0
 
 # NOTE: every service in ml_services/ has a NumPy/pure-Python fallback so the
 # whole platform runs, tests and demos end-to-end without the ML extras.
+
+# Phase 11: real backend PDF generation
+reportlab>=4.0
+pymupdf>=1.23  # test-time PDF validation

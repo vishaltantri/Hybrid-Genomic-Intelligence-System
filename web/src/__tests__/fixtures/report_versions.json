@@ -1,0 +1,13 @@
+[
+ {
+  "report_id": "RPT-4B05718C94",
+  "case_id": "PT-1EC866D1",
+  "version": 1,
+  "status": "draft",
+  "created_by": "clinician",
+  "created_utc": "2026-10-05T21:45:38Z",
+  "finalized_by": null,
+  "finalized_utc": null,
+  "content_sha256": "bbaccdabcac59d237a157c7229ee229beca6a1eee1664b4df163dec40d3752bd"
+ }
+]

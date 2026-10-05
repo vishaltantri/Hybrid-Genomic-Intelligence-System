@@ -343,8 +343,9 @@ export function PgxPanel({ twin, nav }) {
 
 // ------------------------------- Family -------------------------------
 
-export function FamilyPanel({ twin }) {
+export function FamilyPanel({ twin, nav, patientId }) {
   const f = twin.family
+  const ped = f.pedigree
   return (
     <div className="space-y-3 text-xs">
       {!f.available && <Note tone="warn">{f.note}</Note>}
@@ -357,6 +358,17 @@ export function FamilyPanel({ twin }) {
           {f.known_carrier.length > 0 && <div>Known carrier: {f.known_carrier.join(', ')}</div>}
           {f.known_affected.length > 0 && <div>Known affected: {f.known_affected.join(', ')}</div>}
           {f.vcf_samples.length > 0 && <div>VCF samples: {f.vcf_samples.join(', ')}</div>}
+        </div>
+      )}
+      {ped && ped.exists && (
+        <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 space-y-1" data-testid="twin-pedigree-summary">
+          {ped.synthetic && <div className="font-semibold text-amber-800">Synthetic/Test Family — Not Clinical Data</div>}
+          <div className="font-semibold text-on-surface">Pedigree: {ped.members} members, proband {ped.proband || 'not designated'}, {ped.affected} affected</div>
+          {ped.validation_errors > 0 && <div className="text-red-700">{ped.validation_errors} pedigree validation error(s)</div>}
+          {ped.variants.slice(0, 4).map((v) => (
+            <div key={v.variant_key}>{v.gene} {v.hgvs}: {v.most_consistent ? `${v.most_consistent.label} (${v.most_consistent.verdict})` : 'inheritance inconclusive'}{v.de_novo === 'candidate' ? ' · candidate de novo' : ''}</div>
+          ))}
+          {nav && <button className="text-primary font-semibold hover:underline" onClick={() => nav('pedigree', { patient_id: patientId })}>Open Pedigree &amp; Inheritance</button>}
         </div>
       )}
       <Note>{f.limitation}</Note>

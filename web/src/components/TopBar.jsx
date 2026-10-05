@@ -2,12 +2,12 @@ import React from 'react'
 import {
   Menu,
   Search,
-  Bell,
   ShieldCheck,
   User,
   LogOut,
   Sparkles,
 } from 'lucide-react'
+import NotificationBell from './NotificationBell.jsx'
 
 export default function TopBar({
   activeTitle,
@@ -70,14 +70,7 @@ export default function TopBar({
           <span>CLINICAL V1.0</span>
         </div>
 
-        {/* Notifications */}
-        <button
-          className="relative p-2 rounded-lg text-outline hover:text-on-surface hover:bg-surface-container-low transition-colors"
-          title="Notifications"
-        >
-          <Bell size={18} />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-secondary"></span>
-        </button>
+        <NotificationBell />
 
         {/* User Badge */}
         <div className="flex items-center gap-2.5 pl-2 border-l border-outline-variant/30">

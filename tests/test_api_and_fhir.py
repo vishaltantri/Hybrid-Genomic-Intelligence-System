@@ -30,8 +30,9 @@ def test_health(client):
     assert len(body["modules"]) == 11
 
 
-def test_platform_status_shows_fallbacks(client):
-    body = client.get("/api/v1/platform/status").json()
+def test_platform_status_shows_fallbacks(client, doctor_headers):
+    assert client.get("/api/v1/platform/status").status_code == 401   # Phase 17: requires sign-in
+    body = client.get("/api/v1/platform/status", headers=doctor_headers).json()
     assert "ner_backend" in body
     assert set(body["trained_checkpoints"]) == {"clinical_ner_muril", "gnn_han", "hpo_mapper",
                                                 "whisper_hi"}

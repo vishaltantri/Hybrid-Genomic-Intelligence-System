@@ -14,6 +14,7 @@ import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 
+from backend.app import store
 from ml_services.config import ACCESS_TOKEN_MINUTES, JWT_ALGORITHM, JWT_SECRET, ROLES
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/token", auto_error=False)
@@ -23,13 +24,14 @@ ROLE_PERMISSIONS: Dict[str, List[str]] = {
     "doctor": ["clinical:read", "clinical:write", "diagnosis:run", "xai:read", "pgx:read",
                "reproductive:read", "reproductive:counsel", "feedback:write",
                "kg:read", "dashboard:read", "variants:read", "variants:write",
-               "assistant:chat", "twin:read", "twin:write"],
+               "assistant:chat", "twin:read", "twin:write", "pedigree:read", "pedigree:write", "evidence:read", "evidence:write",
+               "referral:read", "referral:handoff", "workflow:read", "workflow:write", "search:read", "triage:read", "triage:write", "analytics:read"],
     "patient": ["clinical:read:own", "diagnosis:read:own", "reproductive:read:own",
-                "pgx:read:own", "assistant:chat"],
-    "asha": ["triage:write", "triage:read", "clinical:write:limited", "sync:write"],
+                "pgx:read:own", "assistant:chat", "search:read"],
+    "asha": ["triage:write", "triage:read", "clinical:write:limited", "sync:write", "referral:write", "referral:read", "workflow:read", "search:read"],
     "admin": ["*"],
     "researcher": ["dashboard:read", "federated:read", "kg:read", "kg:propose",
-                   "variants:read", "variants:write", "assistant:chat"],
+                   "variants:read", "variants:write", "assistant:chat", "evidence:read", "search:read", "analytics:read"],
 }
 
 
@@ -61,7 +63,7 @@ def create_access_token(subject: str, role: str, extra: Optional[dict] = None) -
 
 def decode_token(token: str) -> dict:
     try:
-        return jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        return jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM], options={"require": ["exp", "sub", "role"]})
     except jwt.ExpiredSignatureError as exc:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="token expired") from exc
     except jwt.InvalidTokenError as exc:
@@ -72,7 +74,11 @@ async def current_user(token: Optional[str] = Depends(oauth2_scheme)) -> dict:
     if not token:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="missing bearer token")
     payload = decode_token(token)
-    return {"username": payload["sub"], "role": payload["role"], "claims": payload}
+    # The database is authoritative: a deleted account or a changed role takes effect on the next request.
+    record = store.get_user(str(payload["sub"]))
+    if not record or record["role"] not in ROLES:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="account no longer exists")
+    return {"username": record["username"], "role": record["role"], "claims": payload}
 
 
 def require(permission: str):

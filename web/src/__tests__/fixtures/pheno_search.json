@@ -1,0 +1,45 @@
+{
+ "query": "tremor",
+ "results": [
+  {
+   "hpo_id": "HP:0001337",
+   "name": "Tremor",
+   "match": "name",
+   "matched_text": "Tremor"
+  },
+  {
+   "hpo_id": "HP:0001324",
+   "name": "Muscle weakness",
+   "match": "semantic",
+   "score": 0.15,
+   "source": "indian_synonym",
+   "matched_text": "kamzor"
+  },
+  {
+   "hpo_id": "HP:0001297",
+   "name": "Stroke",
+   "match": "semantic",
+   "score": 0.15,
+   "source": "hpo_name",
+   "matched_text": "Stroke"
+  },
+  {
+   "hpo_id": "HP:0002591",
+   "name": "Steatorrhea",
+   "match": "semantic",
+   "score": 0.1412,
+   "source": "hpo_name",
+   "matched_text": "Steatorrhea"
+  },
+  {
+   "hpo_id": "HP:0000400",
+   "name": "Large ear",
+   "match": "semantic",
+   "score": 0.12,
+   "source": "hpo_name",
+   "matched_text": "Large ear"
+  }
+ ],
+ "semantic_note": null,
+ "note": "Semantic matches carry the HPO mapper's own score; lexical matches are labelled by match type."
+}

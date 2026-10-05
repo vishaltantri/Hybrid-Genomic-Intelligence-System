@@ -1,0 +1,25 @@
+{
+ "sources": [
+  {
+   "source": "PubMed",
+   "status": "configured",
+   "detail": "NCBI E-utilities (esearch/efetch)",
+   "api_key": "not set (3 requests/s limit)"
+  },
+  {
+   "source": "ClinVar",
+   "status": "local seed",
+   "detail": "Curated ClinVar records used by Variant Intelligence (not a live ClinVar query)"
+  },
+  {
+   "source": "Orphanet",
+   "status": "local seed",
+   "detail": "Orphanet gene-disease and disease records loaded in the knowledge graph"
+  },
+  {
+   "source": "ClinGen",
+   "status": "not configured",
+   "detail": "No ClinGen dataset or API is configured in this deployment"
+  }
+ ]
+}

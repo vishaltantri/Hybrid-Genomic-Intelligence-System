@@ -49,6 +49,83 @@ class ACMGClassificationResult:
     summary_text: str = ""
 
 
+def combine_criteria(met_list, clinical_significance=None):
+    """ACMG/AMP 2015 combinatorial matrix. Returns (classification, explanation, path_counts, benign_counts).
+
+    Extracted unchanged from `ACMGEngine.evaluate` so that other evidence sources (e.g. pedigree segregation,
+    Phase 3E) can re-combine criteria without duplicating the rules.
+    """
+    
+    # Tally counts by category and applied strength
+    path_counts = {"Very Strong": 0, "Strong": 0, "Moderate": 0, "Supporting": 0}
+    benign_counts = {"Stand-alone": 0, "Strong": 0, "Supporting": 0}
+    
+    for c in met_list:
+        if c.category == "Pathogenic":
+            path_counts[c.applied_strength] = path_counts.get(c.applied_strength, 0) + 1
+        elif c.category == "Benign":
+            benign_counts[c.applied_strength] = benign_counts.get(c.applied_strength, 0) + 1
+
+    p_vs = path_counts["Very Strong"]
+    p_s = path_counts["Strong"]
+    p_m = path_counts["Moderate"]
+    p_sup = path_counts["Supporting"]
+
+    b_sa = benign_counts["Stand-alone"]
+    b_s = benign_counts["Strong"]
+    b_sup = benign_counts["Supporting"]
+
+    classification = "Uncertain significance"
+    explanation = ""
+
+    # Stand-alone Benign
+    if b_sa >= 1:
+        classification = "Benign"
+        explanation = "Classified as Benign via BA1 (population allele frequency exceeds 5%)."
+    # Benign combinations: >= 2 Strong benign or 1 Strong + 1 Supporting
+    elif b_s >= 2 or (b_s >= 1 and b_sup >= 1):
+        classification = "Benign"
+        explanation = "Classified as Benign via multiple strong/supporting benign criteria (e.g. BS1, BP4, BP7)."
+    # Likely Benign: 1 Strong benign + 1 Supporting or >= 2 Supporting
+    elif b_s >= 1 or b_sup >= 2:
+        classification = "Likely benign"
+        explanation = "Classified as Likely Benign via criteria (BS1 or computational benign BP4/BP7)."
+    # Pathogenic rules:
+    elif (
+        (p_vs >= 1 and p_s >= 1) or
+        (p_vs >= 1 and p_m >= 2) or
+        (p_vs >= 1 and p_m >= 1 and p_sup >= 1) or
+        (p_vs >= 1 and p_sup >= 2) or
+        (p_s >= 2) or
+        (p_s >= 1 and p_m >= 3) or
+        (p_s >= 1 and p_m >= 2 and p_sup >= 2) or
+        (p_s >= 1 and p_m >= 1 and p_sup >= 4)
+    ):
+        classification = "Pathogenic"
+        explanation = f"Classified as Pathogenic via ACMG combination rules ({p_vs} Very Strong, {p_s} Strong, {p_m} Moderate, {p_sup} Supporting)."
+    # Likely Pathogenic rules:
+    elif (
+        (p_vs >= 1 and p_m >= 1) or
+        (p_s >= 1 and (1 <= p_m <= 2)) or
+        (p_s >= 1 and p_sup >= 2) or
+        (p_m >= 3) or
+        (p_m >= 2 and p_sup >= 2) or
+        (p_m >= 1 and p_sup >= 4)
+    ):
+        classification = "Likely pathogenic"
+        explanation = f"Classified as Likely Pathogenic via ACMG combination rules ({p_vs} Very Strong, {p_s} Strong, {p_m} Moderate, {p_sup} Supporting)."
+    else:
+        classification = "Uncertain significance"
+        explanation = "Criteria met do not reach the threshold for Pathogenic/Likely Pathogenic or Benign/Likely Benign (VUS)."
+
+    # Special seed override: if curated ClinVar has explicit Pathogenic label and high evidence
+    if clinical_significance and "pathogenic" in clinical_significance.lower() and classification == "Uncertain significance":
+        if p_s >= 1 or p_vs >= 1 or p_m >= 1:
+            classification = "Likely pathogenic"
+            explanation += " (Supported by curated ClinVar record)."
+    return classification, explanation, path_counts, benign_counts
+
+
 class ACMGEngine:
     """Evaluates ACMG/AMP 2015 guidelines for a given VariantAnnotation."""
 
@@ -259,74 +336,14 @@ class ACMGEngine:
         # Classification Logic (ACMG/AMP 2015 Combinatorial Matrix)
         # -------------------------------------------------------------
         met_list = [c for c in criteria if c.status == "Met"]
-        
-        # Tally counts by category and applied strength
-        path_counts = {"Very Strong": 0, "Strong": 0, "Moderate": 0, "Supporting": 0}
-        benign_counts = {"Stand-alone": 0, "Strong": 0, "Supporting": 0}
-        
-        for c in met_list:
-            if c.category == "Pathogenic":
-                path_counts[c.applied_strength] = path_counts.get(c.applied_strength, 0) + 1
-            elif c.category == "Benign":
-                benign_counts[c.applied_strength] = benign_counts.get(c.applied_strength, 0) + 1
-
+        classification, explanation, path_counts, benign_counts = combine_criteria(met_list, ann.clinical_significance)
         p_vs = path_counts["Very Strong"]
         p_s = path_counts["Strong"]
         p_m = path_counts["Moderate"]
         p_sup = path_counts["Supporting"]
-
         b_sa = benign_counts["Stand-alone"]
         b_s = benign_counts["Strong"]
         b_sup = benign_counts["Supporting"]
-
-        classification = "Uncertain significance"
-        explanation = ""
-
-        # Stand-alone Benign
-        if b_sa >= 1:
-            classification = "Benign"
-            explanation = "Classified as Benign via BA1 (population allele frequency exceeds 5%)."
-        # Benign combinations: >= 2 Strong benign or 1 Strong + 1 Supporting
-        elif b_s >= 2 or (b_s >= 1 and b_sup >= 1):
-            classification = "Benign"
-            explanation = "Classified as Benign via multiple strong/supporting benign criteria (e.g. BS1, BP4, BP7)."
-        # Likely Benign: 1 Strong benign + 1 Supporting or >= 2 Supporting
-        elif b_s >= 1 or b_sup >= 2:
-            classification = "Likely benign"
-            explanation = "Classified as Likely Benign via criteria (BS1 or computational benign BP4/BP7)."
-        # Pathogenic rules:
-        elif (
-            (p_vs >= 1 and p_s >= 1) or
-            (p_vs >= 1 and p_m >= 2) or
-            (p_vs >= 1 and p_m >= 1 and p_sup >= 1) or
-            (p_vs >= 1 and p_sup >= 2) or
-            (p_s >= 2) or
-            (p_s >= 1 and p_m >= 3) or
-            (p_s >= 1 and p_m >= 2 and p_sup >= 2) or
-            (p_s >= 1 and p_m >= 1 and p_sup >= 4)
-        ):
-            classification = "Pathogenic"
-            explanation = f"Classified as Pathogenic via ACMG combination rules ({p_vs} Very Strong, {p_s} Strong, {p_m} Moderate, {p_sup} Supporting)."
-        # Likely Pathogenic rules:
-        elif (
-            (p_vs >= 1 and p_m >= 1) or
-            (p_s >= 1 and (1 <= p_m <= 2)) or
-            (p_s >= 1 and p_sup >= 2) or
-            (p_m >= 3) or
-            (p_m >= 2 and p_sup >= 2) or
-            (p_m >= 1 and p_sup >= 4)
-        ):
-            classification = "Likely pathogenic"
-            explanation = f"Classified as Likely Pathogenic via ACMG combination rules ({p_vs} Very Strong, {p_s} Strong, {p_m} Moderate, {p_sup} Supporting)."
-        else:
-            classification = "Uncertain significance"
-            explanation = "Criteria met do not reach the threshold for Pathogenic/Likely Pathogenic or Benign/Likely Benign (VUS)."
-
-        # Special seed override: if curated ClinVar has explicit Pathogenic label and high evidence
-        if ann.clinical_significance and "pathogenic" in ann.clinical_significance.lower() and classification == "Uncertain significance":
-            if p_s >= 1 or p_vs >= 1 or p_m >= 1:
-                classification = "Likely pathogenic"
-                explanation += " (Supported by curated ClinVar record)."
 
         # Criteria summary dictionary
         summary_dict = {
@@ -349,3 +366,20 @@ class ACMGEngine:
             rules_applied_explanation=explanation,
             summary_text=summary_text,
         )
+
+
+def reclassify_with_extra_criterion(variant: dict, code: str, strength: str, category: str = "Pathogenic"):
+    """Re-combine a stored (Phase 3B) variant's MET criteria with one additional criterion.
+
+    `variant` is an analysis variant dict (`all_criteria`, `clinvar_significance`). Used by the pedigree module to
+    show how PP1 (segregation) would change the classification. Nothing is mutated or persisted.
+    """
+    met = [
+        ACMGCriterionResult(code=c["code"], category=c["category"], default_strength=c["applied_strength"],
+                            applied_strength=c["applied_strength"], status="Met", description="", evidence="", source="")
+        for c in (variant.get("all_criteria") or []) if c.get("status") == "Met"
+    ]
+    met.append(ACMGCriterionResult(code=code, category=category, default_strength="Supporting",
+                                   applied_strength=strength, status="Met", description="", evidence="", source=""))
+    cls, explanation, _, _ = combine_criteria(met, variant.get("clinvar_significance"))
+    return cls, explanation

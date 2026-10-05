@@ -94,3 +94,34 @@ def fhir_metadata(user: dict = Depends(require("clinical:read"))):
         "note": ("NRCeS/ABDM-aligned profiles are targeted (nrces.in/ndhm/fhir/r4); formal validation "
                  "against the NRCeS validator is a Phase 6 task."),
     }
+
+
+# ---- Phase 12: case export, structural validation, import preview, ABDM status ----
+from ml_services import fhir_case  # noqa: E402
+
+
+@router.get("/fhir/case/{pid}")
+def fhir_case_export(pid: str, user: dict = Depends(require("clinical:read"))):
+    try:
+        out = fhir_case.build_case_bundle(registry, pid, user["username"])
+    except LookupError as ex:
+        raise HTTPException(status_code=404, detail=str(ex))
+    store.audit(user["username"], "fhir.export", pid, f"{len(out['bundle']['entry'])} entries")
+    return out
+
+
+@router.post("/fhir/validate")
+def fhir_validate(bundle: dict = Body(...), user: dict = Depends(require("clinical:read"))):
+    return fhir_case.validate_bundle(bundle)
+
+
+@router.post("/fhir/import-preview")
+def fhir_import_preview(bundle: dict = Body(...), user: dict = Depends(require("clinical:write"))):
+    out = fhir_case.import_preview(bundle)
+    store.audit(user["username"], "fhir.import_preview", "", f"valid={out['validation']['valid']}")
+    return out
+
+
+@router.get("/abdm/status")
+def abdm_status(user: dict = Depends(require("clinical:read"))):
+    return fhir_case.abdm_status()

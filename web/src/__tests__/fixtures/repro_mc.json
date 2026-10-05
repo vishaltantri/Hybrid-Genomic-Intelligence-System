@@ -1,0 +1,39 @@
+{
+ "disease_id": "ORPHA:915",
+ "disease_name": "Wilson disease",
+ "mode": "autosomal recessive",
+ "n_simulations": 5000,
+ "seed": 5,
+ "inputs": {
+  "p_a": 1.0,
+  "p_b": 1.0,
+  "inbreeding_coefficient": 0.0
+ },
+ "counts": {
+  "affected": 1252,
+  "carrier": 2506,
+  "unaffected_non_carrier": 1242
+ },
+ "distribution": {
+  "affected": 0.2504,
+  "carrier": 0.5012,
+  "unaffected_non_carrier": 0.2484
+ },
+ "affected_ci95": [
+  0.2386,
+  0.2626
+ ],
+ "analytic_affected_probability": 0.25,
+ "existing_engine_check": {
+  "analytic_affected_probability": 0.25,
+  "simulated_affected_probability": 0.2518,
+  "n_simulations": 5000,
+  "abs_difference": 0.0018
+ },
+ "assumptions": [
+  "Each partner is a carrier with the given probability; carriers transmit the disease allele with probability 1/2.",
+  "Inbreeding is modelled as identity-by-descent with the stated coefficient.",
+  "Simulation estimates a probability distribution; it is not a guarantee for any pregnancy."
+ ],
+ "safety": "Calculated genetic probability, not a clinical outcome prediction. Results depend on the recorded genotypes and stated assumptions; discuss them with a clinician or genetic counselor."
+}

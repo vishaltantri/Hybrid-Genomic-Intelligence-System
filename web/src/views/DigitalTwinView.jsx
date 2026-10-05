@@ -155,7 +155,7 @@ export default function DigitalTwinView({ onNavigate, forceFallback = false }) {
     genomic: <GenomicPanel twin={twin} patientId={patientId} nav={nav} />,
     diagnosis: <DiagnosisPanel twin={twin} patientId={patientId} nav={nav} />,
     pgx: <PgxPanel twin={twin} nav={nav} />,
-    family: <FamilyPanel twin={twin} />,
+    family: <FamilyPanel twin={twin} nav={nav} patientId={patientId} />,
     timeline: <TimelinePanel twin={twin} />,
     provenance: <ProvenancePanel twin={twin} />,
   }

@@ -19,6 +19,7 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Upload
 from pydantic import BaseModel, Field
 
 from backend.app import store
+from backend.app.hardening import MAX_UPLOAD, analysis_visible, rate_limit
 from backend.app.security import current_user, require
 from backend.app.services import registry
 from ml_services.config import SEEDS_DIR
@@ -57,15 +58,26 @@ async def upload_vcf(
     patient_id: Optional[str] = Form(default=None),
     hpo_ids_json: Optional[str] = Form(default=None),
     user: dict = Depends(require("variants:write")),
+    _rl: None = Depends(rate_limit("upload")),
 ):
     """Upload and process a clinical VCF file (.vcf or .vcf.gz)."""
-    filename = file.filename or "unknown.vcf"
+    filename = Path(file.filename or "unknown.vcf").name[:120]      # drop any client-supplied directory part
     if not (filename.endswith(".vcf") or filename.endswith(".vcf.gz") or filename.endswith(".txt")):
         raise HTTPException(status_code=400, detail="Uploaded file must be a VCF (.vcf or .vcf.gz)")
 
-    content = await file.read()
+    content = await file.read(MAX_UPLOAD + 1)
     if not content:
         raise HTTPException(status_code=400, detail="Uploaded VCF file is empty")
+    if len(content) > MAX_UPLOAD:
+        raise HTTPException(status_code=413, detail=f"VCF exceeds the {MAX_UPLOAD // (1024 * 1024)} MB limit")
+    if filename.endswith(".vcf.gz") and not content.startswith(b"\x1f\x8b"):
+        raise HTTPException(status_code=400, detail="File is named .vcf.gz but is not gzip data")
+    if not filename.endswith(".vcf.gz"):
+        head = content[:4096]
+        if b"\x00" in head:
+            raise HTTPException(status_code=400, detail="Binary content is not a valid VCF")
+        if not (head.lstrip().startswith(b"##fileformat=VCF") or b"#CHROM" in content[:200000]):
+            raise HTTPException(status_code=400, detail="Not a VCF: expected a '##fileformat=VCF' or '#CHROM' header")
 
     patient_hpos: List[str] = []
     if hpo_ids_json:
@@ -102,28 +114,31 @@ async def upload_vcf(
     return analysis
 
 
+def _visible_analysis(analysis_id: str, user: dict) -> dict:
+    """Fetch an analysis the caller may see. Others' analyses return the same 404 as a missing id (no existence leak)."""
+    analysis = registry.variants.get_analysis(analysis_id)
+    if not analysis or not analysis_visible(user, analysis):
+        raise HTTPException(status_code=404, detail=f"Analysis '{analysis_id}' not found")
+    return analysis
+
+
 @router.get("/analyses")
 def list_analyses(user: dict = Depends(require("variants:read"))):
-    """List recent VCF analyses in this session."""
-    return registry.variants.list_analyses()
+    """List recent VCF analyses the caller may see."""
+    return [a for a in registry.variants.list_analyses() if analysis_visible(user, a)]
 
 
 @router.get("/analyses/{analysis_id}")
 def get_analysis_detail(analysis_id: str, user: dict = Depends(require("variants:read"))):
     """Get full prioritized variant results and QC metrics for an analysis."""
-    analysis = registry.variants.get_analysis(analysis_id)
-    if not analysis:
-        raise HTTPException(status_code=404, detail=f"Analysis '{analysis_id}' not found")
-    return analysis
+    return _visible_analysis(analysis_id, user)
 
 
 @router.get("/analyses/{analysis_id}/variants/{variant_id:path}")
 def get_variant_detail(analysis_id: str, variant_id: str, user: dict = Depends(require("variants:read"))):
     """Retrieve deep clinical detail, ACMG evidence breakdown, and population frequencies."""
-    analysis = registry.variants.get_analysis(analysis_id)
-    if not analysis:
-        raise HTTPException(status_code=404, detail=f"Analysis '{analysis_id}' not found")
-    
+    analysis = _visible_analysis(analysis_id, user)
+
     # Locate variant
     for v in analysis["variants"]:
         if v["variant_id"] == variant_id or v["hgvs"] == variant_id:
@@ -149,9 +164,7 @@ def get_demo_vcf(user: dict = Depends(require("variants:read"))):
 @router.post("/analyses/{analysis_id}/diagnosis-handoff")
 def handoff_to_diagnosis(analysis_id: str, payload: DiagnosisHandoffRequest, user: dict = Depends(require("diagnosis:run"))):
     """Pass prioritized variants/genes into differential diagnosis engine."""
-    analysis = registry.variants.get_analysis(analysis_id)
-    if not analysis:
-        raise HTTPException(status_code=404, detail=f"Analysis '{analysis_id}' not found")
+    analysis = _visible_analysis(analysis_id, user)
 
     # Collect genes from selected or top variants
     target_variants = []
@@ -190,9 +203,7 @@ def handoff_to_diagnosis(analysis_id: str, payload: DiagnosisHandoffRequest, use
 @router.post("/analyses/{analysis_id}/report-handoff")
 def handoff_to_report(analysis_id: str, payload: ReportHandoffRequest, user: dict = Depends(require("clinical:write"))):
     """Queue variant findings and ACMG evidence into clinical report summary."""
-    analysis = registry.variants.get_analysis(analysis_id)
-    if not analysis:
-        raise HTTPException(status_code=404, detail=f"Analysis '{analysis_id}' not found")
+    analysis = _visible_analysis(analysis_id, user)
 
     target_variants = []
     if payload.variant_ids:

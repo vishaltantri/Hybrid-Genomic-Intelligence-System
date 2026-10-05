@@ -1,12 +1,13 @@
 """Module 5 endpoints: population-stratified pharmacogenomic risk."""
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, Query
 
 from backend.app import store
 from backend.app.models import PgxRequest
 from backend.app.security import require
 from backend.app.services import registry
+from ml_services.pharmacogenomics.case_pgx import PgxCaseError
 from ml_services.reproductive.report_generator import generate_pgx_report
 
 router = APIRouter(prefix="/api/v1/pgx", tags=["pharmacogenomics"])
@@ -49,3 +50,30 @@ def metabolizer_inference(gene: str, state: str | None = None, ethnicity: str | 
     return registry.pgx.infer_metabolizer_probabilities(gene, state=state or "",
                                                         ethnicity=ethnicity or "",
                                                         x_linked=x_linked, sex=sex or "")
+
+
+# ----------------------- Phase 9: case-level PGx (genotype -> phenotype -> drug) -----------------------
+
+def _case(fn, *a):
+    try:
+        return fn(*a)
+    except PgxCaseError as ex:
+        raise HTTPException(status_code=404, detail=str(ex))
+
+
+@router.get("/case/{patient_id}")
+def case_workspace(patient_id: str, user: dict = Depends(require("pgx:read"))):
+    """Genotype, diplotype, predicted phenotype and gene->drug matrix derived from the case's variant analysis."""
+    out = _case(registry.case_pgx.workspace, patient_id)
+    store.audit(user["username"], "pgx.case_view", patient_id, "")
+    return out
+
+
+@router.get("/case/{patient_id}/drug")
+def case_drug(patient_id: str, name: str = Query(..., min_length=2, max_length=60), user: dict = Depends(require("pgx:read"))):
+    return _case(registry.case_pgx.drug, patient_id, name)
+
+
+@router.get("/case/{patient_id}/report-section")
+def case_report_section(patient_id: str, user: dict = Depends(require("pgx:read"))):
+    return _case(registry.case_pgx.report_section, patient_id)

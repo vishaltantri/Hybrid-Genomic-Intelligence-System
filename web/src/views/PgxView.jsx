@@ -19,6 +19,7 @@ import {
   Layers,
   Database,
 } from 'lucide-react'
+import PgxCasePanel from '../components/PgxCasePanel.jsx'
 import { PageHeader } from '../components/ui/PageHeader.jsx'
 import { ClinicalCard } from '../components/ui/ClinicalCard.jsx'
 import { SeverityBadge, EvidenceBadge, StatusBadge } from '../components/ui/StatusBadge.jsx'
@@ -52,7 +53,7 @@ const QUICK_PRESETS = [
   },
 ]
 
-export default function PgxView() {
+export default function PgxView({ onNavigate }) {
   const [drugs, setDrugs] = useState(QUICK_PRESETS[0].drugs)
   const [state, setState] = useState(QUICK_PRESETS[0].state)
   const [ethnicity, setEthnicity] = useState(QUICK_PRESETS[0].ethnicity)
@@ -132,6 +133,7 @@ export default function PgxView() {
           icon: Pill,
         }}
       />
+      <PgxCasePanel onNavigate={onNavigate} />
 
       {/* Input Configuration Card */}
       <ClinicalCard
@@ -461,7 +463,7 @@ export default function PgxView() {
               icon={BookOpen}
             >
               <div className="text-xs text-on-surface leading-relaxed whitespace-pre-wrap bg-surface-container-low/50 p-4 rounded-xl border border-outline-variant/40 font-mono">
-                {res.report}
+                {typeof res.report === "string" ? res.report : (res.report?.markdown || "")}
               </div>
             </ClinicalCard>
           )}

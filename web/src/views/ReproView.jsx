@@ -1,3 +1,5 @@
+import ReproCasePanel from '../components/ReproCasePanel.jsx'
+import ReproFromPedigree from '../components/pedigree/ReproFromPedigree.jsx'
 import React, { useState } from 'react'
 import { api } from '../api.js'
 import {
@@ -53,7 +55,7 @@ const QUICK_COUPLES = [
   },
 ]
 
-export default function ReproView() {
+export default function ReproView({ onNavigate } = {}) {
   const [aCommunity, setACommunity] = useState(QUICK_COUPLES[0].aCommunity)
   const [bCommunity, setBCommunity] = useState(QUICK_COUPLES[0].bCommunity)
   const [state, setState] = useState(QUICK_COUPLES[0].state)
@@ -502,6 +504,9 @@ export default function ReproView() {
           }}
         />
       )}
+
+      <ReproCasePanel onNavigate={onNavigate} />
+      <ReproFromPedigree />
     </div>
   )
 }

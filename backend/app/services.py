@@ -36,6 +36,15 @@ class ServiceRegistry:
         self._variants = None
         self._assistant = None
         self._twin = None
+        self._pedigree = None
+        self._evidence = None
+        self._clinical_text = None
+        self._graph_explorer = None
+        self._phenotype = None
+        self._diagnosis_intel = None
+        self._case_pgx = None
+        self._repro = None
+        self._reports = None
 
     # ------------------------------ graphs ------------------------------
 
@@ -124,6 +133,78 @@ class ServiceRegistry:
 
             self._twin = DigitalTwinService(self)
         return self._twin
+
+    @property
+    def pedigree(self):
+        if self._pedigree is None:
+            from ml_services.pedigree.service import PedigreeService
+
+            self._pedigree = PedigreeService(self)
+        return self._pedigree
+
+    @property
+    def evidence(self):
+        if self._evidence is None:
+            from ml_services.evidence.service import EvidenceService
+
+            self._evidence = EvidenceService(self)
+        return self._evidence
+
+    @property
+    def clinical_text(self):
+        if self._clinical_text is None:
+            from ml_services.nlp.clinical_text import ClinicalTextAnalyzer
+
+            self._clinical_text = ClinicalTextAnalyzer(self)
+        return self._clinical_text
+
+    @property
+    def reports(self):
+        if self._reports is None:
+            from ml_services.reports.service import ReportService
+
+            self._reports = ReportService(self)
+        return self._reports
+
+    @property
+    def repro(self):
+        if self._repro is None:
+            from ml_services.reproductive.workspace import ReproWorkspace
+
+            self._repro = ReproWorkspace(self)
+        return self._repro
+
+    @property
+    def case_pgx(self):
+        if self._case_pgx is None:
+            from ml_services.pharmacogenomics.case_pgx import CasePgx
+
+            self._case_pgx = CasePgx(self)
+        return self._case_pgx
+
+    @property
+    def diagnosis_intel(self):
+        if self._diagnosis_intel is None:
+            from ml_services.diagnosis_intel.service import DiagnosisIntelligence
+
+            self._diagnosis_intel = DiagnosisIntelligence(self)
+        return self._diagnosis_intel
+
+    @property
+    def phenotype(self):
+        if self._phenotype is None:
+            from ml_services.phenotype.service import PhenotypeIntelligence
+
+            self._phenotype = PhenotypeIntelligence(self)
+        return self._phenotype
+
+    @property
+    def graph_explorer(self):
+        if self._graph_explorer is None:
+            from ml_services.graph_ai.explorer import GraphExplorer
+
+            self._graph_explorer = GraphExplorer(self)
+        return self._graph_explorer
 
     # ------------------------- learning pipeline -------------------------
 

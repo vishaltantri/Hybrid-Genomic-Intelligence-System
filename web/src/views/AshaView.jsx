@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { api } from '../api.js'
+import ReferralsPanel from '../components/ReferralsPanel.jsx'
 import { ShieldAlert, CheckCircle2, AlertTriangle, AlertOctagon } from 'lucide-react'
 
 export default function AshaView() {
@@ -128,6 +129,8 @@ export default function AshaView() {
           </div>
         )}
       </div>
+
+      <ReferralsPanel />
     </div>
   )
 }

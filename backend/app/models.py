@@ -1,7 +1,7 @@
 """API request/response schemas (Pydantic v2)."""
 from __future__ import annotations
 
-from typing import Dict, List, Optional
+from typing import Dict, List, Literal, Optional
 
 from pydantic import BaseModel, Field
 
@@ -14,10 +14,10 @@ class TokenResponse(BaseModel):
 
 
 class UserCreate(BaseModel):
-    username: str
-    password: str = Field(min_length=8)
-    role: str = Field(description="doctor | patient | asha | admin | researcher")
-    full_name: str = ""
+    username: str = Field(min_length=3, max_length=64, pattern=r"^[A-Za-z0-9_.@-]+$")
+    password: str = Field(min_length=8, max_length=128)
+    role: Literal["doctor", "patient", "asha", "admin", "researcher"] = Field(description="doctor | patient | asha | admin | researcher")
+    full_name: str = Field(default="", max_length=120)
 
 
 class UserOut(BaseModel):

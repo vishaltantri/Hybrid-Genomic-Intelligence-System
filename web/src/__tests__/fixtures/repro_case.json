@@ -1,0 +1,643 @@
+{
+ "patient_id": "PT-C7A70649",
+ "available": true,
+ "partners": [
+  {
+   "member_id": "MEM-AC982A4A",
+   "label": "Father",
+   "sex": "M",
+   "affected": "unaffected",
+   "variants": [
+    {
+     "gene": "BRCA1",
+     "variant_key": "chr17:43124030:GAG>G",
+     "classification": "Pathogenic",
+     "genotype_state": "absent",
+     "carrier": false
+    },
+    {
+     "gene": "VHL",
+     "variant_key": "chr3:10141973:C>G",
+     "classification": "Pathogenic",
+     "genotype_state": "absent",
+     "carrier": false
+    },
+    {
+     "gene": "PAH",
+     "variant_key": "chr12:102844229:C>T",
+     "classification": "Pathogenic",
+     "genotype_state": "het",
+     "carrier": true
+    },
+    {
+     "gene": "ATP7B",
+     "variant_key": "chr13:51943246:C>G",
+     "classification": "Likely pathogenic",
+     "genotype_state": "het",
+     "carrier": true
+    },
+    {
+     "gene": "HBB",
+     "variant_key": "chr11:5227002:A>T",
+     "classification": "Likely benign",
+     "genotype_state": "absent",
+     "carrier": false
+    },
+    {
+     "gene": "CFTR",
+     "variant_key": "chr7:117559590:ATCT>A",
+     "classification": "Likely benign",
+     "genotype_state": "absent",
+     "carrier": false
+    },
+    {
+     "gene": "CYP2C19",
+     "variant_key": "chr10:94781859:G>A",
+     "classification": "Benign",
+     "genotype_state": "het",
+     "carrier": true
+    },
+    {
+     "gene": "MTHFR",
+     "variant_key": "chr1:1234567:A>G",
+     "classification": "Benign",
+     "genotype_state": "absent",
+     "carrier": false
+    }
+   ],
+   "note": null
+  },
+  {
+   "member_id": "MEM-D25E1866",
+   "label": "Mother",
+   "sex": "F",
+   "affected": "unaffected",
+   "variants": [
+    {
+     "gene": "BRCA1",
+     "variant_key": "chr17:43124030:GAG>G",
+     "classification": "Pathogenic",
+     "genotype_state": "het",
+     "carrier": true
+    },
+    {
+     "gene": "VHL",
+     "variant_key": "chr3:10141973:C>G",
+     "classification": "Pathogenic",
+     "genotype_state": "absent",
+     "carrier": false
+    },
+    {
+     "gene": "PAH",
+     "variant_key": "chr12:102844229:C>T",
+     "classification": "Pathogenic",
+     "genotype_state": "absent",
+     "carrier": false
+    },
+    {
+     "gene": "ATP7B",
+     "variant_key": "chr13:51943246:C>G",
+     "classification": "Likely pathogenic",
+     "genotype_state": "het",
+     "carrier": true
+    },
+    {
+     "gene": "HBB",
+     "variant_key": "chr11:5227002:A>T",
+     "classification": "Likely benign",
+     "genotype_state": "het",
+     "carrier": true
+    },
+    {
+     "gene": "CFTR",
+     "variant_key": "chr7:117559590:ATCT>A",
+     "classification": "Likely benign",
+     "genotype_state": "het",
+     "carrier": true
+    },
+    {
+     "gene": "CYP2C19",
+     "variant_key": "chr10:94781859:G>A",
+     "classification": "Benign",
+     "genotype_state": "het",
+     "carrier": true
+    },
+    {
+     "gene": "MTHFR",
+     "variant_key": "chr1:1234567:A>G",
+     "classification": "Benign",
+     "genotype_state": "het",
+     "carrier": true
+    }
+   ],
+   "note": null
+  }
+ ],
+ "relationship_from_pedigree": null,
+ "inbreeding_coefficient": 0.0,
+ "risk_band": "high",
+ "risks": [
+  {
+   "disease_id": "ORPHA:915",
+   "disease_name": "Wilson disease",
+   "gene": "ATP7B",
+   "inheritance": "Autosomal recessive",
+   "supported": true,
+   "carrier_status": {
+    "partner_a": "Carrier",
+    "partner_b": "Carrier"
+   },
+   "evidence_query": "ATP7B Wilson disease",
+   "supporting_variants": [
+    "chr13:51943246:C>G",
+    "chr13:51943246:C>G"
+   ],
+   "mode": "autosomal recessive",
+   "probabilities": {
+    "both_carriers": 1.0,
+    "child_affected": 0.25,
+    "child_carrier": 0.5,
+    "one_in_n": 4
+   },
+   "bayesian": {
+    "partner_a": {
+     "prior": 0.011,
+     "posterior": 1.0,
+     "update_basis": "known_carrier_test",
+     "note": "Confirmed carrier on genetic testing",
+     "likelihood": "Not separately computed (rule-based update)"
+    },
+    "partner_b": {
+     "prior": 0.011,
+     "posterior": 1.0,
+     "update_basis": "known_carrier_test",
+     "note": "Confirmed carrier on genetic testing",
+     "likelihood": "Not separately computed (rule-based update)"
+    },
+    "note": "Prior and posterior are the counselor's computed values; the update is rule-based, so no separate likelihood is reported."
+   },
+   "punnett": {
+    "mode": "autosomal recessive",
+    "parent_a": "Aa",
+    "parent_b": "Aa",
+    "gametes_a": [
+     "A",
+     "a"
+    ],
+    "gametes_b": [
+     "A",
+     "a"
+    ],
+    "cells": [
+     [
+      {
+       "genotype": "AA",
+       "probability": 0.25
+      },
+      {
+       "genotype": "Aa",
+       "probability": 0.25
+      }
+     ],
+     [
+      {
+       "genotype": "Aa",
+       "probability": 0.25
+      },
+      {
+       "genotype": "aa",
+       "probability": 0.25
+      }
+     ]
+    ],
+    "genotype_probabilities": {
+     "AA": 0.25,
+     "Aa": 0.5,
+     "aa": 0.25
+    },
+    "outcome_probabilities": {
+     "affected": 0.25,
+     "carrier": 0.5,
+     "unaffected_non_carrier": 0.25
+    }
+   },
+   "saved_evidence": []
+  },
+  {
+   "disease_id": "ORPHA:355",
+   "disease_name": "G6PD deficiency",
+   "gene": "G6PD",
+   "inheritance": "X-linked recessive",
+   "supported": true,
+   "carrier_status": {
+    "partner_a": "Carrier status cannot be determined",
+    "partner_b": "Carrier status cannot be determined"
+   },
+   "evidence_query": "G6PD G6PD deficiency",
+   "supporting_variants": [],
+   "mode": "x-linked recessive",
+   "probabilities": {
+    "both_carriers": 0.07,
+    "child_affected": 0.0175,
+    "child_carrier": 0.0175,
+    "one_in_n": 57
+   },
+   "bayesian": {
+    "partner_a": {
+     "prior": 0.07,
+     "posterior": 0.07,
+     "update_basis": "population_prior",
+     "note": "Population carrier frequency with community adjustment",
+     "likelihood": "Not separately computed (rule-based update)"
+    },
+    "partner_b": {
+     "prior": 0.07,
+     "posterior": 0.07,
+     "update_basis": "population_prior",
+     "note": "Population carrier frequency with community adjustment",
+     "likelihood": "Not separately computed (rule-based update)"
+    },
+    "note": "Prior and posterior are the counselor's computed values; the update is rule-based, so no separate likelihood is reported."
+   },
+   "punnett": null,
+   "punnett_note": "Punnett square unavailable: parental genotypes are not both determined (Not analyzed).",
+   "saved_evidence": []
+  },
+  {
+   "disease_id": "ORPHA:870",
+   "disease_name": "Down syndrome",
+   "gene": "chr21",
+   "inheritance": "Chromosomal (maternal age)",
+   "supported": false,
+   "carrier_status": {
+    "partner_a": "Carrier status cannot be determined",
+    "partner_b": "Carrier status cannot be determined"
+   },
+   "evidence_query": "chr21 Down syndrome",
+   "supporting_variants": [],
+   "note": "Inheritance pattern not supported for a probability calculation (Chromosomal (maternal age)); no risk is shown.",
+   "probabilities": null,
+   "bayesian": null,
+   "punnett": null,
+   "saved_evidence": []
+  },
+  {
+   "disease_id": "ORPHA:94126",
+   "disease_name": "Fragile X syndrome",
+   "gene": "FMR1",
+   "inheritance": "X-linked dominant",
+   "supported": false,
+   "carrier_status": {
+    "partner_a": "Carrier status cannot be determined",
+    "partner_b": "Carrier status cannot be determined"
+   },
+   "evidence_query": "FMR1 Fragile X syndrome",
+   "supporting_variants": [],
+   "note": "Inheritance pattern not supported for a probability calculation (X-linked dominant); no risk is shown.",
+   "probabilities": null,
+   "bayesian": null,
+   "punnett": null,
+   "saved_evidence": []
+  },
+  {
+   "disease_id": "ORPHA:231222",
+   "disease_name": "Beta-thalassemia major",
+   "gene": "HBB",
+   "inheritance": "Autosomal recessive",
+   "supported": true,
+   "carrier_status": {
+    "partner_a": "Carrier status cannot be determined",
+    "partner_b": "Carrier status cannot be determined"
+   },
+   "evidence_query": "HBB Beta-thalassemia major",
+   "supporting_variants": [
+    "chr11:5227002:A>T"
+   ],
+   "mode": "autosomal recessive",
+   "probabilities": {
+    "both_carriers": 0.0012,
+    "child_affected": 0.0003,
+    "child_carrier": 0.0006,
+    "one_in_n": 3333
+   },
+   "bayesian": {
+    "partner_a": {
+     "prior": 0.035,
+     "posterior": 0.035,
+     "update_basis": "population_prior",
+     "note": "Population carrier frequency with community adjustment",
+     "likelihood": "Not separately computed (rule-based update)"
+    },
+    "partner_b": {
+     "prior": 0.035,
+     "posterior": 0.035,
+     "update_basis": "population_prior",
+     "note": "Population carrier frequency with community adjustment",
+     "likelihood": "Not separately computed (rule-based update)"
+    },
+    "note": "Prior and posterior are the counselor's computed values; the update is rule-based, so no separate likelihood is reported."
+   },
+   "punnett": null,
+   "punnett_note": "Punnett square unavailable: parental genotypes are not both determined (Not analyzed).",
+   "saved_evidence": []
+  },
+  {
+   "disease_id": "ORPHA:232",
+   "disease_name": "Sickle cell disease",
+   "gene": "HBB",
+   "inheritance": "Autosomal recessive",
+   "supported": true,
+   "carrier_status": {
+    "partner_a": "Carrier status cannot be determined",
+    "partner_b": "Carrier status cannot be determined"
+   },
+   "evidence_query": "HBB Sickle cell disease",
+   "supporting_variants": [
+    "chr11:5227002:A>T"
+   ],
+   "mode": "autosomal recessive",
+   "probabilities": {
+    "both_carriers": 0.0004,
+    "child_affected": 0.0001,
+    "child_carrier": 0.0002,
+    "one_in_n": 10000
+   },
+   "bayesian": {
+    "partner_a": {
+     "prior": 0.021,
+     "posterior": 0.021,
+     "update_basis": "population_prior",
+     "note": "Population carrier frequency with community adjustment",
+     "likelihood": "Not separately computed (rule-based update)"
+    },
+    "partner_b": {
+     "prior": 0.021,
+     "posterior": 0.021,
+     "update_basis": "population_prior",
+     "note": "Population carrier frequency with community adjustment",
+     "likelihood": "Not separately computed (rule-based update)"
+    },
+    "note": "Prior and posterior are the counselor's computed values; the update is rule-based, so no separate likelihood is reported."
+   },
+   "punnett": null,
+   "punnett_note": "Punnett square unavailable: parental genotypes are not both determined (Not analyzed).",
+   "saved_evidence": []
+  },
+  {
+   "disease_id": "ORPHA:123222",
+   "disease_name": "Spinal muscular atrophy type 1",
+   "gene": "SMN1",
+   "inheritance": "Autosomal recessive",
+   "supported": true,
+   "carrier_status": {
+    "partner_a": "Carrier status cannot be determined",
+    "partner_b": "Carrier status cannot be determined"
+   },
+   "evidence_query": "SMN1 Spinal muscular atrophy type 1",
+   "supporting_variants": [],
+   "mode": "autosomal recessive",
+   "probabilities": {
+    "both_carriers": 0.0003,
+    "child_affected": 0.0001,
+    "child_carrier": 0.0002,
+    "one_in_n": 10000
+   },
+   "bayesian": {
+    "partner_a": {
+     "prior": 0.0185,
+     "posterior": 0.0185,
+     "update_basis": "population_prior",
+     "note": "Population carrier frequency with community adjustment",
+     "likelihood": "Not separately computed (rule-based update)"
+    },
+    "partner_b": {
+     "prior": 0.0185,
+     "posterior": 0.0185,
+     "update_basis": "population_prior",
+     "note": "Population carrier frequency with community adjustment",
+     "likelihood": "Not separately computed (rule-based update)"
+    },
+    "note": "Prior and posterior are the counselor's computed values; the update is rule-based, so no separate likelihood is reported."
+   },
+   "punnett": null,
+   "punnett_note": "Punnett square unavailable: parental genotypes are not both determined (Not analyzed).",
+   "saved_evidence": []
+  },
+  {
+   "disease_id": "ORPHA:79432",
+   "disease_name": "Oculocutaneous albinism type 2",
+   "gene": "OCA2",
+   "inheritance": "Autosomal recessive",
+   "supported": true,
+   "carrier_status": {
+    "partner_a": "Carrier status cannot be determined",
+    "partner_b": "Carrier status cannot be determined"
+   },
+   "evidence_query": "OCA2 Oculocutaneous albinism type 2",
+   "supporting_variants": [],
+   "mode": "autosomal recessive",
+   "probabilities": {
+    "both_carriers": 0.0003,
+    "child_affected": 0.0001,
+    "child_carrier": 0.0002,
+    "one_in_n": 10000
+   },
+   "bayesian": {
+    "partner_a": {
+     "prior": 0.018,
+     "posterior": 0.018,
+     "update_basis": "population_prior",
+     "note": "Population carrier frequency with community adjustment",
+     "likelihood": "Not separately computed (rule-based update)"
+    },
+    "partner_b": {
+     "prior": 0.018,
+     "posterior": 0.018,
+     "update_basis": "population_prior",
+     "note": "Population carrier frequency with community adjustment",
+     "likelihood": "Not separately computed (rule-based update)"
+    },
+    "note": "Prior and posterior are the counselor's computed values; the update is rule-based, so no separate likelihood is reported."
+   },
+   "punnett": null,
+   "punnett_note": "Punnett square unavailable: parental genotypes are not both determined (Not analyzed).",
+   "saved_evidence": []
+  },
+  {
+   "disease_id": "ORPHA:586",
+   "disease_name": "Cystic fibrosis",
+   "gene": "CFTR",
+   "inheritance": "Autosomal recessive",
+   "supported": true,
+   "carrier_status": {
+    "partner_a": "Carrier status cannot be determined",
+    "partner_b": "Carrier status cannot be determined"
+   },
+   "evidence_query": "CFTR Cystic fibrosis",
+   "supporting_variants": [
+    "chr7:117559590:ATCT>A"
+   ],
+   "mode": "autosomal recessive",
+   "probabilities": {
+    "both_carriers": 0.0001,
+    "child_affected": 0.0,
+    "child_carrier": 0.0001,
+    "one_in_n": null
+   },
+   "bayesian": {
+    "partner_a": {
+     "prior": 0.012,
+     "posterior": 0.012,
+     "update_basis": "population_prior",
+     "note": "Population carrier frequency with community adjustment",
+     "likelihood": "Not separately computed (rule-based update)"
+    },
+    "partner_b": {
+     "prior": 0.012,
+     "posterior": 0.012,
+     "update_basis": "population_prior",
+     "note": "Population carrier frequency with community adjustment",
+     "likelihood": "Not separately computed (rule-based update)"
+    },
+    "note": "Prior and posterior are the counselor's computed values; the update is rule-based, so no separate likelihood is reported."
+   },
+   "punnett": null,
+   "punnett_note": "Punnett square unavailable: parental genotypes are not both determined (Not analyzed).",
+   "saved_evidence": []
+  },
+  {
+   "disease_id": "ORPHA:716",
+   "disease_name": "Phenylketonuria",
+   "gene": "PAH",
+   "inheritance": "Autosomal recessive",
+   "supported": true,
+   "carrier_status": {
+    "partner_a": "Carrier",
+    "partner_b": "Not a carrier"
+   },
+   "evidence_query": "PAH Phenylketonuria",
+   "supporting_variants": [
+    "chr12:102844229:C>T"
+   ],
+   "mode": "autosomal recessive",
+   "probabilities": {
+    "both_carriers": 0.0,
+    "child_affected": 0.0,
+    "child_carrier": 0.0,
+    "one_in_n": null
+   },
+   "bayesian": {
+    "partner_a": {
+     "prior": 0.008,
+     "posterior": 1.0,
+     "update_basis": "known_carrier_test",
+     "note": "Confirmed carrier on genetic testing",
+     "likelihood": "Not separately computed (rule-based update)"
+    },
+    "partner_b": {
+     "prior": 0.008,
+     "posterior": 0.0,
+     "update_basis": "known_not_carrier",
+     "note": "Tested and NOT a carrier",
+     "likelihood": "Not separately computed (rule-based update)"
+    },
+    "note": "Prior and posterior are the counselor's computed values; the update is rule-based, so no separate likelihood is reported."
+   },
+   "punnett": {
+    "mode": "autosomal recessive",
+    "parent_a": "Aa",
+    "parent_b": "AA",
+    "gametes_a": [
+     "A",
+     "a"
+    ],
+    "gametes_b": [
+     "A",
+     "A"
+    ],
+    "cells": [
+     [
+      {
+       "genotype": "AA",
+       "probability": 0.25
+      },
+      {
+       "genotype": "AA",
+       "probability": 0.25
+      }
+     ],
+     [
+      {
+       "genotype": "Aa",
+       "probability": 0.25
+      },
+      {
+       "genotype": "Aa",
+       "probability": 0.25
+      }
+     ]
+    ],
+    "genotype_probabilities": {
+     "AA": 0.5,
+     "Aa": 0.5
+    },
+    "outcome_probabilities": {
+     "affected": 0.0,
+     "carrier": 0.5,
+     "unaffected_non_carrier": 0.5
+    }
+   },
+   "saved_evidence": []
+  }
+ ],
+ "screening": [
+  {
+   "condition": "Wilson disease",
+   "test": "Carrier screening for ATP7B (sequencing/MLPA as appropriate)",
+   "timing": "Pre-conception"
+  },
+  {
+   "condition": "G6PD deficiency",
+   "test": "G6PD enzyme assay (quantitative) for the mother; newborn screening",
+   "timing": "Pre-conception"
+  },
+  {
+   "condition": "Down syndrome",
+   "test": "Carrier screening for chr21 (sequencing/MLPA as appropriate)",
+   "timing": "Pre-conception"
+  },
+  {
+   "condition": "Fragile X syndrome",
+   "test": "Carrier testing for the mother; prenatal diagnosis options discussion",
+   "timing": "Pre-conception / early pregnancy"
+  }
+ ],
+ "assumptions": [
+  "Carrier probabilities use Indian population priors adjusted for community, recorded genotypes and family history.",
+  "Genotypes come from the pedigree's recorded values; unrecorded genotypes are treated as unknown, never as normal.",
+  "Autosomal recessive, autosomal dominant and X-linked recessive patterns are modelled; others are not."
+ ],
+ "safety": "Calculated genetic probability, not a clinical outcome prediction. Results depend on the recorded genotypes and stated assumptions; discuss them with a clinician or genetic counselor.",
+ "partner_inputs": {
+  "a": {
+   "state": "Andhra Pradesh",
+   "sex": "M",
+   "age": null,
+   "known_carrier": {
+    "ORPHA:716": true,
+    "ORPHA:915": true
+   },
+   "known_affected": {}
+  },
+  "b": {
+   "state": "Andhra Pradesh",
+   "sex": "F",
+   "age": null,
+   "known_carrier": {
+    "ORPHA:716": false,
+    "ORPHA:915": true
+   },
+   "known_affected": {}
+  }
+ }
+}

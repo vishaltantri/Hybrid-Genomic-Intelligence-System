@@ -1,0 +1,55 @@
+{
+ "hpo_id": "HP:0001337",
+ "name": "Tremor",
+ "definition": "Involuntary rhythmic oscillatory movement.",
+ "synonyms": [],
+ "indian_synonyms": [
+  {
+   "text": "haath kaanpna",
+   "language": "hi"
+  },
+  {
+   "text": "kaanpna",
+   "language": "hi"
+  }
+ ],
+ "parents": [
+  {
+   "hpo_id": "HP:0000707",
+   "name": "Abnormality of the nervous system"
+  }
+ ],
+ "children": [],
+ "ancestors": [
+  {
+   "hpo_id": "HP:0000707",
+   "name": "Abnormality of the nervous system"
+  },
+  {
+   "hpo_id": "HP:0000118",
+   "name": "Phenotypic abnormality"
+  },
+  {
+   "hpo_id": "HP:0000001",
+   "name": "All"
+  }
+ ],
+ "organ_systems": [
+  {
+   "id": "HP:0000707",
+   "name": "Abnormality of the nervous system"
+  }
+ ],
+ "diseases": [
+  {
+   "disease_id": "ORPHA:915",
+   "disease_name": "Wilson disease",
+   "genes": [
+    "ATP7B"
+   ],
+   "frequency": "HP:0040280"
+  }
+ ],
+ "case_variants": [],
+ "variant_note": "Not analyzed: no variant analysis is linked to this case."
+}

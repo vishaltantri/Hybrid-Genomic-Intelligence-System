@@ -1,0 +1,598 @@
+{
+ "patient_id": "PT-3780FB12",
+ "summary": {
+  "patient_id": "PT-3780FB12",
+  "age": null,
+  "sex": "F",
+  "state": "Kerala",
+  "community": "General",
+  "phenotypes": 2,
+  "explicitly_absent": 0,
+  "uncertain": 0,
+  "variants": null,
+  "variant_note": "Not analyzed: no variant analysis linked to this case.",
+  "pedigree_members": 0,
+  "pedigree_note": "No pedigree recorded.",
+  "saved_evidence": 0
+ },
+ "available": true,
+ "top_diagnosis": {
+  "rank": 1,
+  "disease_id": "ORPHA:915",
+  "disease_name": "Wilson disease",
+  "probability": 0.1766,
+  "phenotype_similarity": 2.5534,
+  "inheritance": "Autosomal recessive",
+  "genes": [
+   "ATP7B"
+  ],
+  "supporting_phenotypes": [
+   {
+    "hpo_id": "HP:0001337",
+    "name": "Tremor",
+    "weight_pct": 78.1
+   },
+   {
+    "hpo_id": "HP:0000952",
+    "name": "Jaundice",
+    "weight_pct": 21.9
+   }
+  ],
+  "missing_findings": [
+   {
+    "hpo_id": "HP:0001394",
+    "name": "Cirrhosis",
+    "status": "Not documented"
+   },
+   {
+    "hpo_id": "HP:0001332",
+    "name": "Dystonia",
+    "status": "Not documented"
+   },
+   {
+    "hpo_id": "HP:0000616",
+    "name": "Kayser-Fleischer ring",
+    "status": "Not documented"
+   }
+  ],
+  "variants": [],
+  "genomic_support": {
+   "disease_id": "ORPHA:915",
+   "genes": [
+    "ATP7B"
+   ],
+   "pathogenic_or_likely": 0,
+   "vus": 0,
+   "variant_ids": [],
+   "max_priority_score": null
+  },
+  "evidence_quality": {
+   "label": "No matching record",
+   "saved_items": 0,
+   "note": "No saved literature/database evidence is linked to this disease's variants."
+  },
+  "confirmatory_tests": {
+   "first_line": [
+    "Serum ceruloplasmin",
+    "24-hour urinary copper",
+    "slit-lamp for Kayser-Fleischer ring",
+    "serum free copper"
+   ],
+   "genetic": [
+    "ATP7B sequencing / WES"
+   ],
+   "india_note": "Low ceruloplasmin plus KF ring is near-diagnostic; chelation available at district level"
+  }
+ },
+ "differential": [
+  {
+   "rank": 1,
+   "disease_id": "ORPHA:915",
+   "disease_name": "Wilson disease",
+   "probability": 0.1766,
+   "phenotype_similarity": 2.5534,
+   "inheritance": "Autosomal recessive",
+   "genes": [
+    "ATP7B"
+   ],
+   "supporting_phenotypes": [
+    {
+     "hpo_id": "HP:0001337",
+     "name": "Tremor",
+     "weight_pct": 78.1
+    },
+    {
+     "hpo_id": "HP:0000952",
+     "name": "Jaundice",
+     "weight_pct": 21.9
+    }
+   ],
+   "missing_findings": [
+    {
+     "hpo_id": "HP:0001394",
+     "name": "Cirrhosis",
+     "status": "Not documented"
+    },
+    {
+     "hpo_id": "HP:0001332",
+     "name": "Dystonia",
+     "status": "Not documented"
+    },
+    {
+     "hpo_id": "HP:0000616",
+     "name": "Kayser-Fleischer ring",
+     "status": "Not documented"
+    }
+   ],
+   "variants": [],
+   "genomic_support": {
+    "disease_id": "ORPHA:915",
+    "genes": [
+     "ATP7B"
+    ],
+    "pathogenic_or_likely": 0,
+    "vus": 0,
+    "variant_ids": [],
+    "max_priority_score": null
+   },
+   "evidence_quality": {
+    "label": "No matching record",
+    "saved_items": 0,
+    "note": "No saved literature/database evidence is linked to this disease's variants."
+   },
+   "confirmatory_tests": {
+    "first_line": [
+     "Serum ceruloplasmin",
+     "24-hour urinary copper",
+     "slit-lamp for Kayser-Fleischer ring",
+     "serum free copper"
+    ],
+    "genetic": [
+     "ATP7B sequencing / WES"
+    ],
+    "india_note": "Low ceruloplasmin plus KF ring is near-diagnostic; chelation available at district level"
+   }
+  },
+  {
+   "rank": 2,
+   "disease_id": "ORPHA:355",
+   "disease_name": "G6PD deficiency",
+   "probability": 0.1342,
+   "phenotype_similarity": 1.7559,
+   "inheritance": "X-linked recessive",
+   "genes": [
+    "G6PD"
+   ],
+   "supporting_phenotypes": [
+    {
+     "hpo_id": "HP:0000952",
+     "name": "Jaundice",
+     "weight_pct": 100.0
+    }
+   ],
+   "missing_findings": [
+    {
+     "hpo_id": "HP:0001878",
+     "name": "Hemolytic anemia",
+     "status": "Not documented"
+    },
+    {
+     "hpo_id": "HP:0001903",
+     "name": "Anemia",
+     "status": "Not documented"
+    },
+    {
+     "hpo_id": "HP:0000951",
+     "name": "Abnormality of the skin",
+     "status": "Not documented"
+    }
+   ],
+   "variants": [],
+   "genomic_support": {
+    "disease_id": "ORPHA:355",
+    "genes": [
+     "G6PD"
+    ],
+    "pathogenic_or_likely": 0,
+    "vus": 0,
+    "variant_ids": [],
+    "max_priority_score": null
+   },
+   "evidence_quality": {
+    "label": "No matching record",
+    "saved_items": 0,
+    "note": "No saved literature/database evidence is linked to this disease's variants."
+   },
+   "confirmatory_tests": {
+    "first_line": [
+     "G6PD enzyme assay",
+     "CBC with Heinz bodies"
+    ],
+    "genetic": [
+     "G6PD sequencing (research)"
+    ],
+    "india_note": "Screen before primaquine/dapsone"
+   }
+  },
+  {
+   "rank": 3,
+   "disease_id": "ORPHA:231222",
+   "disease_name": "Beta-thalassemia major",
+   "probability": 0.1269,
+   "phenotype_similarity": 1.7559,
+   "inheritance": "Autosomal recessive",
+   "genes": [
+    "HBB"
+   ],
+   "supporting_phenotypes": [
+    {
+     "hpo_id": "HP:0000952",
+     "name": "Jaundice",
+     "weight_pct": 100.0
+    }
+   ],
+   "missing_findings": [
+    {
+     "hpo_id": "HP:0001744",
+     "name": "Splenomegaly",
+     "status": "Not documented"
+    },
+    {
+     "hpo_id": "HP:0002240",
+     "name": "Hepatomegaly",
+     "status": "Not documented"
+    },
+    {
+     "hpo_id": "HP:0004322",
+     "name": "Short stature",
+     "status": "Not documented"
+    }
+   ],
+   "variants": [],
+   "genomic_support": {
+    "disease_id": "ORPHA:231222",
+    "genes": [
+     "HBB"
+    ],
+    "pathogenic_or_likely": 0,
+    "vus": 0,
+    "variant_ids": [],
+    "max_priority_score": null
+   },
+   "evidence_quality": {
+    "label": "No matching record",
+    "saved_items": 0,
+    "note": "No saved literature/database evidence is linked to this disease's variants."
+   },
+   "confirmatory_tests": {
+    "first_line": [
+     "CBC with MCV",
+     "HPLC HbA2 >3.5 percent",
+     "iron studies"
+    ],
+    "genetic": [
+     "HBB sequencing for prenatal planning"
+    ],
+    "india_note": "Carrier screening of spouse mandatory; prenatal diagnosis via CVS"
+   }
+  },
+  {
+   "rank": 4,
+   "disease_id": "ORPHA:232",
+   "disease_name": "Sickle cell disease",
+   "probability": 0.1088,
+   "phenotype_similarity": 1.531,
+   "inheritance": "Autosomal recessive",
+   "genes": [
+    "HBB"
+   ],
+   "supporting_phenotypes": [
+    {
+     "hpo_id": "HP:0000952",
+     "name": "Jaundice",
+     "weight_pct": 52.5
+    },
+    {
+     "hpo_id": "HP:0001337",
+     "name": "Tremor",
+     "weight_pct": 47.5
+    }
+   ],
+   "missing_findings": [
+    {
+     "hpo_id": "HP:0012532",
+     "name": "Chronic pain",
+     "status": "Not documented"
+    },
+    {
+     "hpo_id": "HP:0001297",
+     "name": "Stroke",
+     "status": "Not documented"
+    },
+    {
+     "hpo_id": "HP:0001878",
+     "name": "Hemolytic anemia",
+     "status": "Not documented"
+    }
+   ],
+   "variants": [],
+   "genomic_support": {
+    "disease_id": "ORPHA:232",
+    "genes": [
+     "HBB"
+    ],
+    "pathogenic_or_likely": 0,
+    "vus": 0,
+    "variant_ids": [],
+    "max_priority_score": null
+   },
+   "evidence_quality": {
+    "label": "No matching record",
+    "saved_items": 0,
+    "note": "No saved literature/database evidence is linked to this disease's variants."
+   },
+   "confirmatory_tests": {
+    "first_line": [
+     "Sickling test",
+     "HPLC showing HbS"
+    ],
+    "genetic": [
+     "HBB genotyping (HbS)"
+    ],
+    "india_note": "Sickle Cell Mission screening in tribal districts"
+   }
+  },
+  {
+   "rank": 5,
+   "disease_id": "ORPHA:636",
+   "disease_name": "Neurofibromatosis type 1",
+   "probability": 0.0646,
+   "phenotype_similarity": 0.9777,
+   "inheritance": "Autosomal dominant",
+   "genes": [
+    "NF1"
+   ],
+   "supporting_phenotypes": [
+    {
+     "hpo_id": "HP:0000952",
+     "name": "Jaundice",
+     "weight_pct": 100.0
+    }
+   ],
+   "missing_findings": [
+    {
+     "hpo_id": "HP:0000957",
+     "name": "Cafe-au-lait spot",
+     "status": "Not documented"
+    },
+    {
+     "hpo_id": "HP:0000995",
+     "name": "Neurofibroma",
+     "status": "Not documented"
+    },
+    {
+     "hpo_id": "HP:0000951",
+     "name": "Abnormality of the skin",
+     "status": "Not documented"
+    }
+   ],
+   "variants": [],
+   "genomic_support": {
+    "disease_id": "ORPHA:636",
+    "genes": [
+     "NF1"
+    ],
+    "pathogenic_or_likely": 0,
+    "vus": 0,
+    "variant_ids": [],
+    "max_priority_score": null
+   },
+   "evidence_quality": {
+    "label": "No matching record",
+    "saved_items": 0,
+    "note": "No saved literature/database evidence is linked to this disease's variants."
+   },
+   "confirmatory_tests": {
+    "first_line": [
+     "Clinical criteria",
+     "MRI brain"
+    ],
+    "genetic": [
+     "NF1 sequencing"
+    ],
+    "india_note": "Cafe-au-lait spots plus neurofibromas diagnostic"
+   }
+  },
+  {
+   "rank": 6,
+   "disease_id": "ORPHA:79432",
+   "disease_name": "Oculocutaneous albinism type 2",
+   "probability": 0.0642,
+   "phenotype_similarity": 0.9777,
+   "inheritance": "Autosomal recessive",
+   "genes": [
+    "OCA2"
+   ],
+   "supporting_phenotypes": [
+    {
+     "hpo_id": "HP:0000952",
+     "name": "Jaundice",
+     "weight_pct": 100.0
+    }
+   ],
+   "missing_findings": [
+    {
+     "hpo_id": "HP:0000639",
+     "name": "Nystagmus",
+     "status": "Not documented"
+    },
+    {
+     "hpo_id": "HP:0001010",
+     "name": "Hypopigmentation of the skin",
+     "status": "Not documented"
+    },
+    {
+     "hpo_id": "HP:0000478",
+     "name": "Abnormality of the eye",
+     "status": "Not documented"
+    }
+   ],
+   "variants": [],
+   "genomic_support": {
+    "disease_id": "ORPHA:79432",
+    "genes": [
+     "OCA2"
+    ],
+    "pathogenic_or_likely": 0,
+    "vus": 0,
+    "variant_ids": [],
+    "max_priority_score": null
+   },
+   "evidence_quality": {
+    "label": "No matching record",
+    "saved_items": 0,
+    "note": "No saved literature/database evidence is linked to this disease's variants."
+   },
+   "confirmatory_tests": {
+    "first_line": [
+     "Clinical",
+     "ophthalmic exam"
+    ],
+    "genetic": [
+     "OCA2 sequencing"
+    ],
+    "india_note": "Vision support; sun protection"
+   }
+  },
+  {
+   "rank": 7,
+   "disease_id": "ORPHA:870",
+   "disease_name": "Down syndrome",
+   "probability": 0.0636,
+   "phenotype_similarity": 0.896,
+   "inheritance": "Chromosomal anomaly",
+   "genes": [],
+   "supporting_phenotypes": [
+    {
+     "hpo_id": "HP:0001337",
+     "name": "Tremor",
+     "weight_pct": 65.4
+    },
+    {
+     "hpo_id": "HP:0000952",
+     "name": "Jaundice",
+     "weight_pct": 34.6
+    }
+   ],
+   "missing_findings": [
+    {
+     "hpo_id": "HP:0000954",
+     "name": "Single transverse palmar crease",
+     "status": "Not documented"
+    },
+    {
+     "hpo_id": "HP:0000582",
+     "name": "Upslanted palpebral fissure",
+     "status": "Not documented"
+    },
+    {
+     "hpo_id": "HP:0001252",
+     "name": "Hypotonia",
+     "status": "Not documented"
+    }
+   ],
+   "variants": [],
+   "genomic_support": {
+    "disease_id": "ORPHA:870",
+    "genes": [],
+    "pathogenic_or_likely": 0,
+    "vus": 0,
+    "variant_ids": [],
+    "max_priority_score": null
+   },
+   "evidence_quality": {
+    "label": "No matching record",
+    "saved_items": 0,
+    "note": "No saved literature/database evidence is linked to this disease's variants."
+   },
+   "confirmatory_tests": {
+    "first_line": [
+     "Karyotype / FISH",
+     "echo for cardiac defects"
+    ],
+    "genetic": [
+     "Trisomy 21 confirmation"
+    ],
+    "india_note": "Early intervention services"
+   }
+  },
+  {
+   "rank": 8,
+   "disease_id": "ORPHA:716",
+   "disease_name": "Phenylketonuria",
+   "probability": 0.0579,
+   "phenotype_similarity": 0.896,
+   "inheritance": "Autosomal recessive",
+   "genes": [
+    "PAH"
+   ],
+   "supporting_phenotypes": [
+    {
+     "hpo_id": "HP:0001337",
+     "name": "Tremor",
+     "weight_pct": 65.4
+    },
+    {
+     "hpo_id": "HP:0000952",
+     "name": "Jaundice",
+     "weight_pct": 34.6
+    }
+   ],
+   "missing_findings": [
+    {
+     "hpo_id": "HP:0000252",
+     "name": "Microcephaly",
+     "status": "Not documented"
+    },
+    {
+     "hpo_id": "HP:0001249",
+     "name": "Intellectual disability",
+     "status": "Not documented"
+    },
+    {
+     "hpo_id": "HP:0001010",
+     "name": "Hypopigmentation of the skin",
+     "status": "Not documented"
+    }
+   ],
+   "variants": [],
+   "genomic_support": {
+    "disease_id": "ORPHA:716",
+    "genes": [
+     "PAH"
+    ],
+    "pathogenic_or_likely": 0,
+    "vus": 0,
+    "variant_ids": [],
+    "max_priority_score": null
+   },
+   "evidence_quality": {
+    "label": "No matching record",
+    "saved_items": 0,
+    "note": "No saved literature/database evidence is linked to this disease's variants."
+   },
+   "confirmatory_tests": {
+    "first_line": [
+     "Blood phenylalanine (tandem MS newborn screen)"
+    ],
+    "genetic": [
+     "PAH sequencing"
+    ],
+    "india_note": "NBS programs expanding; diet therapy prevents ID"
+   }
+  }
+ ],
+ "ranking_basis": "Phenotype similarity x Indian population prior (existing engine). Variants are shown as separate genomic support and do not alter this ranking.",
+ "engine": "graph_similarity+india_prior",
+ "disclaimer": "Clinical Decision Support. Computational ranking for clinician review; it is not a diagnosis."
+}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { api, streamAssistantChat } from '../api.js'
+import { api, streamAssistantChat, consumeNavContext } from '../api.js'
 import {
   Bot,
   Send,
@@ -49,6 +49,10 @@ export default function AssistantView({ onNavigateToDiagnosis, onNavigateToVaria
   // Mode & Language
   const [mode, setMode] = useState('clinical') // 'clinical' or 'patient_friendly'
   const [language, setLanguage] = useState('en') // 'en' or 'hi'
+  const [includeEvidence, setIncludeEvidence] = useState(false)
+  const [graphNode, setGraphNode] = useState(null)
+  const [dxIntel, setDxIntel] = useState(false)
+  const [pgxCtx, setPgxCtx] = useState(false)
 
   // Voice Input (Web Speech API SpeechRecognition)
   const [isListening, setIsListening] = useState(false)
@@ -60,6 +64,24 @@ export default function AssistantView({ onNavigateToDiagnosis, onNavigateToVaria
 
   // Auto-scroll
   const messagesEndRef = useRef(null)
+
+  useEffect(() => {
+    const ctx = consumeNavContext('ai-assistant')
+    if (ctx?.graph_node) {
+      setGraphNode(ctx.graph_node)
+      if (ctx.prompt) setInputValue(ctx.prompt)
+    }
+    if (ctx?.include_pgx && ctx.patient_id) {
+      setPatientId(ctx.patient_id)
+      setPgxCtx(true)
+      if (ctx.prompt) setInputValue(ctx.prompt)
+    }
+    if (ctx?.include_diagnosis_intel && ctx.patient_id) {
+      setPatientId(ctx.patient_id)
+      setDxIntel(true)
+      if (ctx.prompt) setInputValue(ctx.prompt)
+    }
+  }, [])
 
   useEffect(() => {
     loadPatientsAndAnalyses()
@@ -227,6 +249,10 @@ export default function AssistantView({ onNavigateToDiagnosis, onNavigateToVaria
       analysis_id: selectedAnalysisId || undefined,
       mode: activeMode,
       language: activeLang,
+      include_evidence: includeEvidence || undefined,
+      graph_node: graphNode || undefined,
+      include_diagnosis_intel: dxIntel || undefined,
+      include_pgx: pgxCtx || undefined,
     }
 
     await streamAssistantChat(
@@ -334,6 +360,18 @@ export default function AssistantView({ onNavigateToDiagnosis, onNavigateToVaria
               Patient-Friendly
             </button>
           </div>
+
+          <label className="flex items-center gap-1.5 text-xs font-semibold text-on-surface-variant bg-surface-container-low px-2.5 py-1.5 rounded-xl border border-outline-variant/40" title="Retrieve real PubMed literature for this question; only retrieved PMIDs may be cited">
+            <input type="checkbox" aria-label="Include literature evidence" checked={includeEvidence} onChange={(e) => setIncludeEvidence(e.target.checked)} />
+            Literature
+          </label>
+
+          {graphNode && (
+            <span className="flex items-center gap-1.5 text-xs font-semibold text-primary bg-primary/5 px-2.5 py-1.5 rounded-xl border border-primary/30" data-testid="graph-chip">
+              Graph node: {graphNode}
+              <button aria-label="Remove graph node" onClick={() => setGraphNode(null)} className="text-outline">×</button>
+            </span>
+          )}
 
           {/* Language Selector */}
           <div className="flex items-center bg-surface-container-low p-1 rounded-xl border border-outline-variant/40">

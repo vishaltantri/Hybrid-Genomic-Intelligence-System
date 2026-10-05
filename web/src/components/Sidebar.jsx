@@ -8,12 +8,15 @@ import {
   Stethoscope,
   Dna,
   Network,
+  GitBranch,
   Cpu,
+  ScanText,
   Bot,
   BookOpen,
   Pill,
   HeartHandshake,
   Map,
+  BarChart3,
   FileCheck,
   ShieldAlert,
   Server,
@@ -36,10 +39,13 @@ export const NAVIGATION_SECTIONS = [
   {
     title: 'CLINICAL INTELLIGENCE',
     items: [
+      { id: 'clinical-text', label: 'Clinical Text', icon: ScanText, badge: 'Phase 5' },
       { id: 'phenotypes', label: 'Phenotypes', icon: FileText },
       { id: 'diagnosis', label: 'Diagnosis', icon: Stethoscope },
+      { id: 'dx-intel', label: 'Diagnosis Intelligence', icon: Stethoscope, badge: 'Phase 8' },
       { id: 'variants', label: 'Variants', icon: Dna, badge: 'Phase 2' },
       { id: 'kg', label: 'Knowledge Graph', icon: Network },
+      { id: 'pedigree', label: 'Pedigree', icon: GitBranch, badge: 'Phase 3E' },
     ],
   },
   {
@@ -47,7 +53,7 @@ export const NAVIGATION_SECTIONS = [
     items: [
       { id: 'digital-twin', label: 'Digital Twin', icon: Cpu, badge: 'Live' },
       { id: 'ai-assistant', label: 'AI Assistant', icon: Bot, badge: 'Phase 3' },
-      { id: 'evidence', label: 'Evidence', icon: BookOpen, badge: 'Phase 2' },
+      { id: 'evidence', label: 'Evidence', icon: BookOpen, badge: 'Phase 4' },
     ],
   },
   {
@@ -60,6 +66,7 @@ export const NAVIGATION_SECTIONS = [
   {
     title: 'NATIONAL INSIGHTS',
     items: [
+      { id: 'analytics', label: 'Analytics', icon: BarChart3 },
       { id: 'national', label: 'National View', icon: Map },
     ],
   },

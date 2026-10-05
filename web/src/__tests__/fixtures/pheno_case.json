@@ -1,0 +1,128 @@
+{
+ "patient_id": "PT-7D4CEABF",
+ "observed": [
+  {
+   "hpo_id": "HP:0001337",
+   "name": "Tremor",
+   "in_knowledge_graph": true,
+   "organ_systems": [
+    {
+     "id": "HP:0000707",
+     "name": "Abnormality of the nervous system"
+    }
+   ],
+   "onset": "Not documented",
+   "severity": "Not documented",
+   "evidence_text": null,
+   "documented": "2026-10-05T21:17:32Z",
+   "sources": [
+    "Clinical-text HPO mapping"
+   ]
+  },
+  {
+   "hpo_id": "HP:0000952",
+   "name": "Jaundice",
+   "in_knowledge_graph": true,
+   "organ_systems": [
+    {
+     "id": "HP:0000951",
+     "name": "Abnormality of the skin"
+    }
+   ],
+   "onset": "Not documented",
+   "severity": "Not documented",
+   "evidence_text": null,
+   "documented": "2026-10-05T21:17:32Z",
+   "sources": [
+    "Clinical-text HPO mapping"
+   ]
+  }
+ ],
+ "negated": [
+  {
+   "hpo_id": "HP:0001250",
+   "name": "Seizures",
+   "in_knowledge_graph": true,
+   "organ_systems": [
+    {
+     "id": "HP:0000707",
+     "name": "Abnormality of the nervous system"
+    }
+   ],
+   "onset": "Not documented",
+   "severity": "Not documented",
+   "evidence_text": null,
+   "documented": "2026-10-05T21:17:32Z",
+   "sources": []
+  }
+ ],
+ "uncertain": [],
+ "not_documented": [
+  {
+   "hpo_id": "HP:0001394",
+   "name": "Cirrhosis",
+   "status": "Not documented",
+   "for_disease": "Wilson disease"
+  },
+  {
+   "hpo_id": "HP:0000616",
+   "name": "Kayser-Fleischer ring",
+   "status": "Not documented",
+   "for_disease": "Wilson disease"
+  },
+  {
+   "hpo_id": "HP:0001332",
+   "name": "Dystonia",
+   "status": "Not documented",
+   "for_disease": "Wilson disease"
+  },
+  {
+   "hpo_id": "HP:0002240",
+   "name": "Hepatomegaly",
+   "status": "Not documented",
+   "for_disease": "Wilson disease"
+  },
+  {
+   "hpo_id": "HP:0000478",
+   "name": "Abnormality of the eye",
+   "status": "Not documented",
+   "for_disease": "Wilson disease"
+  },
+  {
+   "hpo_id": "HP:0000707",
+   "name": "Abnormality of the nervous system",
+   "status": "Not documented",
+   "for_disease": "Wilson disease"
+  },
+  {
+   "hpo_id": "HP:0000951",
+   "name": "Abnormality of the skin",
+   "status": "Not documented",
+   "for_disease": "Wilson disease"
+  }
+ ],
+ "conflicts": [],
+ "unknown_ids": [],
+ "top_diagnoses": [
+  {
+   "disease_id": "ORPHA:915",
+   "disease_name": "Wilson disease",
+   "probability": 0.1766,
+   "phenotype_similarity": 2.5534
+  },
+  {
+   "disease_id": "ORPHA:355",
+   "disease_name": "G6PD deficiency",
+   "probability": 0.1342,
+   "phenotype_similarity": 1.7559
+  },
+  {
+   "disease_id": "ORPHA:231222",
+   "disease_name": "Beta-thalassemia major",
+   "probability": 0.1269,
+   "phenotype_similarity": 1.7559
+  }
+ ],
+ "diagnosis_note": null,
+ "note": "Uncertain and negated findings are not fed to the diagnosis engine."
+}

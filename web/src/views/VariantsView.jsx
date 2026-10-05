@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react'
-import { api, uploadVcfFile, consumeNavContext } from '../api.js'
+import { api, uploadVcfFile, consumeNavContext, setNavContext } from '../api.js'
 import {
   Dna,
   Upload,
@@ -177,6 +177,23 @@ export default function VariantsView({ onNavigateToDiagnosis, onNavigateToKg, on
     } catch (err) {
       setErrorMessage(`Diagnosis handoff failed: ${err.message}`)
     }
+  }
+
+  // Open the Evidence & Literature workspace at this variant
+  const handleViewEvidence = () => {
+    if (!currentAnalysis || !selectedVariant) return
+    setNavContext('evidence', {
+      analysis_id: currentAnalysis.analysis_id, variant_id: selectedVariant.variant_id,
+      patient_id: currentAnalysis.patient_id, gene: selectedVariant.gene_symbol, hgvs: selectedVariant.hgvs,
+    })
+    if (onNavigateToDiagnosis) onNavigateToDiagnosis('evidence')
+  }
+
+  // Open the Knowledge Graph at this variant's gene (and the case, when linked)
+  const handleViewGraph = () => {
+    if (!selectedVariant) return
+    setNavContext('kg', { gene: selectedVariant.gene_symbol, disease_id: selectedVariant.disease_id || undefined })
+    if (onNavigateToDiagnosis) onNavigateToDiagnosis('kg')
   }
 
   // Handoff to Clinical Report
@@ -824,6 +841,22 @@ export default function VariantsView({ onNavigateToDiagnosis, onNavigateToKg, on
                     >
                       <FileCheck size={14} />
                       <span>Queue in Report</span>
+                    </button>
+
+                    <button
+                      onClick={handleViewEvidence}
+                      className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-surface-container text-primary border border-primary/20 text-xs font-semibold hover:bg-surface-container-high transition-all"
+                    >
+                      <Search size={14} />
+                      <span>View Evidence</span>
+                    </button>
+
+                    <button
+                      onClick={handleViewGraph}
+                      className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-surface-container text-primary border border-primary/20 text-xs font-semibold hover:bg-surface-container-high transition-all"
+                    >
+                      <Search size={14} />
+                      <span>View in Knowledge Graph</span>
                     </button>
                   </div>
                 </div>

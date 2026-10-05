@@ -1,112 +1,177 @@
-"""Module 1/2 tests: code-mixed NER, token-level LID, HPO mapping."""
-from __future__ import annotations
+"""Phase 5: clinical text intelligence, tested on labelled synthetic notes (no patient data)."""
+import os
+
+os.environ.setdefault("GENOMIND_EMBED_MODEL", "none")
 
 import pytest
+from fastapi.testclient import TestClient
 
-from ml_services.config import SEEDS_DIR
-from ml_services.nlp.clinical_ner import LexicalRuleNER, get_ner
-from ml_services.nlp.hpo_mapper import HPOMapper
-from ml_services.nlp.symptom_normalizer import SymptomNormalizer
-from ml_services.utils import read_jsonl, token_language
-
-
-@pytest.fixture(scope="module")
-def ner():
-    return LexicalRuleNER()
+from backend.app.main import app
+from backend.app.security import create_access_token
+from backend.app.services import registry
+from ml_services.nlp.clinical_text import assess_context
 
 
-@pytest.fixture(scope="module")
-def mapper():
-    return HPOMapper(use_embeddings=False)
+@pytest.fixture
+def client():
+    return TestClient(app)
 
 
-def test_token_level_language_id():
-    # Indic scripts are identified directly
-    assert token_language("बुखार") == "HI"            # Devanagari
-    assert token_language("காய்ச்சல்") == "TA"        # Tamil
-    assert token_language("జ్వరం") == "TE"            # Telugu
-    # Romanised Hindi is the interesting case: Latin script but not English
-    assert token_language("bukhar") == "HI-LATN"
-    assert token_language("piliya") == "HI-LATN"
-    assert token_language("patient") == "EN"
-    # Domain vocabulary can extend the romanised lexicon
-    assert token_language("karyotype", {"karyotype"}) == "HI-LATN"
+def hdr(name="clinician", role="doctor"):
+    return {"Authorization": f"Bearer {create_access_token(name, role)}"}
 
 
-def test_ner_extracts_symptoms(ner):
-    r = ner.extract("Patient ko 6 mahine se haath pair mein sujan hai")
-    labels = {e["label"] for e in r["entities"]}
-    assert "SYMPTOM" in labels
-    assert any("sujan" in e["text"] for e in r["entities"])
-    assert all(e["start"] < e["end"] for e in r["entities"])
+def run(text):
+    return registry.clinical_text.analyze(text)
 
 
-def test_ner_code_mixed_detection(ner):
-    mixed = ner.extract("Patient ko piliya hai and weight loss since 2 months")
-    assert mixed["is_code_mixed"] is True
-    assert mixed["lid_counts"]["HI-LATN"] >= 3  # ko / piliya / hai
-    assert mixed["lid_counts"]["EN"] >= 3
-    assert mixed["romanised_hindi_tokens"] >= 3
+def by(res, label, text=None):
+    return [e for e in res["entities"] if e["label"] == label and (text is None or e["text"].lower() == text.lower())]
 
 
-def test_ner_duration_lab_and_family(ner):
-    r = ner.extract("HbA2 5.2 hai, 2 hafte se bukhaar, cousin marriage hai")
-    labels = {e["label"] for e in r["entities"]}
-    assert "LAB_VALUE" in labels and "DURATION" in labels and "FAMILY_HISTORY" in labels
+NOTE = ("12 year old girl with tremor and jaundice since 6 months. No fever, seizures or tremor. Mother has Wilson disease; "
+        "ATP7B c.3207C>A found. Hb: 9.2. Wilson disease ruled out in brother. Started clopidogrel.")
 
 
-def test_ner_drugs(ner):
-    r = ner.extract("Clopidogrel aur warfarin dono chal rahe hain")
-    drugs = {e["text"].lower() for e in r["entities"] if e["label"] == "DRUG"}
-    assert {"clopidogrel", "warfarin"} <= drugs
+def test_phenotype_present_with_hpo_and_onset():
+    r = run(NOTE)
+    j = by(r, "PHENOTYPE", "jaundice")[0]
+    assert j["assertion"] == "present" and j["normalized"]["id"] == "HP:0000952" and j["normalized"]["system"] == "HPO"
+    assert j["onset"]["amount"] == 6 and j["onset"]["unit"].startswith("month")
+    assert by(r, "AGE")[0]["text"] == "12 year old"
 
 
-def test_seed_sentences_roundtrip(ner):
-    """Every hand-labelled seed sentence must yield at least one entity of its annotated type."""
-    rows = read_jsonl(SEEDS_DIR / "clinical_ner_seed.jsonl")
-    assert len(rows) >= 20
-    missing = []
-    for row in rows:
-        got = {e["label"] for e in ner.extract(row["text"])["entities"]}
-        expected = {e["label"] for e in row["entities"]}
-        if not (expected & got):
-            missing.append(row["id"])
-    # lexical NER is a baseline: allow a small miss rate, but most sentences must hit
-    assert len(missing) <= 4, f"too many seed sentences unmatched: {missing}"
+def test_negation_list_and_clause_scope():
+    r = run("No fever, seizures or tremor.")
+    assert {e["text"]: e["assertion"] for e in by(r, "PHENOTYPE")} == {"fever": "absent", "seizures": "absent", "tremor": "absent"}
+    r = run("No fever, but tremor present.")
+    assert {e["text"]: e["assertion"] for e in by(r, "PHENOTYPE")} == {"fever": "absent", "tremor": "present"}
 
 
-def test_normalizer_dictionary_hits():
-    sn = SymptomNormalizer()
-    assert sn.normalize("piliya")["hpo_id"] == "HP:0000952"
-    assert sn.normalize("mirgi ka daura")["hpo_id"] == "HP:0001250"
-    assert sn.normalize("piliya")["confidence"] == 1.0
-    assert sn.normalize("piliya")["method"] == "dictionary"
+def test_negation_does_not_cross_sentences():
+    r = run("Denies seizures. Has tremor.")
+    assert {e["text"]: e["assertion"] for e in by(r, "PHENOTYPE")} == {"seizures": "absent", "tremor": "present"}
 
 
-def test_normalizer_flags_unknown_for_review():
-    sn = SymptomNormalizer()
-    r = sn.normalize("something totally unrelated xyzzy")
-    assert r["needs_review"] is True
+def test_post_negation_and_ruled_out():
+    t = "Seizures not present. Tremor ruled out."
+    r = run(t)
+    assert all(e["assertion"] == "absent" for e in by(r, "PHENOTYPE"))
+    assert by(r, "PHENOTYPE", "tremor")[0]["ruled_out"] is True
 
 
-def test_mapper_produces_hpo_profile(mapper):
-    out = mapper.map_text("Peeli aankhein aur piliya do hafte se hai")
-    assert "HP:0000952" in out["hpo_ids"]
-    assert out["hpo_profile"][0]["confidence"] >= 0.5
-    assert out["hpo_profile"][0]["hpo_name"]
+def test_uncertainty_and_history():
+    r = run("Possible seizures. Suspected tremor. History of jaundice.")
+    got = {e["text"]: e["assertion"] for e in by(r, "PHENOTYPE")}
+    assert got == {"seizures": "possible", "tremor": "possible", "jaundice": "historical"}
+    assert run("Possible seizures.")["summary"]["possible_phenotypes"][0]["hpo_id"] == "HP:0001250"
 
 
-def test_mapper_records_confidence_and_method(mapper):
-    out = mapper.map_phrase("raat mein na dikhna")
-    assert out[0]["hpo_id"] == "HP:0000618"
-    assert 0.0 < out[0]["score"] <= 1.0
+def test_family_context_is_not_the_patient():
+    r = run(NOTE)
+    d = by(r, "DISEASE", "Wilson disease")
+    assert d[0]["experiencer"] == "family" and d[0]["family_relation"] == "mother"
+    assert d[1]["experiencer"] == "family" and d[1]["family_relation"] == "brother" and d[1]["assertion"] == "absent"
+    rel = {f["relation"]: f["assertion"] for f in r["summary"]["family_findings"]}
+    assert rel == {"mother": "present", "brother": "absent"}
+    # family phenotypes never enter the patient's HPO lists
+    r2 = run("Her mother has tremor.")
+    assert r2["summary"]["hpo_ids_present"] == [] and r2["summary"]["family_findings"][0]["relation"] == "mother"
 
 
-def test_mapper_flags_low_confidence(mapper):
-    out = mapper.map_text("kuch ajeeb sa lakshan hai jo samajh nahi aata")
-    assert "low_confidence_count" in out
-    assert isinstance(out["unmapped_symptoms"], list)
+def test_gene_variant_link_only_when_unambiguous():
+    r = run(NOTE)
+    v = by(r, "VARIANT")[0]
+    assert v["value"]["gene"] == "ATP7B" and v["value"]["kind"] == "hgvs_c"
+    r = run("ATP7B and VHL were tested and c.3207C>A was seen.")
+    v = by(r, "VARIANT")[0]
+    assert v["value"]["gene"] is None and "ambiguous" in v["value"]["gene_link"]
+    assert by(run("rs12345 noted."), "VARIANT")[0]["normalized"]["system"] == "dbSNP"
 
 
-def test_get_ner_returns_lexical_without_checkpoint():
-    assert get_ner().__class__.__name__ in ("LexicalRuleNER", "MuRILNER")
+def test_genes_need_graph_membership_and_uppercase():
+    r = run("The ATP7B gene, and ICU stay, and nothing else like Tremor.")
+    assert [e["text"] for e in by(r, "GENE")] == ["ATP7B"]
+
+
+def test_drug_normalised_only_when_known():
+    d = by(run("Started clopidogrel."), "DRUG")[0]
+    assert d["normalized"]["id"] == "clopidogrel" and d["normalized"]["status"] == "normalized"
+
+
+def test_lab_value_parsed_not_normalised():
+    lab = by(run("Hb: 9.2 g/dL."), "LAB")[0]
+    assert lab["value"]["analyte"].lower() == "hb" and lab["value"]["value"] == 9.2 and lab["normalized"]["status"] == "unmapped"
+
+
+def test_conflict_detected_only_from_explicit_text():
+    r = run("Tremor is present. Later: no tremor.")
+    assert [c["hpo_id"] for c in r["summary"]["conflicts"]] == ["HP:0001337"]
+    assert run("Tremor present.")["summary"]["conflicts"] == []
+
+
+def test_hindi_english_code_mixed():
+    r = run("Bachche ko tremor hai aur seizures nahi hote.")
+    got = {e["text"]: e["assertion"] for e in by(r, "PHENOTYPE")}
+    assert got.get("tremor") == "present"
+
+
+def test_unsupported_labels_declared_and_unproduced():
+    r = run("MRI brain done. Biopsy of the liver was taken.")
+    assert not by(r, "PROCEDURE") and not by(r, "ANATOMICAL_SITE")
+    assert set(r["engine"]["unsupported_labels"]) == {"PROCEDURE", "ANATOMICAL_SITE"}
+
+
+def test_assess_context_unit():
+    t = "no fever"
+    a = assess_context(t, 3, 8, (0, len(t)))
+    assert a["negated"] and a["assertion"] == "absent"
+
+
+def test_no_text_invented():
+    r = run("Routine follow-up visit. Nothing to report.")
+    assert r["summary"]["hpo_ids_present"] == [] and r["summary"]["possible_phenotypes"] == []
+
+
+# --------------------------------- API ---------------------------------
+
+def test_analyze_endpoint_and_audit(client):
+    r = client.post("/api/v1/nlp/analyze", json={"text": NOTE}, headers=hdr())
+    assert r.status_code == 200
+    j = r.json()
+    assert j["entities"] and j["summary"]["hpo_ids_present"] and "disclaimer" in j
+    assert client.post("/api/v1/nlp/entities", json={"text": NOTE}, headers=hdr()).json()["counts"]["PHENOTYPE"] >= 3
+
+
+def test_normalize_endpoint(client):
+    r = client.post("/api/v1/nlp/normalize", json={"phrases": ["tremor", "qwertyzzz"]}, headers=hdr()).json()["results"]
+    assert r[0]["candidates"][0]["hpo_id"] == "HP:0001337" and r[0]["status"] == "mapped"
+    assert r[1]["status"] in ("unmapped", "needs_review")
+
+
+def test_validation_and_auth(client):
+    assert client.post("/api/v1/nlp/analyze", json={"text": "   "}, headers=hdr()).status_code == 422
+    assert client.post("/api/v1/nlp/analyze", json={"text": "x" * 20001}, headers=hdr()).status_code == 422
+    assert client.post("/api/v1/nlp/analyze", json={"text": "tremor", "patient_id": "NOPE"}, headers=hdr()).status_code == 404
+    assert client.post("/api/v1/nlp/analyze", json={"text": "tremor"}).status_code in (401, 403)
+    assert client.post("/api/v1/nlp/analyze", json={"text": "tremor"}, headers=hdr("p", "patient")).status_code == 403
+    assert client.post("/api/v1/nlp/normalize", json={"phrases": []}, headers=hdr()).status_code == 422
+
+
+def test_capabilities(client):
+    j = client.get("/api/v1/nlp/capabilities", headers=hdr()).json()
+    assert "PHENOTYPE" in j["supported_labels"] and "PROCEDURE" in j["unsupported_labels"]
+
+
+def test_assistant_receives_nlp_context(client, monkeypatch):
+    seen = {}
+    svc = registry.assistant
+    orig = svc.handle_message if hasattr(svc, "handle_message") else None
+    ctx = registry.clinical_text.ai_context(NOTE)
+    assert "Explicitly absent" in ctx["text"] and "Family (mother)" in ctx["text"]
+    assert ctx["citations"][0]["source_type"] == "clinical_text_nlp"
+    r = client.post("/api/v1/assistant/chat", json={"message": "Summarise this note", "clinical_text": NOTE}, headers=hdr())
+    assert r.status_code == 200
+    assert any(c.get("source_type") == "clinical_text_nlp" for c in r.json()["citations"])
+    assert client.post("/api/v1/assistant/chat", json={"message": "x", "clinical_text": NOTE}, headers=hdr("p", "patient")).status_code in (403,)
+    del seen, orig

@@ -1,0 +1,67 @@
+{
+ "disease_id": "ORPHA:915",
+ "disease_name": "Wilson disease",
+ "mode": "autosomal recessive",
+ "scenario": {
+  "partner_a": "Carrier",
+  "partner_b": "Not a carrier"
+ },
+ "baseline": {
+  "both_carriers": 1.0,
+  "child_affected": 0.25,
+  "child_carrier": 0.5,
+  "one_in_n": 4
+ },
+ "result": {
+  "both_carriers": 0.0,
+  "child_affected": 0.0,
+  "child_carrier": 0.0,
+  "one_in_n": null
+ },
+ "punnett": {
+  "mode": "autosomal recessive",
+  "parent_a": "Aa",
+  "parent_b": "AA",
+  "gametes_a": [
+   "A",
+   "a"
+  ],
+  "gametes_b": [
+   "A",
+   "A"
+  ],
+  "cells": [
+   [
+    {
+     "genotype": "AA",
+     "probability": 0.25
+    },
+    {
+     "genotype": "AA",
+     "probability": 0.25
+    }
+   ],
+   [
+    {
+     "genotype": "Aa",
+     "probability": 0.25
+    },
+    {
+     "genotype": "Aa",
+     "probability": 0.25
+    }
+   ]
+  ],
+  "genotype_probabilities": {
+   "AA": 0.5,
+   "Aa": 0.5
+  },
+  "outcome_probabilities": {
+   "affected": 0.0,
+   "carrier": 0.5,
+   "unaffected_non_carrier": 0.5
+  }
+ },
+ "note": "What-if only: the recorded pedigree is not changed.",
+ "safety": "Calculated genetic probability, not a clinical outcome prediction. Results depend on the recorded genotypes and stated assumptions; discuss them with a clinician or genetic counselor."
+}

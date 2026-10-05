@@ -1,0 +1,65 @@
+{
+ "patient_id": "PT-3780FB12",
+ "disease_id": "ORPHA:915",
+ "disease_name": "Wilson disease",
+ "rank": 1,
+ "explanation": [
+  "Phenotype similarity (Resnik/Phenomizer information content) is 2.5534 against a best of 2.5534 in this differential.",
+  "It is within 80% of the best similarity, so the Indian population prior is applied (exposure 0.15); relative prior weight 1.0864.",
+  "No variant analysis is linked, so there is no genomic support to show (Not analyzed)."
+ ],
+ "factors": {
+  "phenotype_similarity": 2.5534,
+  "probability": 0.1766,
+  "rank": 1,
+  "prevalence_per_100k": 3.0,
+  "consanguinity_multiplier": 1.1,
+  "founder_multiplier": 1.0,
+  "sex_multiplier": 1.0,
+  "relative_prior_weight": 1.0864,
+  "prior_applied": true,
+  "similarity_gate": 0.8,
+  "prior_exposure": 0.15,
+  "noise_floor": 0.05
+ },
+ "supporting_symptoms": [
+  {
+   "patient_term": "HP:0001337",
+   "matched_disease_term": "HP:0001337",
+   "similarity": 2.9444,
+   "specificity": 2.9444,
+   "contribution": 8.6697,
+   "weight_pct": 78.1,
+   "patient_term_name": "Tremor",
+   "disease_term_name": "Tremor"
+  },
+  {
+   "patient_term": "HP:0000952",
+   "matched_disease_term": "HP:0000952",
+   "similarity": 1.5581,
+   "specificity": 1.5581,
+   "contribution": 2.4278,
+   "weight_pct": 21.9,
+   "patient_term_name": "Jaundice",
+   "disease_term_name": "Jaundice"
+  }
+ ],
+ "missing_findings": [
+  {
+   "hpo_id": "HP:0001394",
+   "name": "Cirrhosis",
+   "status": "Not documented"
+  },
+  {
+   "hpo_id": "HP:0001332",
+   "name": "Dystonia",
+   "status": "Not documented"
+  },
+  {
+   "hpo_id": "HP:0000616",
+   "name": "Kayser-Fleischer ring",
+   "status": "Not documented"
+  }
+ ],
+ "disclaimer": "Clinical Decision Support. Computational ranking for clinician review; it is not a diagnosis."
+}

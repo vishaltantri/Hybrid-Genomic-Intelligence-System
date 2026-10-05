@@ -1,0 +1,63 @@
+{
+ "patient_id": "PT-7D4CEABF",
+ "disease_id": "ORPHA:915",
+ "disease_name": "Wilson disease",
+ "score": {
+  "probability": 0.1766,
+  "phenotype_similarity": 2.5534
+ },
+ "score_note": null,
+ "matched": [
+  {
+   "patient_term": "HP:0001337",
+   "patient_term_name": "Tremor",
+   "disease_term": "HP:0001337",
+   "disease_term_name": "Tremor",
+   "similarity": 2.9444,
+   "weight_pct": 78.1
+  },
+  {
+   "patient_term": "HP:0000952",
+   "patient_term_name": "Jaundice",
+   "disease_term": "HP:0000952",
+   "disease_term_name": "Jaundice",
+   "similarity": 1.5581,
+   "weight_pct": 21.9
+  }
+ ],
+ "unmatched_patient_terms": [],
+ "explicitly_absent": [
+  {
+   "hpo_id": "HP:0001250",
+   "name": "Seizures"
+  }
+ ],
+ "not_documented": [
+  {
+   "hpo_id": "HP:0000616",
+   "name": "Kayser-Fleischer ring",
+   "status": "Not documented"
+  },
+  {
+   "hpo_id": "HP:0001394",
+   "name": "Cirrhosis",
+   "status": "Not documented"
+  },
+  {
+   "hpo_id": "HP:0001332",
+   "name": "Dystonia",
+   "status": "Not documented"
+  },
+  {
+   "hpo_id": "HP:0002240",
+   "name": "Hepatomegaly",
+   "status": "Not documented"
+  }
+ ],
+ "genes": [
+  "ATP7B"
+ ],
+ "case_variants": [],
+ "variant_note": "Not analyzed: no variant analysis is linked to this case.",
+ "note": "Scores come from the existing Resnik/Phenomizer engine; this view does not re-weight them."
+}

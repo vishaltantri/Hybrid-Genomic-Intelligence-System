@@ -53,6 +53,8 @@ async function request(path, { method = 'GET', body, form } = {}) {
     try {
       const j = await res.json()
       detail = j.detail || detail
+      if (detail && typeof detail === 'object' && !Array.isArray(detail)) detail = detail.message || JSON.stringify(detail)
+      else if (Array.isArray(detail)) detail = detail.map((d) => d.msg || JSON.stringify(d)).join('; ')
     } catch {
       /* keep */
     }
@@ -125,11 +127,31 @@ export const api = {
   explain: (body) => request('/xai/explain', { method: 'POST', body }),
   diseaseDetail: (id) => request(`/diseases/${encodeURIComponent(id)}`),
   kgStats: () => request('/kg/stats'),
+  kgTypes: () => request('/kg/types'),
+  kgSearch: (p) => request(`/kg/search?${new URLSearchParams(Object.entries(p).filter(([, v]) => v !== '' && v != null))}`),
+  kgNode: (key) => request(`/kg/node?${new URLSearchParams({ key })}`),
+  kgNeighborhood: (p) => request(`/kg/neighborhood?${new URLSearchParams(Object.entries(p).filter(([, v]) => v !== '' && v != null))}`),
+  kgPath: (p) => request(`/kg/path?${new URLSearchParams(p)}`),
+  kgCase: (pid) => request(`/kg/case/${encodeURIComponent(pid)}`),
 
   // clinical
   ner: (body) => request('/clinical/extract', { method: 'POST', body }),
   mapHpo: (body) => request('/clinical/hpo-map', { method: 'POST', body }),
   reference: () => request('/reference'),
+
+  // phenotype intelligence (Phase 7)
+  phenoSearch: (q) => request(`/phenotype/search?q=${encodeURIComponent(q)}`),
+  phenoTerm: (id, pid) => request(`/phenotype/term/${encodeURIComponent(id)}${pid ? `?patient_id=${encodeURIComponent(pid)}` : ''}`),
+  phenoCase: (pid) => request(`/phenotype/case/${encodeURIComponent(pid)}`),
+  phenoCompare: (pid, did) => request(`/phenotype/case/${encodeURIComponent(pid)}/compare?disease_id=${encodeURIComponent(did)}`),
+  phenoImport: (pid, items) => request(`/phenotype/case/${encodeURIComponent(pid)}/import`, { method: 'POST', body: { items } }),
+
+  // diagnosis intelligence (Phase 8)
+  dxCase: (pid) => request(`/dx/case/${encodeURIComponent(pid)}`),
+  dxWhy: (pid, did) => request(`/dx/case/${encodeURIComponent(pid)}/why?disease_id=${encodeURIComponent(did)}`),
+  dxMatrix: (pid) => request(`/dx/case/${encodeURIComponent(pid)}/matrix`),
+  dxDiscriminating: (pid) => request(`/dx/case/${encodeURIComponent(pid)}/discriminating`),
+  dxWhatIf: (pid, body) => request(`/dx/case/${encodeURIComponent(pid)}/whatif`, { method: 'POST', body }),
 
   // patients
   listPatients: () => request('/patients'),
@@ -138,6 +160,20 @@ export const api = {
 
   // pharmacogenomics: POST /pgx/check { drugs[], state, ethnicity, sex, age, known_genotypes, lang }
   pgxCheck: (body) => request('/pgx/check', { method: 'POST', body }),
+  pgxCase: (pid) => request(`/pgx/case/${encodeURIComponent(pid)}`),
+  reproMembers: (pid) => request(`/repro/case/${encodeURIComponent(pid)}/members`),
+  reproCase: (pid, a, b) => request(`/repro/case/${encodeURIComponent(pid)}${a && b ? `?partner_a=${encodeURIComponent(a)}&partner_b=${encodeURIComponent(b)}` : ''}`),
+  reproPunnett: (parent_a, parent_b) => request('/repro/punnett', { method: 'POST', body: { parent_a, parent_b } }),
+  reproMonteCarlo: (pid, body) => request(`/repro/case/${encodeURIComponent(pid)}/montecarlo`, { method: 'POST', body }),
+  reproScenario: (pid, body) => request(`/repro/case/${encodeURIComponent(pid)}/scenario`, { method: 'POST', body }),
+  reproExplain: (pid, disease_id) => request(`/repro/case/${encodeURIComponent(pid)}/explain?disease_id=${encodeURIComponent(disease_id)}`),
+  reportSections: () => request('/reports/sections'),
+  reportGenerate: (pid, sections) => request(`/reports/case/${encodeURIComponent(pid)}`, { method: 'POST', body: { sections } }),
+  reportVersions: (pid) => request(`/reports/case/${encodeURIComponent(pid)}`),
+  reportGet: (id) => request(`/reports/${encodeURIComponent(id)}`),
+  reportRefresh: (id) => request(`/reports/${encodeURIComponent(id)}/refresh`, { method: 'POST' }),
+  reportFinalize: (id) => request(`/reports/${encodeURIComponent(id)}/finalize`, { method: 'POST' }),
+  pgxCaseDrug: (pid, name) => request(`/pgx/case/${encodeURIComponent(pid)}/drug?name=${encodeURIComponent(name)}`),
   pgxCoverage: () => request('/pgx/coverage'),
   pgxAlleleFreqs: (params = '') => request(`/pgx/allele-frequencies${params}`),
 
@@ -165,8 +201,33 @@ export const api = {
   triageQuestionnaire: () => request('/triage/questionnaire'),
   triageText: (body) => request('/triage/text', { method: 'POST', body }),
 
+  // workflow + notifications
+  notifList: () => request('/workflow/notifications'),
+  notifCount: () => request('/workflow/notifications/count'),
+  notifRead: (id) => request(`/workflow/notifications/${encodeURIComponent(id)}/read`, { method: 'POST' }),
+  notifReadAll: () => request('/workflow/notifications/read-all', { method: 'POST' }),
+  wfGet: (pid) => request(`/workflow/case/${encodeURIComponent(pid)}`),
+  wfStatus: (pid, body) => request(`/workflow/case/${encodeURIComponent(pid)}/status`, { method: 'POST', body }),
+  wfAssign: (pid, body) => request(`/workflow/case/${encodeURIComponent(pid)}/assign`, { method: 'POST', body }),
+
+  // community referrals
+  refCreateText: (body) => request('/community/referrals/from-text', { method: 'POST', body }),
+  refList: () => request('/community/referrals'),
+  refSummary: () => request('/community/summary'),
+  refFollowUp: (id, body) => request(`/community/referrals/${encodeURIComponent(id)}/followup`, { method: 'POST', body }),
+  refHandoff: (id, body) => request(`/community/referrals/${encodeURIComponent(id)}/handoff`, { method: 'POST', body }),
+
   // EMR / FHIR
   fhirMetadata: () => request('/emr/fhir/metadata'),
+  fhirCaseExport: (pid) => request(`/emr/fhir/case/${encodeURIComponent(pid)}`),
+  fhirValidate: (body) => request('/emr/fhir/validate', { method: 'POST', body }),
+  fhirImportPreview: (body) => request('/emr/fhir/import-preview', { method: 'POST', body }),
+  abdmStatus: () => request('/emr/abdm/status'),
+  analytics: (section, params = {}) => {
+    const qs = new URLSearchParams(Object.entries(params).filter(([, v]) => v !== undefined && v !== null && v !== '')).toString()
+    return request(`/analytics/${section}${qs ? `?${qs}` : ''}`)
+  },
+  searchGlobal: (q, types) => request(`/search?q=${encodeURIComponent(q)}${types ? `&types=${types}` : ''}`),
 
   // variants / ACMG intelligence
   listVariantAnalyses: () => request('/variants/analyses'),
@@ -201,6 +262,41 @@ export const api = {
     request(`/digital-twin/${encodeURIComponent(pid)}/scenarios/${encodeURIComponent(sid)}`, { method: 'DELETE' }),
   twinReportHandoff: (pid, body) =>
     request(`/digital-twin/${encodeURIComponent(pid)}/report-handoff`, { method: 'POST', body }),
+
+  // clinical text NLP (Phase 5)
+  nlpAnalyze: (body) => request('/nlp/analyze', { method: 'POST', body }),
+  nlpNormalize: (phrases, top_k = 3) => request('/nlp/normalize', { method: 'POST', body: { phrases, top_k } }),
+  nlpCapabilities: () => request('/nlp/capabilities'),
+
+  // evidence & literature (Phase 4)
+  evidenceSources: () => request('/evidence/sources'),
+  evidenceSearch: (params) => request(`/evidence/search?${new URLSearchParams(Object.entries(params).filter(([, v]) => v !== '' && v != null))}`),
+  evidencePmid: (pmid) => request(`/evidence/pmid/${encodeURIComponent(pmid)}`),
+  evidenceVariant: (aid, vid, page = 1) => request(`/evidence/variant/${encodeURIComponent(aid)}?variant_id=${encodeURIComponent(vid)}&page=${page}`),
+  evidenceCase: (cid) => request(`/evidence/case/${encodeURIComponent(cid)}`),
+  evidenceSave: (cid, body) => request(`/evidence/case/${encodeURIComponent(cid)}`, { method: 'POST', body }),
+  evidencePatch: (cid, eid, body) => request(`/evidence/case/${encodeURIComponent(cid)}/${encodeURIComponent(eid)}`, { method: 'PATCH', body }),
+  evidenceDelete: (cid, eid) => request(`/evidence/case/${encodeURIComponent(cid)}/${encodeURIComponent(eid)}`, { method: 'DELETE' }),
+  evidenceReport: (cid) => request(`/evidence/case/${encodeURIComponent(cid)}/report`),
+
+  // pedigree & inheritance (Phase 3E)
+  pedigree: (cid) => request(`/pedigree/${encodeURIComponent(cid)}`),
+  pedigreeAddMember: (cid, body) => request(`/pedigree/${encodeURIComponent(cid)}/members`, { method: 'POST', body }),
+  pedigreePatchMember: (cid, mid, body) => request(`/pedigree/${encodeURIComponent(cid)}/members/${encodeURIComponent(mid)}`, { method: 'PATCH', body }),
+  pedigreeDeleteMember: (cid, mid) => request(`/pedigree/${encodeURIComponent(cid)}/members/${encodeURIComponent(mid)}`, { method: 'DELETE' }),
+  pedigreeSetProband: (cid, mid) => request(`/pedigree/${encodeURIComponent(cid)}/members/${encodeURIComponent(mid)}/proband`, { method: 'POST' }),
+  pedigreeSetPhenotypes: (cid, mid, hpo_ids) => request(`/pedigree/${encodeURIComponent(cid)}/members/${encodeURIComponent(mid)}/phenotypes`, { method: 'PUT', body: { hpo_ids } }),
+  pedigreeAddRelationship: (cid, body) => request(`/pedigree/${encodeURIComponent(cid)}/relationships`, { method: 'POST', body }),
+  pedigreeDeleteRelationship: (cid, rid) => request(`/pedigree/${encodeURIComponent(cid)}/relationships/${encodeURIComponent(rid)}`, { method: 'DELETE' }),
+  pedigreeSetGenotype: (cid, mid, body) => request(`/pedigree/${encodeURIComponent(cid)}/members/${encodeURIComponent(mid)}/genotypes`, { method: 'POST', body }),
+  pedigreeDeleteGenotype: (cid, mid, vkey) => request(`/pedigree/${encodeURIComponent(cid)}/members/${encodeURIComponent(mid)}/genotypes/${encodeURIComponent(vkey)}`, { method: 'DELETE' }),
+  pedigreeImportGenotypes: (cid, mid, body) => request(`/pedigree/${encodeURIComponent(cid)}/members/${encodeURIComponent(mid)}/genotypes/import`, { method: 'POST', body }),
+  pedigreeAnalysis: (cid, vkey) => request(`/pedigree/${encodeURIComponent(cid)}/analysis?variant_key=${encodeURIComponent(vkey)}`),
+  pedigreeOverview: (cid) => request(`/pedigree/${encodeURIComponent(cid)}/overview`),
+  pedigreePrioritization: (cid) => request(`/pedigree/${encodeURIComponent(cid)}/prioritization`),
+  pedigreeReproductive: (cid, a, b) => request(`/pedigree/${encodeURIComponent(cid)}/reproductive-context${a && b ? `?partner_a=${encodeURIComponent(a)}&partner_b=${encodeURIComponent(b)}` : ''}`),
+  pedigreeDemoFamily: (cid) => request(`/pedigree/${encodeURIComponent(cid)}/demo-family`, { method: 'POST' }),
+  pedigreeHpoSearch: (q) => request(`/pedigree/hpo-search?q=${encodeURIComponent(q)}`),
 
   // platform status
   platformStatus: () => request('/platform/status'),
@@ -293,4 +389,39 @@ export function consumeNavContext(target) {
   } catch {
     return null
   }
+}
+
+// Authenticated analytics export (CSV / JSON), generated and authorised by the backend.
+export async function downloadAnalytics(section, format, range = {}) {
+  const token = getToken()
+  const qs = new URLSearchParams({ section, format, ...(range.from ? { from: range.from } : {}), ...(range.to ? { to: range.to } : {}) })
+  const res = await fetch(`/api/v1/analytics/export?${qs}`, { headers: token ? { Authorization: `Bearer ${token}` } : {} })
+  if (!res.ok) throw new Error(res.status === 403 ? 'Your role may not export analytics.' : `Export failed (${res.status})`)
+  const blob = await res.blob()
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `genomera_${section.replace(':', '_')}.${format}`
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  URL.revokeObjectURL(url)
+  return blob.size
+}
+
+// Authenticated binary download (PDF / JSON export) - the file is produced by the backend, never in the browser.
+export async function downloadReport(reportId, kind) {
+  const token = getToken()
+  const res = await fetch(`/api/v1/reports/${encodeURIComponent(reportId)}/${kind}`, { headers: token ? { Authorization: `Bearer ${token}` } : {} })
+  if (!res.ok) throw new Error(`Download failed (${res.status})`)
+  const blob = await res.blob()
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `${reportId}.${kind}`
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  URL.revokeObjectURL(url)
+  return blob.size
 }

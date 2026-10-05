@@ -9,6 +9,7 @@ import AppShell from './components/AppShell.jsx'
 // Existing Functional Views
 import DiagnosisView from './views/DiagnosisView.jsx'
 import PgxView from './views/PgxView.jsx'
+import AnalyticsView from './views/AnalyticsView.jsx'
 import ReproView from './views/ReproView.jsx'
 import NationalView from './views/NationalView.jsx'
 import KgView from './views/KgView.jsx'
@@ -24,6 +25,10 @@ import SettingsView from './views/SettingsView.jsx'
 import VariantsView from './views/VariantsView.jsx'
 import AssistantView from './views/AssistantView.jsx'
 import DigitalTwinView from './views/DigitalTwinView.jsx'
+import PedigreeView from './views/PedigreeView.jsx'
+import EvidenceView from './views/EvidenceView.jsx'
+import ClinicalTextView from './views/ClinicalTextView.jsx'
+import DiagnosisIntelView from './views/DiagnosisIntelView.jsx'
 import PlaceholderView from './views/PlaceholderView.jsx'
 
 // Helper to extract initial route from hash or URL query parameter
@@ -148,6 +153,10 @@ export default function App() {
         return <PatientsView onSelectPatientForDiagnosis={handleSelectPatientForDiagnosis} />
       case 'phenotypes':
         return <PhenotypesView onNavigateToDiagnosis={(text) => handleNavigate('diagnosis')} />
+      case 'clinical-text':
+        return <ClinicalTextView onNavigate={handleNavigate} />
+      case 'dx-intel':
+        return <DiagnosisIntelView onNavigate={handleNavigate} />
       case 'diagnosis':
         return <DiagnosisView />
       case 'variants':
@@ -159,7 +168,9 @@ export default function App() {
           />
         )
       case 'kg':
-        return <KgView />
+        return <KgView onNavigate={handleNavigate} />
+      case 'pedigree':
+        return <PedigreeView onNavigate={handleNavigate} />
       case 'digital-twin':
         return <DigitalTwinView onNavigate={handleNavigate} />
       case 'ai-assistant':
@@ -171,11 +182,13 @@ export default function App() {
           />
         )
       case 'evidence':
-        return <PlaceholderView moduleId="evidence" onNavigateToDiagnosis={handleNavigate} />
+        return <EvidenceView onNavigate={handleNavigate} />
       case 'pgx':
-        return <PgxView />
+        return <PgxView onNavigate={handleNavigate} />
       case 'repro':
-        return <ReproView />
+        return <ReproView onNavigate={handleNavigate} />
+      case 'analytics':
+        return <AnalyticsView />
       case 'national':
         return <NationalView />
       case 'reports':

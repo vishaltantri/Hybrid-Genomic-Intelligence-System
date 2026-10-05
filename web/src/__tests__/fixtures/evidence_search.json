@@ -1,0 +1,243 @@
+{
+ "status": "ok",
+ "query": {
+  "kind": "text",
+  "term": "ATP7B Wilson",
+  "terms": [
+   "ATP7B",
+   "Wilson"
+  ]
+ },
+ "results": [
+  {
+   "source": "PubMed",
+   "source_id": "40661833",
+   "title": "Functional Screen of Wilson Disease ATP7B Variants Reveals Residual Transport Activities.",
+   "authors": [
+    "Calvo JS",
+    "Heger T",
+    "Kabin E",
+    "Mowrey WR",
+    "Del Angel G",
+    "Ding W",
+    "Lutsenko S"
+   ],
+   "journal": "Human mutation",
+   "publication_date": "2025",
+   "pmid": "40661833",
+   "doi": "10.1155/humu/7485658",
+   "gene": [
+    "ATP7B"
+   ],
+   "variant": [],
+   "disease": [],
+   "phenotype": [],
+   "evidence_type": null,
+   "evidence_strength": null,
+   "summary": "Wilson disease is a disorder of copper (Cu) homeostasis caused by the malfunction of Cu transporter ATP7B and associated Cu accumulation in tissues. The existence of over 700 disease-associated variants in the ATP7B gene and a broad spectrum of disease manifestations complicate the analysis of genotype-phenotype correlations and the development of better treatments for this disorder. To assist suc",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/40661833/",
+   "retrieved_at": "2026-10-05T20:53:46Z",
+   "provenance": {
+    "database": "PubMed (NCBI E-utilities efetch)",
+    "query": "ATP7B Wilson",
+    "retrieved_at": "2026-10-05T20:53:46Z",
+    "publication_types": [
+     "Journal Article"
+    ],
+    "mesh_terms": [
+     "Humans",
+     "Copper-Transporting ATPases",
+     "Hepatolenticular Degeneration",
+     "Copper",
+     "Mutation",
+     "Biological Transport",
+     "Fibroblasts",
+     "Genetic Association Studies"
+    ],
+    "strength_basis": "No recognised publication-type tag; design not classified",
+    "abstract_available": true
+   },
+   "mentions": {
+    "genes": [
+     "ATP7B"
+    ],
+    "hgvs_c": [],
+    "hgvs_p": [],
+    "rsids": [],
+    "transcripts": []
+   },
+   "linked_variants": [],
+   "relevance": 0.856,
+   "relevance_components": {
+    "title_match": 0.45,
+    "abstract_match": 0.25,
+    "study_design": 0.06,
+    "recency": 0.096
+   },
+   "relevance_note": "Relevance to the query, not certainty or clinical validity",
+   "pubmed_order": 0
+  },
+  {
+   "source": "PubMed",
+   "source_id": "22240481",
+   "title": "Diverse functional properties of Wilson disease ATP7B variants.",
+   "authors": [
+    "Huster D",
+    "K\u00fchne A",
+    "Bhattacharjee A",
+    "Raines L",
+    "Jantsch V",
+    "Noe J",
+    "Schirrmeister W",
+    "Sommerer I",
+    "Sabri O",
+    "Berr F",
+    "M\u00f6ssner J",
+    "Stieger B"
+   ],
+   "journal": "Gastroenterology",
+   "publication_date": "2012-Apr",
+   "pmid": "22240481",
+   "doi": "10.1053/j.gastro.2011.12.048",
+   "gene": [
+    "ATP7B"
+   ],
+   "variant": [],
+   "disease": [],
+   "phenotype": [],
+   "evidence_type": null,
+   "evidence_strength": null,
+   "summary": "BACKGROUND & AIMS: Wilson disease is a severe disorder of copper metabolism caused by mutations in ATP7B, which encodes a copper-transporting adenosine triphosphatase. The disease presents with a variable phenotype that complicates the diagnostic process and treatment. Little is known about the mechanisms that contribute to the different phenotypes of the disease. METHODS: We analyzed 28 variants ",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/22240481/",
+   "retrieved_at": "2026-10-05T20:53:46Z",
+   "provenance": {
+    "database": "PubMed (NCBI E-utilities efetch)",
+    "query": "ATP7B Wilson",
+    "retrieved_at": "2026-10-05T20:53:46Z",
+    "publication_types": [
+     "Journal Article",
+     "Research Support, N.I.H., Extramural",
+     "Research Support, Non-U.S. Gov't"
+    ],
+    "mesh_terms": [
+     "Adenosine Triphosphatases",
+     "Adenosine Triphosphate",
+     "Baculoviridae",
+     "Catalytic Domain",
+     "Cation Transport Proteins",
+     "Copper",
+     "Copper-Transporting ATPases",
+     "Enzyme Stability",
+     "Genetic Predisposition to Disease",
+     "Genetic Vectors",
+     "Green Fluorescent Proteins",
+     "HEK293 Cells",
+     "Hepatolenticular Degeneration",
+     "Humans",
+     "Ion Transport"
+    ],
+    "strength_basis": "No recognised publication-type tag; design not classified",
+    "abstract_available": true
+   },
+   "mentions": {
+    "genes": [
+     "ATP7B"
+    ],
+    "hgvs_c": [],
+    "hgvs_p": [],
+    "rsids": [],
+    "transcripts": []
+   },
+   "linked_variants": [],
+   "relevance": 0.804,
+   "relevance_components": {
+    "title_match": 0.45,
+    "abstract_match": 0.25,
+    "study_design": 0.06,
+    "recency": 0.044
+   },
+   "relevance_note": "Relevance to the query, not certainty or clinical validity",
+   "pubmed_order": 1
+  },
+  {
+   "source": "PubMed",
+   "source_id": "22692182",
+   "title": "A structural model of the copper ATPase ATP7B to facilitate analysis of Wilson disease-causing mutations and studies of the transport mechanism.",
+   "authors": [
+    "Schushan M",
+    "Bhattacharjee A",
+    "Ben-Tal N",
+    "Lutsenko S"
+   ],
+   "journal": "Metallomics : integrated biometal science",
+   "publication_date": "2012-Jul",
+   "pmid": "22692182",
+   "doi": "10.1039/c2mt20025b",
+   "gene": [
+    "ATP7B"
+   ],
+   "variant": [],
+   "disease": [],
+   "phenotype": [],
+   "evidence_type": null,
+   "evidence_strength": null,
+   "summary": "The copper-transporting ATPase ATP7B has an essential role in human physiology, particularly for the liver and brain function. Inactivation of ATP7B is associated with a severe hepato-neurologic disorder, Wilson disease (WD). Hundreds of WD related mutations have been identified in ATP7B to date. The low frequency and the compound-heterozygous nature of causative mutations complicate the analysis ",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/22692182/",
+   "retrieved_at": "2026-10-05T20:53:46Z",
+   "provenance": {
+    "database": "PubMed (NCBI E-utilities efetch)",
+    "query": "ATP7B Wilson",
+    "retrieved_at": "2026-10-05T20:53:46Z",
+    "publication_types": [
+     "Journal Article",
+     "Research Support, N.I.H., Extramural",
+     "Research Support, Non-U.S. Gov't"
+    ],
+    "mesh_terms": [
+     "Adenosine Triphosphatases",
+     "Amino Acid Sequence",
+     "Amino Acid Substitution",
+     "Animals",
+     "Binding Sites",
+     "Biological Transport",
+     "Cation Transport Proteins",
+     "Cell Membrane",
+     "Conserved Sequence",
+     "Copper",
+     "Copper-Transporting ATPases",
+     "Hepatolenticular Degeneration",
+     "Humans",
+     "Hydrophobic and Hydrophilic Interactions",
+     "Mice"
+    ],
+    "strength_basis": "No recognised publication-type tag; design not classified",
+    "abstract_available": true
+   },
+   "mentions": {
+    "genes": [
+     "ATP7B"
+    ],
+    "hgvs_c": [],
+    "hgvs_p": [],
+    "rsids": [],
+    "transcripts": []
+   },
+   "linked_variants": [],
+   "relevance": 0.804,
+   "relevance_components": {
+    "title_match": 0.45,
+    "abstract_match": 0.25,
+    "study_design": 0.06,
+    "recency": 0.044
+   },
+   "relevance_note": "Relevance to the query, not certainty or clinical validity",
+   "pubmed_order": 2
+  }
+ ],
+ "total": 1313,
+ "page": 1,
+ "size": 3,
+ "retrieved_at": "2026-10-05T20:53:46Z",
+ "query_translation": "(\"atp7b protein human\"[Supplementary Concept] OR \"atp7b protein human\"[All Fields] OR \"atp7b\"[All Fields]) AND (\"wilson\"[All Fields] OR \"wilson s\"[All Fields] OR \"wilsons\"[All Fields] OR \"wilsons s\"[All Fields])",
+ "message": ""
+}

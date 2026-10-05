@@ -107,6 +107,10 @@ class DigitalTwinService:
         pgx = ts.build_pgx_state(self.registry.pgx, core["variants"], patient)
         anatomy = build_anatomy(graph, self.ontology, phenotype, genomic.get("variants", []), diagnosis)
         family = ts.build_family_state(patient, analysis)
+        # Phase 3E: the pedigree module owns the family representation; the Twin only reads its summary.
+        family["pedigree"] = self.registry.pedigree.summary(patient_id)
+        if family["pedigree"]["exists"]:
+            family["available"], family["note"] = True, None
         timeline = ts.build_timeline(patient, events, core["analyses"])
 
         cons_rate = self.registry.diagnosis.state_consanguinity.get(

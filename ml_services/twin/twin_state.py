@@ -113,7 +113,12 @@ def collect_phenotype_records(patient: dict, events: List[dict]) -> Dict[str, di
 
     for ev in sorted(events, key=lambda e: e.get("created_utc") or ""):
         payload = ev.get("payload") or {}
-        if ev["kind"] == "hpo_profile":
+        if ev["kind"] == "phenotype_assertions":
+            # explicit clinician-confirmed negation / uncertainty removes the term from the computational set
+            for item in payload.get("assertions", []):
+                if item.get("assertion") in ("absent", "possible"):
+                    records.pop(item["hpo_id"], None)
+        elif ev["kind"] == "hpo_profile":
             for item in payload.get("hpo_profile", []):
                 add(item["hpo_id"], {
                     "type": "hpo_profile", "ref": ev["event_id"], "timestamp": ev["created_utc"],

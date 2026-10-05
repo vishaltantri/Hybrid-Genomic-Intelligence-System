@@ -19,6 +19,9 @@ from backend.app import store
 from ml_services.assistant.intent_classifier import detect_intent, extract_entities_from_query
 
 
+NO_VISIBLE_ANALYSIS = "__no_visible_analysis__"
+
+
 @dataclass
 class Citation:
     source_type: str         # "Variant Analysis", "Knowledge Graph", "ClinVar", "Orphanet", "IndiGenomes", "Diagnosis Engine", "CPIC"
@@ -81,13 +84,14 @@ class ContextRetriever:
         # 1. Variant & ACMG Retrieval (Phase 3B Engine)
         # -------------------------------------------------------------
         variants_data: List[dict] = []
-        if analysis_id:
+        if analysis_id and analysis_id != NO_VISIBLE_ANALYSIS:
             analysis = self.registry.variants.get_analysis(analysis_id)
             if analysis:
                 variants_data = analysis.get("variants", [])
         elif not variants_data:
-            # If no analysis_id, inspect recent analyses
-            recent = self.registry.variants.list_analyses()
+            # No analysis_id: inspect recent analyses. The API passes NO_VISIBLE_ANALYSIS when analyses exist but none
+            # belong to the caller, so another user's upload is never used; the verified demo trio is used instead.
+            recent = [] if analysis_id == NO_VISIBLE_ANALYSIS else self.registry.variants.list_analyses()
             if recent:
                 analysis = self.registry.variants.get_analysis(recent[0]["analysis_id"])
                 if analysis:

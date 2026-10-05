@@ -1,0 +1,11 @@
+{
+ "disease_id": "ORPHA:915",
+ "available": true,
+ "sections": {
+  "what_we_know": "For Wilson disease (autosomal recessive), the recorded information is: Father: carrier; Mother: carrier.",
+  "what_the_calculation_means": "Based on these inputs, the calculated chance that a child is affected is 25.0% (about 1 in 4), and the chance a child is a carrier is 50.0%. This is a probability for each pregnancy, not a prediction for any one child.",
+  "what_remains_uncertain": "Any genotype that was not recorded is treated as unknown, so the figure uses population averages for that person. Testing can change the result.",
+  "discuss_with_clinician": "Please discuss these results, carrier testing and the available options with a clinician or genetic counselor."
+ },
+ "safety": "Calculated genetic probability, not a clinical outcome prediction. Results depend on the recorded genotypes and stated assumptions; discuss them with a clinician or genetic counselor."
+}

@@ -1,244 +1,95 @@
-import React, { useEffect, useState } from 'react'
-import { api } from '../../api.js'
-import {
-  Search,
-  Users,
-  Stethoscope,
-  Pill,
-  Network,
-  X,
-  ArrowRight,
-  Command,
-} from 'lucide-react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
+import { Search, X, ArrowRight } from 'lucide-react'
+import { api, setNavContext } from '../../api.js'
 
-export function GlobalSearchModal({ isOpen, onClose, onNavigate }) {
+const GROUPS = [
+  ['commands', 'Go to'], ['cases', 'Cases'], ['variants', 'Variants'], ['diseases', 'Diseases'],
+  ['genes', 'Genes'], ['phenotypes', 'Phenotypes'], ['reports', 'Reports'], ['referrals', 'Referrals'],
+]
+
+export function GlobalSearchModal({ isOpen, onClose, onNavigate, debounceMs = 200 }) {
   const [query, setQuery] = useState('')
-  const [patients, setPatients] = useState([])
-  const [reference, setReference] = useState({ drugs: [], communities: [], states: [] })
+  const [data, setData] = useState(null)
+  const [error, setError] = useState(null)
   const [loading, setLoading] = useState(false)
+  const [active, setActive] = useState(0)
+  const seq = useRef(0)
+
+  useEffect(() => { if (!isOpen) { setQuery(''); setData(null); setError(null); setActive(0) } }, [isOpen])
 
   useEffect(() => {
-    if (isOpen) {
-      setLoading(true)
-      Promise.all([
-        api.listPatients().catch(() => []),
-        api.reference().catch(() => ({ drugs: [], communities: [], states: [] })),
-      ])
-        .then(([pts, ref]) => {
-          setPatients(pts || [])
-          setReference(ref || { drugs: [], communities: [], states: [] })
-        })
-        .finally(() => setLoading(false))
-    }
-  }, [isOpen])
+    const q = query.trim()
+    if (!isOpen || q.length < 2) { setData(null); setError(null); setLoading(false); return }
+    const id = ++seq.current
+    setLoading(true)
+    const t = setTimeout(async () => {
+      try {
+        const r = await api.searchGlobal(q)
+        if (id === seq.current) { setData(r); setError(null); setActive(0) }
+      } catch (e) {
+        if (id === seq.current) { setError(e.message); setData(null) }
+      } finally { if (id === seq.current) setLoading(false) }
+    }, debounceMs)
+    return () => clearTimeout(t)
+  }, [query, isOpen, debounceMs])
 
-  // Listen for Escape key
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.key === 'Escape' && isOpen) {
-        onClose()
-      }
-    }
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [isOpen, onClose])
+  const flat = useMemo(() => (data ? GROUPS.flatMap(([k]) => data.results[k] || []) : []), [data])
 
   if (!isOpen) return null
 
-  const q = query.trim().toLowerCase()
+  const choose = (h) => {
+    setNavContext(h.route, { ...h.context, type: h.type, id: h.id, ...(h.type === 'gene' ? { gene: h.id } : {}) })
+    onNavigate(h.route)
+    onClose()
+  }
+  const onKeyDown = (e) => {
+    if (e.key === 'Escape') onClose()
+    else if (e.key === 'ArrowDown') { e.preventDefault(); setActive((a) => Math.min(a + 1, Math.max(flat.length - 1, 0))) }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); setActive((a) => Math.max(a - 1, 0)) }
+    else if (e.key === 'Enter' && flat[active]) { e.preventDefault(); choose(flat[active]) }
+  }
 
-  // Filter patients
-  const matchedPatients = q
-    ? patients.filter(
-        (p) =>
-          p.patient_id?.toLowerCase().includes(q) ||
-          p.state?.toLowerCase().includes(q) ||
-          p.community?.toLowerCase().includes(q) ||
-          p.extra?.notes?.toLowerCase().includes(q)
-      ).slice(0, 4)
-    : []
-
-  // Filter drugs
-  const matchedDrugs = q
-    ? (reference.drugs || [])
-        .filter((d) => (typeof d === 'string' ? d : d.name || '').toLowerCase().includes(q))
-        .slice(0, 4)
-    : []
-
-  // Static common rare diseases recognized by the system
-  const commonDiseases = [
-    { id: 'ORPHA:90', name: 'Wilson Disease', gene: 'ATP7B' },
-    { id: 'ORPHA:231', name: 'Spinal Muscular Atrophy', gene: 'SMN1' },
-    { id: 'ORPHA:98909', name: 'Duchenne Muscular Dystrophy', gene: 'DMD' },
-    { id: 'ORPHA:2312', name: 'Beta-Thalassemia', gene: 'HBB' },
-    { id: 'ORPHA:58', name: 'Alkaptonuria', gene: 'HGD' },
-  ]
-  const matchedDiseases = q
-    ? commonDiseases.filter(
-        (d) =>
-          d.name.toLowerCase().includes(q) ||
-          d.id.toLowerCase().includes(q) ||
-          d.gene.toLowerCase().includes(q)
-      )
-    : []
-
-  const hasResults =
-    matchedPatients.length > 0 || matchedDrugs.length > 0 || matchedDiseases.length > 0
-
+  let idx = -1
+  const q = query.trim()
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-150">
-      <div
-        className="w-full max-w-xl bg-white rounded-2xl shadow-2xl overflow-hidden border border-outline-variant/40 animate-in zoom-in-95 duration-150 flex flex-col max-h-[80vh]"
-        role="dialog"
-        aria-modal="true"
-      >
-        {/* Search Input Bar */}
-        <div className="p-4 border-b border-outline-variant/30 flex items-center gap-3 bg-surface-container-low/30">
+    <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 p-4 bg-slate-900/30" onKeyDown={onKeyDown}>
+      <div role="dialog" aria-modal="true" aria-label="Command palette" className="w-full max-w-xl bg-white rounded-2xl shadow-2xl overflow-hidden border border-outline-variant/40 flex flex-col max-h-[80vh]">
+        <div className="p-4 border-b border-outline-variant/30 flex items-center gap-3">
           <Search size={20} className="text-primary shrink-0" />
-          <input
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search patients, diseases (Wilson, Thalassemia), drugs (Clopidogrel)..."
-            className="w-full bg-transparent border-none outline-none text-sm font-body-md text-on-surface focus:ring-0 p-0"
-            autoFocus
-          />
-          {query && (
-            <button
-              onClick={() => setQuery('')}
-              className="p-1 rounded text-outline hover:text-on-surface text-xs"
-            >
-              Clear
-            </button>
-          )}
-          <button
-            onClick={onClose}
-            className="p-1.5 rounded-lg text-outline hover:text-on-surface hover:bg-surface-container transition-colors"
-          >
-            <X size={18} />
-          </button>
+          <input autoFocus aria-label="Search" value={query} onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search cases, variants, diseases, genes, reports, or go to a page"
+            className="w-full bg-transparent border-none outline-none text-sm text-on-surface focus:ring-0 p-0" />
+          <button aria-label="Close search" onClick={onClose} className="p-1.5 rounded-lg text-outline hover:text-on-surface hover:bg-surface-container"><X size={18} /></button>
         </div>
-
-        {/* Search Results Area */}
-        <div className="p-4 overflow-y-auto space-y-4">
-          {!q ? (
-            <div className="py-8 text-center text-xs text-outline space-y-2">
-              <Command size={28} className="mx-auto text-outline/60 mb-1" />
-              <div>Type to query the clinical intelligence registry.</div>
-              <div className="flex flex-wrap justify-center gap-1.5 pt-2">
-                <span className="px-2 py-0.5 rounded bg-surface-container-low text-[11px] font-mono">Wilson Disease</span>
-                <span className="px-2 py-0.5 rounded bg-surface-container-low text-[11px] font-mono">Clopidogrel</span>
-                <span className="px-2 py-0.5 rounded bg-surface-container-low text-[11px] font-mono">Reddy</span>
-                <span className="px-2 py-0.5 rounded bg-surface-container-low text-[11px] font-mono">PT-</span>
+        <div className="p-3 overflow-y-auto space-y-3 text-xs">
+          {error && <div role="alert" className="rounded-lg border border-red-200 bg-red-50 text-red-800 px-3 py-2">{error}</div>}
+          {q.length < 2 && !error && <div className="py-6 text-center text-outline">Type at least 2 characters. Results only include what your role may access.</div>}
+          {loading && <div className="text-outline">Searching…</div>}
+          {data && data.total === 0 && !loading && (
+            <div data-testid="no-match" className="py-6 text-center text-outline">{data.state === 'Not available' ? 'Search is not available for these sources right now.' : `No matching result for "${data.query}".`}</div>
+          )}
+          {data && data.unavailable?.length > 0 && <div className="text-amber-800">Not available: {data.unavailable.join(', ')}.</div>}
+          {data && GROUPS.map(([key, title]) => (data.results[key] || []).length > 0 && (
+            <div key={key}>
+              <div className="text-[10px] font-bold text-outline uppercase tracking-wider mb-1">{title}</div>
+              <div className="space-y-1" role="listbox" aria-label={title}>
+                {data.results[key].map((h) => {
+                  idx += 1
+                  const mine = idx
+                  return (
+                    <div key={`${key}-${h.id}-${mine}`} role="option" aria-selected={mine === active} onMouseEnter={() => setActive(mine)} onClick={() => choose(h)}
+                      className={`p-2 rounded-lg border flex items-center justify-between cursor-pointer ${mine === active ? 'bg-surface-container border-primary/40' : 'border-outline-variant/30'}`}>
+                      <div><span className="font-semibold text-on-surface">{h.label}</span>{h.sub && <span className="text-on-surface-variant ml-2">{h.sub}</span>}</div>
+                      <ArrowRight size={14} className="text-outline" />
+                    </div>
+                  )
+                })}
               </div>
             </div>
-          ) : !hasResults ? (
-            <div className="py-8 text-center text-xs text-outline">
-              No matching clinical entities found for "{query}".
-            </div>
-          ) : (
-            <>
-              {/* Matched Patients */}
-              {matchedPatients.length > 0 && (
-                <div>
-                  <div className="text-[10px] font-bold text-outline uppercase font-mono tracking-wider mb-1.5">
-                    Patients ({matchedPatients.length})
-                  </div>
-                  <div className="space-y-1.5">
-                    {matchedPatients.map((p) => (
-                      <div
-                        key={p.patient_id}
-                        onClick={() => {
-                          onNavigate('patients')
-                          onClose()
-                        }}
-                        className="p-2.5 rounded-lg bg-surface-container-low/60 hover:bg-surface-container border border-outline-variant/30 flex items-center justify-between cursor-pointer transition-colors"
-                      >
-                        <div className="flex items-center gap-2.5">
-                          <Users size={16} className="text-primary shrink-0" />
-                          <div>
-                            <span className="font-mono font-bold text-xs text-primary">{p.patient_id}</span>
-                            <span className="text-xs text-on-surface-variant ml-2">
-                              {p.age_years ? `${p.age_years}y` : ''} · {p.state || 'India'} {p.community ? `(${p.community})` : ''}
-                            </span>
-                          </div>
-                        </div>
-                        <ArrowRight size={14} className="text-outline" />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Matched Diseases */}
-              {matchedDiseases.length > 0 && (
-                <div>
-                  <div className="text-[10px] font-bold text-outline uppercase font-mono tracking-wider mb-1.5">
-                    Rare Diseases ({matchedDiseases.length})
-                  </div>
-                  <div className="space-y-1.5">
-                    {matchedDiseases.map((d) => (
-                      <div
-                        key={d.id}
-                        onClick={() => {
-                          onNavigate('diagnosis')
-                          onClose()
-                        }}
-                        className="p-2.5 rounded-lg bg-surface-container-low/60 hover:bg-surface-container border border-outline-variant/30 flex items-center justify-between cursor-pointer transition-colors"
-                      >
-                        <div className="flex items-center gap-2.5">
-                          <Stethoscope size={16} className="text-secondary shrink-0" />
-                          <div>
-                            <span className="font-bold text-xs text-on-surface">{d.name}</span>
-                            <span className="text-[11px] text-outline font-mono ml-2">
-                              {d.id} · Gene: {d.gene}
-                            </span>
-                          </div>
-                        </div>
-                        <span className="text-[11px] font-semibold text-primary">Open in Diagnosis</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Matched Medications */}
-              {matchedDrugs.length > 0 && (
-                <div>
-                  <div className="text-[10px] font-bold text-outline uppercase font-mono tracking-wider mb-1.5">
-                    Pharmacogenomic Drugs ({matchedDrugs.length})
-                  </div>
-                  <div className="space-y-1.5">
-                    {matchedDrugs.map((d, i) => {
-                      const drugName = typeof d === 'string' ? d : d.name || ''
-                      return (
-                        <div
-                          key={i}
-                          onClick={() => {
-                            onNavigate('pgx')
-                            onClose()
-                          }}
-                          className="p-2.5 rounded-lg bg-surface-container-low/60 hover:bg-surface-container border border-outline-variant/30 flex items-center justify-between cursor-pointer transition-colors"
-                        >
-                          <div className="flex items-center gap-2.5">
-                            <Pill size={16} className="text-tertiary shrink-0" />
-                            <span className="font-bold text-xs text-on-surface capitalize">{drugName}</span>
-                          </div>
-                          <span className="text-[11px] font-semibold text-tertiary">Check PGx Risk</span>
-                        </div>
-                      )
-                    })}
-                  </div>
-                </div>
-              )}
-            </>
-          )}
+          ))}
         </div>
-
-        {/* Footer info */}
-        <div className="px-4 py-2.5 bg-surface-container-low border-t border-outline-variant/30 text-[11px] text-outline flex items-center justify-between">
-          <span>Navigate with mouse or keyboard</span>
-          <kbd className="px-1.5 py-0.5 rounded bg-white border border-outline-variant/40 font-mono text-[10px]">ESC to close</kbd>
+        <div className="px-4 py-2 bg-surface-container-low border-t border-outline-variant/30 text-[11px] text-outline flex justify-between">
+          <span>Up/Down to move, Enter to open</span><span>Esc to close</span>
         </div>
       </div>
     </div>

@@ -63,7 +63,7 @@ def extract_entities(payload: ClinicalNoteIn, user: dict = Depends(require("clin
     if payload.patient_id:
         store.add_event(payload.patient_id, "clinical_note", {"text": payload.text,
                                                              "entities": result["entities"]})
-    store.audit(user["username"], "clinical.extract", payload.patient_id or "", payload.text[:120])
+    store.audit(user["username"], "clinical.extract", payload.patient_id or "", f"{len(payload.text)} chars, {len(result['entities'])} entities")   # never log note text
     return result
 
 

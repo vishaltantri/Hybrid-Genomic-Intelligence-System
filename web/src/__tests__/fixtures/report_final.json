@@ -1,0 +1,212 @@
+{
+ "report_id": "RPT-4B05718C94",
+ "case_id": "PT-1EC866D1",
+ "version": 1,
+ "status": "final",
+ "created_by": "clinician",
+ "created_utc": "2026-10-05T21:45:38Z",
+ "finalized_by": "clinician",
+ "finalized_utc": null,
+ "content_sha256": "bbaccdabcac59d237a157c7229ee229beca6a1eee1664b4df163dec40d3752bd",
+ "content": {
+  "case_id": "PT-1EC866D1",
+  "title": "Genomera Clinical Genomics Report",
+  "generated_utc": "2026-10-05T21:45:38Z",
+  "generated_by": "clinician",
+  "sections": [
+   {
+    "id": "patient",
+    "title": "Patient summary",
+    "status": "available",
+    "rows": [
+     [
+      "Case ID",
+      "PT-1EC866D1"
+     ],
+     [
+      "Age (years)",
+      9
+     ],
+     [
+      "Sex",
+      "F"
+     ],
+     [
+      "State",
+      "AP"
+     ],
+     [
+      "Community",
+      "Reddy"
+     ],
+     [
+      "Consanguinity",
+      "Not documented"
+     ]
+    ]
+   },
+   {
+    "id": "phenotypes",
+    "title": "Phenotypes",
+    "status": "not_documented",
+    "note": "Not documented: no phenotypes recorded for this case.",
+    "rows": []
+   },
+   {
+    "id": "variants",
+    "title": "Variants",
+    "status": "available",
+    "columns": [
+     "Gene",
+     "Variant",
+     "Zygosity",
+     "ACMG classification"
+    ],
+    "rows": [
+     [
+      "BRCA1",
+      "BRCA1:c.68_69delAG",
+      "Heterozygous",
+      "Pathogenic"
+     ],
+     [
+      "VHL",
+      "VHL:c.194C>G",
+      "Heterozygous",
+      "Pathogenic"
+     ],
+     [
+      "PAH",
+      "PAH:c.1223C>T",
+      "Heterozygous",
+      "Pathogenic"
+     ],
+     [
+      "ATP7B",
+      "ATP7B:c.2931C>G",
+      "Homozygous",
+      "Likely pathogenic"
+     ]
+    ],
+    "note": null
+   },
+   {
+    "id": "diagnosis",
+    "title": "Differential diagnosis",
+    "status": "insufficient",
+    "note": "Insufficient data: a phenotype profile is required to rank diagnoses.",
+    "rows": []
+   },
+   {
+    "id": "pedigree",
+    "title": "Family history and pedigree",
+    "status": "available",
+    "rows": [
+     [
+      "Members",
+      3
+     ],
+     [
+      "Proband",
+      "Proband"
+     ],
+     [
+      "Affected members",
+      1
+     ],
+     [
+      "Data source",
+      "Synthetic/Test Family - Not Clinical Data"
+     ]
+    ]
+   },
+   {
+    "id": "pgx",
+    "title": "Pharmacogenomics",
+    "status": "available",
+    "columns": [
+     "Gene",
+     "Diplotype / drug",
+     "Phenotype / recommendation",
+     "Risk / type"
+    ],
+    "rows": [
+     [
+      "CYP2C19",
+      "*2/*2",
+      "Poor metabolizer",
+      "Genotype"
+     ],
+     [
+      "CYP2C19",
+      "clopidogrel",
+      "Poor metabolizer: Avoid clopidogrel; use ticagrelor or prasugrel",
+      "critical (evidence 1A)"
+     ]
+    ],
+    "note": "Genotypes derive only from reported variants; unreported second alleles are not assumed. Rules are configured prototype guideline tables; confirm with clinical PGx testing. Pharmacogenomic decision support. Clinical prescribing decisions require qualified clinician review."
+   },
+   {
+    "id": "reproductive",
+    "title": "Reproductive genetics",
+    "status": "available",
+    "columns": [
+     "Condition",
+     "Gene",
+     "Inheritance",
+     "Calculated chance a child is affected"
+    ],
+    "rows": [
+     [
+      "Wilson disease",
+      "ATP7B",
+      "Autosomal recessive",
+      "25.00%"
+     ],
+     [
+      "G6PD deficiency",
+      "G6PD",
+      "X-linked recessive",
+      "1.75%"
+     ],
+     [
+      "Beta-thalassemia major",
+      "HBB",
+      "Autosomal recessive",
+      "0.03%"
+     ],
+     [
+      "Sickle cell disease",
+      "HBB",
+      "Autosomal recessive",
+      "0.01%"
+     ],
+     [
+      "Spinal muscular atrophy type 1",
+      "SMN1",
+      "Autosomal recessive",
+      "0.01%"
+     ],
+     [
+      "Oculocutaneous albinism type 2",
+      "OCA2",
+      "Autosomal recessive",
+      "0.01%"
+     ]
+    ],
+    "note": "Calculated genetic probability, not a clinical outcome prediction."
+   },
+   {
+    "id": "evidence",
+    "title": "Evidence selected for the report",
+    "status": "no_result",
+    "note": "No matching result: no evidence has been marked for the report.",
+    "rows": []
+   }
+  ],
+  "disclaimer": "This report is clinical decision support generated from the recorded case data. It is not a diagnosis. Findings must be reviewed and confirmed by a qualified clinician before any clinical action.",
+  "report_id": "RPT-4B05718C94",
+  "version": 1
+ },
+ "integrity_ok": true
+}
