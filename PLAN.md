@@ -858,6 +858,202 @@ Phase 3A implemented an interactive, genuine geographic intelligence layer on to
     4. Added an "All-India Genomics Map" clinical workflow card to [`OverviewView.jsx`](file:///c:/Users/HP/Desktop/cloud/Hybrid-Genomic-Intelligence-System/web/src/views/OverviewView.jsx).
 - **Verification**: Verified with headless Edge browser DOM dump, CDP event stream, and live visual capture ([`national_map_screenshot.png`](file:///C:/Users/HP/.gemini/antigravity/brain/3efa4618-c1f8-4a32-bfb0-b7d3bff26345/national_map_screenshot.png)). All 36 states and union territories rendered with active choropleth shading, pulsing hotspot rings, and interactive tooltips.
 
+---
+
+## 26. Phase 3B: Functional VCF Variant Intelligence & ACMG/AMP Engine
+
+### 26.1 Architectural Objective & Core Workflow
+Delivered an end-to-end, genuinely functional VCF variant analysis and clinical decision-support pipeline inside Genomera:
+`VCF file upload (.vcf, .vcf.gz) -> Validation -> Parsing (single/multi-sample, multi-ALT decomposition) -> Left-aligning/trimming Normalization -> Annotation (ClinVar, gnomAD, IndiGenomes/GenomeIndia AF, Orphanet) -> 2015 ACMG/AMP Criteria Evaluation (28 rules) -> Classification (5 tiers) -> Phenotype-aware Prioritization (HPO overlap + KG) -> Interactive Clinical Workspace`.
+
+### 26.2 Implementation Details
+1. **Genomic Processing Core (`ml_services/variants/`)**:
+   - [`vcf_parser.py`](file:///c:/Users/HP/Desktop/cloud/Hybrid-Genomic-Intelligence-System/ml_services/variants/vcf_parser.py): Robust VCF 4.2+ parser with gzip decompressor, header metadata extractor, FORMAT field decoding (`GT`, `DP`, `AD`, `GQ`), zygosity determination (`Heterozygous`, `Homozygous`, `Hemizygous`), indel left-aligning and suffix/prefix trimming, and chromosome notation standardizer (`chr1`..`chr22`, `chrX`, `chrY`, `chrM`).
+   - [`annotator.py`](file:///c:/Users/HP/Desktop/cloud/Hybrid-Genomic-Intelligence-System/ml_services/variants/annotator.py): Maps genomic coordinates to curated ClinVar seeds, IndiGenomes and GenomeIndia allele frequencies, gnomAD SAS/global frequencies, and Orphanet rare disease associations (`ORPHA:915`, `ORPHA:231222`, etc.). Explicitly enforces data honesty ("Data unavailable in IndiGenomes" when absent).
+   - [`acmg_engine.py`](file:///c:/Users/HP/Desktop/cloud/Hybrid-Genomic-Intelligence-System/ml_services/variants/acmg_engine.py): Implements standard 2015 ACMG/AMP criteria (PVS1, PS1, PS3, PS4, PM1, PM2, PM4, PM5, PP1, PP2, PP3, PP4, BA1, BS1, BS2, BP1, BP4, BP6, BP7). Combines applied strengths into formal classifications (`Pathogenic`, `Likely pathogenic`, `Uncertain significance`, `Likely benign`, `Benign`) with clinical explanations.
+   - [`prioritizer.py`](file:///c:/Users/HP/Desktop/cloud/Hybrid-Genomic-Intelligence-System/ml_services/variants/prioritizer.py): Blends ACMG classification (45 pts), patient HPO phenotype overlap (30 pts), Indian population rarity (15 pts), and molecular consequence severity (10 pts) into a composite Priority Score (0-100) and actionable tiers (Tier 1 High Actionability, Tier 2 Candidate, Tier 3 Low Actionability).
+   - [`variant_engine.py`](file:///c:/Users/HP/Desktop/cloud/Hybrid-Genomic-Intelligence-System/ml_services/variants/variant_engine.py): State manager orchestrating file parsing, session analysis caching, QC metrics, and platform handoffs.
+2. **Backend API (`backend/app/routers/variants.py`)**:
+   - `POST /api/v1/variants/upload`: Accepts multipart `.vcf` or `.vcf.gz`, optional `patient_id`, and `hpo_ids_json`.
+   - `GET /api/v1/variants/analyses`: Lists recent genomic analyses.
+   - `GET /api/v1/variants/analyses/{id}`: Returns complete analysis summary, QC KPIs, and ranked variants.
+   - `GET /api/v1/variants/analyses/{id}/variants/{variant_id}`: Deep variant inspector with individual ACMG criteria matrix.
+   - `GET /api/v1/variants/demo-vcf`: Serves verified test trio VCF for 1-click clinical testing.
+   - `POST /api/v1/variants/analyses/{id}/diagnosis-handoff`: Forwards candidate genes/variants to Differential Diagnosis.
+   - `POST /api/v1/variants/analyses/{id}/report-handoff`: Queues prioritized variants to Clinical Reports.
+   - **RBAC**: Configured `"variants:read"` and `"variants:write"` for `doctor`, `researcher`, and `admin` in [`security.py`](file:///c:/Users/HP/Desktop/cloud/Hybrid-Genomic-Intelligence-System/backend/app/security.py).
+3. **Frontend Clinical Workspace (`web/src/views/VariantsView.jsx`)**:
+   - Connected file upload dropzone, patient selector, and 1-click "Load Verified Clinical Trio VCF" demo launcher.
+   - Real-time QC metric cards: Total Variants, Pathogenic, Likely Pathogenic, VUS, Benign/Likely Benign, and PGx Actionable.
+   - Searchable, filterable interactive table (by gene, consequence, classification, priority tier, Indian AF).
+   - Comprehensive detail drawer displaying priority rationale, Indian AF vs global AF, ClinVar significance, interactive ACMG/AMP criteria checklist with evidence statements, and workflow handoffs to Differential Diagnosis and Reports.
+   - Fully wired into [`App.jsx`](file:///c:/Users/HP/Desktop/cloud/Hybrid-Genomic-Intelligence-System/web/src/App.jsx) for route `'variants'`.
+
+### 26.3 Verification & Quality Assurance
+- **Full Backend Pytest Suite**: **130/130 tests passed** (including 6 new tests in `tests/test_vcf_and_acmg.py`) in 5.70s with zero regressions.
+- **Frontend Production Build**: `npm run build` compiled 1,946 modules cleanly with **0 errors**.
+- **Data Honesty**: No fabricated clinical results; unavailable annotations clearly state "Data unavailable".
+
+---
+
+## 27. Phase 3C: Functional Clinical Genomics AI Assistant
+
+### 27.1 Architecture & Grounded Retrieval Flow
+Constructed a grounded clinical genomics AI Assistant strictly integrated with Genomera's live domain models:
+`User Query -> Prompt Injection Guardrail -> Intent Classification & Entity Extraction -> Case Context Retrieval (Patient Demographics, HPO Phenotypes, Differential Diagnosis Ranking, Phase 3B Variant Prioritization, ACMG Criteria, Knowledge Graph Nodes) -> Prompt Synthesis (System Guardrails + Clinical Delimiters) -> High-Throughput Inference Client -> Stream / Sync Dispatch -> Verified Evidence Citations & Grounded Explanations`.
+
+### 27.2 Core Implementations
+1. **Intelligence & Routing Engine (`ml_services/assistant/`)**:
+   - [`intent_classifier.py`](file:///c:/Users/HP/Desktop/cloud/Hybrid-Genomic-Intelligence-System/ml_services/assistant/intent_classifier.py): Classifies clinical queries across 11 discrete intents (`VARIANT_EXPLANATION`, `ACMG_EXPLANATION`, `DIAGNOSIS_REASONING`, `PHENOTYPE_REASONING`, `PGX_QUESTION`, `REPRODUCTIVE_QUESTION`, `CASE_SUMMARY`, `PATIENT_FRIENDLY_EXPLANATION`, `GENE_DISEASE_ASSOCIATION`, `KG_EXPLORATION`, `GENERAL_GENOMICS`) and extracts genes and HPO identifiers.
+   - [`context_retriever.py`](file:///c:/Users/HP/Desktop/cloud/Hybrid-Genomic-Intelligence-System/ml_services/assistant/context_retriever.py): Dynamically retrieves structured case details, linking patient demographics, active HPO profiles, differential diagnoses, Phase 3B prioritized variants, 2015 ACMG criteria evaluations, and Knowledge Graph associations into structured evidence citations.
+   - [`guardrails.py`](file:///c:/Users/HP/Desktop/cloud/Hybrid-Genomic-Intelligence-System/ml_services/assistant/guardrails.py): Strict clinical safety guardrails preventing hallucinated variants or literature, rejecting prompt injection attempts (e.g., instructions override, credential leakage), and enforcing strict provider privacy (zero leakage of model provider names or API credentials).
+   - [`llm_client.py`](file:///c:/Users/HP/Desktop/cloud/Hybrid-Genomic-Intelligence-System/ml_services/assistant/llm_client.py): High-performance internal inference client supporting both non-streaming and Server-Sent Events (SSE) streaming generations.
+   - [`assistant_service.py`](file:///c:/Users/HP/Desktop/cloud/Hybrid-Genomic-Intelligence-System/ml_services/assistant/assistant_service.py): Manages isolated user sessions, in-memory conversation persistence, streaming generators, and error handling.
+2. **Backend API (`backend/app/routers/assistant.py`)**:
+   - `POST /api/v1/assistant/chat`: Synchronous conversational endpoint returning grounded responses, parsed intent, and verified citation cards.
+   - `POST /api/v1/assistant/chat/stream`: SSE streaming endpoint providing real-time incremental token delivery.
+   - `GET /api/v1/assistant/conversations/{id}`: Retrieves persistent multi-turn history.
+   - `DELETE /api/v1/assistant/conversations/{id}`: Clears session history.
+   - `GET /api/v1/assistant/context`: Pre-flight context inspection endpoint.
+   - **RBAC**: Configured `"assistant:chat"` for `doctor`, `researcher`, `patient`, and `admin` roles in [`security.py`](file:///c:/Users/HP/Desktop/cloud/Hybrid-Genomic-Intelligence-System/backend/app/security.py).
+3. **Frontend Clinical Workspace (`web/src/views/AssistantView.jsx`)**:
+   - Native Genomera ocean clinical styling.
+   - **Live Case Context Bar**: Patient selector, Variant Run selector, and real-time grounded status indicator.
+   - **Mode Switches**: Instant toggle between **Clinical Mode** (technical ACMG codes, molecular mechanisms) and **Patient-Friendly Mode** (accessible, empathetic explanations).
+   - **Language Support**: Seamless toggle between **English** and **Hindi (हिंदी)** with preserved medical nomenclature.
+   - **Voice Support**: Integrated browser SpeechRecognition voice input and Web Speech API text-to-speech audio playback.
+   - **Interactive Suggestion Chips**: 1-click clinical quick actions ("Why is the top variant ranked first?", "Explain evaluated ACMG criteria", "Explain differential diagnosis ranking", "Explain for patient", "हिंदी में समझाइए").
+   - **Verified Citation Cards**: Direct visual breakdown of grounding sources (Variant Analysis, ClinVar, Human Phenotype Ontology, Diagnosis Engine, Knowledge Graph).
+   - Wired to route `'ai-assistant'` in [`App.jsx`](file:///c:/Users/HP/Desktop/cloud/Hybrid-Genomic-Intelligence-System/web/src/App.jsx).
+
+### 27.3 Verification & Quality Assurance
+- **Full Backend Pytest Suite**: **136/136 tests passed** (including 6 new tests in `tests/test_assistant.py`) with 0 regressions.
+- **Frontend Production Build**: `npm run build` compiled 1,947 modules cleanly with **0 errors**.
+- **Provider Privacy Verified**: Grep verification confirmed zero occurrences of provider names or API key variables in user-facing code (`web/src/`).
+- **Live Inference Verified**: Tested synchronous, streaming, Hindi translation, and patient-friendly generation modes directly against active case data.
 
 
 
+
+
+
+
+## 28. Phase 3D: Functional Clinical Digital Twin
+
+### 28.1 Architecture
+```
+Patient record (store.patients) ──┐
+Clinical events (hpo_profile, diagnosis, vcf_analysis, …) ──┤
+Variant Intelligence session (registry.variants, filtered by patient_id) ──┤
+DifferentialDiagnosisEngine (registry.diagnosis) ──┤──► DigitalTwinService.build_twin()
+PGxEngine (registry.pgx) ──┤        ml_services/twin/twin_service.py
+Knowledge Graph (registry.graph: IS_A, ASSOCIATED_WITH) ──┘        ├─ twin_state.py      (section builders)
+                                                                   └─ scenario_engine.py (what-if)
+```
+- **No new patient/case system.** The patient record *is* the case. The Twin is computed on request from existing stores (one patient row, one events query, the in-memory analyses) and is never cached across patients.
+- **Twin state (`GET /api/v1/digital-twin/{patient_id}`)**: identity, demographic, phenotype, genomic, diagnosis, pgx, family, timeline, provenance, snapshot, limitations. A section with no data returns `available: false` and an explicit note (`Insufficient data…`, `No PGx findings available for this case.`, `Family/inheritance information unavailable.`, `Longitudinal history is limited in the current dataset…`).
+- **Phenotype state**: HPO terms collected from the patient record, stored `hpo_profile` events and stored `diagnosis` inputs, each with its source event id / time / evidence text. Organ systems are derived from the graph's own HPO `IS_A` hierarchy ("Abnormality of …" ancestors; a bare finding directly under the root is reported as unclassified). Onset/severity are returned as `null` — no intake path records them. "Missing" = findings expected for the top diagnosis that are not documented (unknown, not confirmed absent).
+- **Genomic state**: the selected Variant Intelligence analysis *that carries this patient's `patient_id`* (newest by default; `?analysis_id=` must belong to the patient or 404). Counts, per-variant records, gene summary, inheritance note. Variant rows open the existing Variant Intelligence view at that analysis/variant.
+- **Diagnosis state**: the existing engine run live on the Twin's HPO set + the patient's state/community/sex. Per differential: probability, similarity, supporting-phenotype count, driving/missing findings, confirmatory tests, and **genomic support** (non-benign variants whose gene is KG-linked to the disease). A separate "genomically implicated diseases" list shows diseases reached from P/LP/VUS variants (e.g. Phenylketonuria from PAH) with their phenotype rank. Variants do **not** alter the engine's ranking (the engine takes HPO only); no second diagnosis model was added.
+- **PGx state**: star alleles in the analysis; metabolizer status is assigned **only** for loss-of-function alleles (homozygous → poor, heterozygous → intermediate; G6PD hemizygous/homozygous → deficient); guideline findings come from `PGxEngine.check_drugs`. Otherwise "No PGx findings available for this case."
+- **Family state**: only what the record holds (consanguinity flag, `family_history`, `known_carrier/affected`, VCF sample names). Segregation / de novo are not stored (only the first VCF sample's genotype is kept) and are not inferred.
+- **Timeline**: dated events from stored data only (registration, hpo_profile, clinical_note, diagnosis, vcf_analysis, report bundles, analyses).
+- **Snapshot (`GET …/snapshot`)**: counts + top diagnosis + PGx findings + `snapshot_version` = `TS-` + sha256 of the content (changes only when the underlying state changes) + `last_updated_utc` from source timestamps. `POST …/snapshot` persists it for the current user (sequence number, changed-since-previous).
+- **Provenance**: per-section list of source system / reference id / timestamp (also the UI "Provenance" tab).
+
+### 28.2 Scenario engine (`POST …/scenarios`, persisted per user)
+Baseline and scenario go through the same `_evaluate()` path (existing ACMG→priority scoring helpers, existing diagnosis engine), so differences are attributable to the one modification. Responses contain `baseline`, `scenario`, a `comparison` table, a structured `diff`, `explanation` sentences generated from the computed diff, and `limitations`.
+
+| Scenario | Recomputed with | Result |
+|---|---|---|
+| `variant_exclusion` | counts, variant ranking, per-disease genomic support | Variant counts/ranks and genomic support change; the HPO-only differential is verified unchanged |
+| `variant_reclassification` | `ACMG_POINTS` + composite priority/tier, genomic support | Hypothetical class only — does **not** re-run ACMG criteria |
+| `phenotype_remove` / `phenotype_add` | `DifferentialDiagnosisEngine.diagnose` on the new HPO set; phenotype component of every variant's priority | Differential, probabilities, supporting phenotypes, variant priorities |
+| `diagnosis_focus` | engine rank, `attribute_symptoms`, `missing_terms`, genomic support | Evidence comparison of a chosen working diagnosis vs the current top |
+| `medication` | `PGxEngine.check_drugs` with genotypes taken from the analysis | Drug-gene rule alerts only; no outcome/response modelled |
+
+Variant scenarios use helpers added to `ml_services/variants/prioritizer.py` (`ACMG_POINTS`, `phenotype_points`, `rarity_points`, `consequence_points`, `composite_score`, `tier_for_score`); a test asserts they reproduce the stored priority score of every variant, so drift from `prioritize()` fails loudly.
+
+**Explicitly NOT implemented** (rejected with "This simulation is not available from the current clinical data/model."): disease progression, treatment response / clinical outcome, survival / prognosis, laboratory or physiological values. No scenario produces arbitrary percentages.
+
+### 28.3 API / security
+`GET /api/v1/digital-twin/{id}`, `/snapshot`, `/snapshots`, `/timeline`; `POST /snapshot`; `POST|GET /scenarios`; `GET|DELETE /scenarios/{sid}`; `POST /report-handoff`. Permissions `twin:read` / `twin:write` were added to the `doctor` role (admin has `*`); patient, asha and researcher roles get 403. Scenarios and saved snapshots are stored in a new `twin_records` table (`CREATE TABLE IF NOT EXISTS`; no existing table changed) keyed by (patient, creating user): another user gets an empty list / 404. They are deliberately **not** stored in `clinical_events`, which `GET /patients/{id}` returns to every clinician. Actions are audit-logged. Note that, as in the existing platform, any doctor may open any patient's Twin; only scenarios and saved snapshots are private to their creator.
+
+### 28.4 Integrations
+- **AI Assistant**: `ChatMessageIn` gained `include_twin` and `twin_scenario_id`; the router builds the Twin context server-side (requires `twin:read`) and `AssistantService` appends it to the retrieved context and citations (`context_summary.twin`, `twin_snapshot`, `twin_scenario`). Existing retrieval, guardrails and LLM client are reused.
+- **Variant Intelligence / Diagnosis / Knowledge Graph**: Twin buttons set a one-shot navigation hint (`setNavContext` / `consumeNavContext`, sessionStorage); the target view consumes it (Variants → that analysis + variant; Diagnosis → prefilled phenotypes and demographics; Knowledge Graph → new "From the Digital Twin" card using the existing `/diseases/{id}` endpoint).
+- **Reports**: "Add Twin Snapshot to Report" / "Add to Report" writes a `twin_report_bundle` clinical event (snapshot + selected scenarios + disclaimer); Reports now lists a patient's stored Variant/Twin bundles ("Case Report Bundles"), read back from the clinical record.
+
+### 28.5 Frontend
+`web/src/views/DigitalTwinView.jsx` + `web/src/components/twin/` (`TwinStateGraph` clickable state map where dashed nodes = insufficient data, `TwinSections`, `ScenarioWorkspace`, `TwinAssistantPanel`, `KgFocusCard`, `CaseBundlesPanel`). No 3D or anatomical graphics. Changing patient discards the previous Twin and ignores late responses for a previous patient. The sidebar badge changed from "Phase 4" to "Live"; the Digital Twin placeholder is no longer routed (file kept).
+
+### 28.6 Tests & verification
+- `tests/test_digital_twin.py`: 31 backend tests (auth/RBAC, construction vs. engines, insufficient-data states, isolation, snapshot versioning, scoring parity, every scenario type incl. direct-engine equivalence, rejection of unmodelled simulations, per-user persistence, report hand-off, assistant grounding). Uses a temporary SQLite file.
+- `web/src/__tests__/digital-twin.test.jsx`: 17 Vitest tests over real payload fixtures captured from the API (`npm test`; vitest, jsdom and Testing Library were added as devDependencies).
+- Full suite: **167 passed** with `PYTHONUTF8=1`. With the default Windows console encoding, `tests/test_demo_and_synthetic.py::test_end_to_end_demo_runs` and `::test_demo_json_bundle_is_valid` fail on a `UnicodeEncodeError` while the demo prints Hindi (a console-encoding problem in the demo subprocess, not in this phase's code). `npm run build` clean; `npm test` 17/17.
+- Live end-to-end (browser + API): login → select patient → Twin shows phenotype/genomic/diagnosis state matching stored data → exclude the ATP7B variant → baseline vs scenario computed by the backend with explanation → Variant Intelligence opened at the patient's analysis/variant → Knowledge Graph opened at Wilson disease → AI Assistant answered with Twin + scenario context → report bundle stored and visible in Reports.
+
+### 28.7 Known limitations
+- Variant analyses live in memory in `VariantEngine` (Phase 3B design): after an API restart the Twin reports "Insufficient data" for genomics until the VCF is re-uploaded; the upload event stays in the timeline.
+- The differential ranking is phenotype-only, so variant scenarios change genomic support and priority but not the ranking; this is stated in every such result.
+- Pre-existing issues noticed and not changed: the Phase 3C context retriever reads `diag_res["differential"]` while the engine returns `results` (its differential block is always empty); `AssistantView` preselects `pts.value[0].id` although patients expose `patient_id`; when an LLM key is configured, patient context is sent to the external inference provider by the existing assistant.
+
+## 29. Phase 3D (advanced): Interactive 3D Human + Genome Digital Twin
+
+The computational Twin of section 28 (state, provenance, snapshots, scenarios, report/AI hand-offs) is unchanged. This section records the visual/interactive layer built on top of it. The former "Patient state map" is now a collapsed "Data explorer" inside the secondary Clinical Intelligence panel; the stage (body / genome / DNA / systems / timeline) is the primary element.
+
+### 29.1 Backend additions (`ml_services/twin/anatomy.py`, `twin_service.py`, `scenario_engine.py`)
+- `twin["anatomy"]` (computed with the Twin, no extra endpoint): 13 display systems (the ten requested plus ocular, hematologic and skin, which the knowledge graph's phenotypes need), per-system patient phenotypes / genes / variants / diseases, a gene index (diseases from the KG, systems from the diseases' documented phenotypes), a 24-chromosome layer and notes.
+- **System mapping**: a curated HPO→system table for the 67 phenotype terms in the graph (the graph's `IS_A` hierarchy places e.g. Hepatomegaly directly under the root), then the "Abnormality of the <system>" ancestor; anything else is reported as unmapped. A system gets `has_case_data` only if a documented patient phenotype maps to it, or a non-benign variant lies in a gene whose KG disease has documented manifestations there. Otherwise it returns "No case-specific genomic or phenotype findings mapped to this system." Highlighting never means damage.
+- **Genome layer**: GRCh38 chromosome lengths (public constants) + the `chrom`/`pos` already stored by Variant Intelligence. No gene loci are drawn (none are stored); variants without coordinates are listed as not placed. Variant slim records now also carry ACMG criteria, explanation, rationale and matched HPO terms for the evidence panel.
+- **Scenario stages**: each scenario returns `stages` (the stages that actually ran, with server-measured milliseconds; the apply/compare steps without a measurement carry `ms: null`) and `system_impact` (systems whose variant or phenotype counts changed between baseline and scenario).
+
+### 29.2 Frontend architecture (`web/src/components/twin3d/`)
+| Piece | Role |
+|---|---|
+| `TwinStage` | Control-bar-driven stage; chooses WebGL or the 2D fallback; fullscreen; DNA info panel |
+| `Stage3D` (lazy chunk, three + @react-three/fiber 8 + drei 9) | Procedural body and DNA helix |
+| `GenomeView` | SVG chromosome ideograms scaled by chromosome length; markers at VCF positions |
+| `BodyFallback2D`, `DnaFallback2D` | Used when WebGL is unavailable or the 3D stage throws (error boundary) |
+| `EntityPanel` | Evidence panel for a variant / gene / system / diagnosis with the Variant→Gene→System→Disease chain, ACMG evidence, and actions into Variant Intelligence, Knowledge Graph, Diagnosis and the AI Assistant |
+| `ScenarioCompare` + `StagePlayer` | Baseline-vs-scenario split view and the stage replay |
+| `TwinTimeline` | Timeline from stored events only |
+
+- **Control bar**: Anatomy / Genome / DNA / Systems / Timeline, Front / Back / Left / Right, Reset view, Fullscreen. Each changes the rendered view; camera moves ease toward the goal and rotate/zoom/pan come from OrbitControls.
+- **Anatomy**: neutral reference body; selecting a system (3D click, 2D schematic, systems rail or text list) opens its evidence. In *Systems* mode systems with case data are tinted soft blue, systems linked to the selection are deeper blue, the selected one is teal. No red is used anywhere.
+- **Genome → Chromosome → Gene → Variant → Evidence**: click a chromosome (drill-down list) or a marker; the panel shows chromosome, gene, variant, system chain and ACMG criteria from the existing variant data.
+- **DNA**: animated double helix (instanced base-pair rungs, hover shows the rung). The sequence is illustrative; a variant marker is placed at the variant's position as a fraction of its chromosome, and the marked rung shows the VCF reference base. Without a selection no patient variant is drawn.
+- **Simulation**: while the request is in flight only "Applying scenario" is active and the rest read "waiting for server" (no percentage). When the response arrives, the stages the server executed are replayed with their measured times, then the split view shows genome markers (excluded variants dashed), changed systems outlined, both differentials with rank changes, and the backend-computed differences.
+- **AI Assistant**: "Ask AI" from a selected variant/gene/system sends `selected_variant_id` + `include_twin` (+ `twin_scenario_id` when a scenario is active); the chips "What changed between baseline and this scenario?" and "Why is the selected variant important?" use the real context.
+- **Responsive**: stage → evidence → clinical panel → timeline → simulation in one column below 1280 px; verified at 768 px.
+- **Accessibility**: tablist/aria-pressed on all controls, every system/variant/chromosome reachable as a button with an aria-label, a text system list with data counts, `aria-live` evidence panel; all clinical facts are also in text panels.
+
+### 29.3 Anatomical asset / licence
+No anatomical model file exists in the repository and none was downloaded. The body is **procedural** (lathe torso, capsules, ellipsoid/torus organs) generated in code (`bodyModel.js`, `Stage3D.jsx`) — no external asset, so no asset licence applies. Libraries: three.js, @react-three/fiber and @react-three/drei (all MIT). Consequence: the anatomy is a schematic reference, not a medically accurate or photoreal model.
+
+### 29.4 Performance and fallback
+three.js lives in a separate lazily-loaded chunk (not in the main bundle); the body renders on demand (idle GPU) with a ~30 fps pulse only while a system is highlighted; the helix loop runs only in DNA mode; reduced complexity and DPR 1 on low-core/low-memory devices; `prefers-reduced-motion` disables rotation/pulse; geometries are disposed on unmount. If WebGL is missing or the stage throws, a 2D anatomical schematic / DNA schematic is shown with a notice and the computational Twin keeps working.
+
+### 29.5 Tests and verification
+- Backend: `tests/test_digital_twin.py` now 41 tests (adds anatomy mapping, chromosome layer, empty-data neutrality, evidence fields, real scenario stages and system impact). Full suite **172 passed** with `PYTHONUTF8=1` (the two demo-subprocess tests fail only under the default Windows console encoding).
+- Frontend: `npm test` 35 Vitest tests (18 new in `twin-visual.test.jsx`: stage/control bar, view switching, camera buttons, organ and neutral-organ selection, genome and DNA views, variant evidence + navigation, chromosome drill-down, diagnosis selection, Ask AI, patient switching, stage player, baseline-vs-scenario, reset, errors, WebGL fallback). `npm run build` clean.
+- Live end-to-end (browser pane with WebGL, synthetic demo trio case `PT-33698F2A`, labelled synthetic): login → select patient → 3D body loads → rotate and zoom with the mouse → Reset view → click the liver in 3D (Hepatic evidence: Jaundice, Hepatomegaly, ATP7B, Wilson disease) → Genome (24 chromosomes) → select ATP7B variant (real ACMG criteria, ClinVar, chain via Hepatic/Nervous/Ocular) → DNA view with the marker → run "exclude variant" (stage replay with measured ms, ghosted marker, Nervous 2→1 / Ocular 1→0 / Hepatic 1→0) → Ask AI (answer grounded in the Twin snapshot and scenario) → Knowledge Graph at Wilson disease → Add Twin Snapshot to Report (event stored). Tablet (768 px) layout checked. The WebGL-unavailable path was verified in jsdom only, not by disabling WebGL in a real browser.
+
+### 29.6 Limitations
+- Anatomy is schematic; organs are not patient-specific and no imaging, vitals or physiology exist or are implied.
+- System associations are knowledge-derived (disease manifestations), not measurements; a variant can legitimately link several systems (e.g. ATP7B → hepatic, nervous, ocular).
+- The helix sequence is illustrative; marker position is a fraction of the chromosome, not a nucleotide-accurate locus; gene loci are not drawn.
+- The reference build of an uploaded VCF is not verified; GRCh38 lengths are used for scale.
+- Variant analyses remain in memory (Phase 3B), so genome/DNA views need the VCF re-uploaded after an API restart.
+- The lazy 3D chunk is ~830 kB (227 kB gzip).
+
+## 30. Digital Twin visual redesign (dark holographic stage)
+
+- Stage is now a dark scientific scene (navy radial background, faint grid, starfield, fog, bloom + vignette via `@react-three/postprocessing` 2.16.3 / `postprocessing` 6.35.6 — MIT / Zlib, pinned for three 0.160).
+- Body: rim-lit (Fresnel shader) translucent shell with continuous lathed limbs, ribs, long bones, spine and 30+ organ primitives in muted reference tints; still procedural, no external asset.
+- Slow turntable rotation (pause/play button; stops automatically on drag or a Front/Back/Left/Right preset; disabled with `prefers-reduced-motion`).
+- Systems mode draws data callouts (system, phenotype count, genes) with leader lines, only for systems that have case data or are selected/linked.
+- A genome helix stands beside the body; dashed links are drawn from it to organ systems only when the selected variant/gene has a knowledge-graph-backed link (e.g. ATP7B → hepatic, nervous, ocular).
+- Legend: grey-blue = no case data (reference), blue = case data mapped, cyan = linked to selection, mint = selected. No red; highlighting is not damage.
+- 2D fallback restyled to match. Genome and Timeline views stay light for legibility.
+- The 3D chunk is now ~926 kB (251 kB gzip) and still lazy-loaded.

@@ -45,6 +45,15 @@ CREATE TABLE IF NOT EXISTS clinical_events (
     created_utc TEXT,
     payload TEXT
 );
+CREATE TABLE IF NOT EXISTS twin_records (
+    record_id TEXT PRIMARY KEY,
+    patient_id TEXT NOT NULL,
+    kind TEXT NOT NULL,
+    created_by TEXT NOT NULL,
+    created_utc TEXT,
+    payload TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_twin_records_lookup ON twin_records (patient_id, kind, created_by);
 CREATE TABLE IF NOT EXISTS audit_log (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     ts TEXT,
@@ -183,6 +192,48 @@ def list_events(patient_id: str, kind: Optional[str] = None) -> List[dict]:
         d["payload"] = json.loads(d["payload"] or "{}")
         out.append(d)
     return out
+
+
+# ------------------------- digital twin scenarios / snapshots -------------------------
+# Kept out of clinical_events on purpose: those rows are returned by GET /patients/{id} to every
+# clinician, whereas scenarios and saved snapshots are private to the user who created them.
+
+def add_twin_record(record_id: str, patient_id: str, kind: str, created_by: str, payload: dict) -> dict:
+    created = _now()
+    with _connect() as conn:
+        conn.execute("INSERT INTO twin_records (record_id, patient_id, kind, created_by, created_utc, payload) "
+                     "VALUES (?,?,?,?,?,?)",
+                     (record_id, patient_id, kind, created_by, created, json.dumps(payload, ensure_ascii=False)))
+    return {"record_id": record_id, "patient_id": patient_id, "kind": kind, "created_by": created_by,
+            "created_utc": created, "payload": payload}
+
+
+def _twin_row(row) -> dict:
+    d = dict(row)
+    d["payload"] = json.loads(d["payload"] or "{}")
+    return d
+
+
+def list_twin_records(patient_id: str, kind: str, created_by: str, limit: int = 50) -> List[dict]:
+    with _connect() as conn:
+        rows = conn.execute("SELECT * FROM twin_records WHERE patient_id = ? AND kind = ? AND created_by = ? "
+                            "ORDER BY created_utc DESC, rowid DESC LIMIT ?",
+                            (patient_id, kind, created_by, limit)).fetchall()
+    return [_twin_row(r) for r in rows]
+
+
+def get_twin_record(record_id: str, patient_id: str, created_by: str) -> Optional[dict]:
+    with _connect() as conn:
+        row = conn.execute("SELECT * FROM twin_records WHERE record_id = ? AND patient_id = ? AND created_by = ?",
+                           (record_id, patient_id, created_by)).fetchone()
+    return _twin_row(row) if row else None
+
+
+def delete_twin_record(record_id: str, patient_id: str, created_by: str) -> bool:
+    with _connect() as conn:
+        cur = conn.execute("DELETE FROM twin_records WHERE record_id = ? AND patient_id = ? AND created_by = ?",
+                           (record_id, patient_id, created_by))
+    return cur.rowcount > 0
 
 
 # --------------------------------- audit ---------------------------------

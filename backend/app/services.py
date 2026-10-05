@@ -33,6 +33,9 @@ class ServiceRegistry:
         self._triples: Optional[TripleExtractor] = None
         self._kg_update: Optional[KGUpdateManager] = None
         self._triage = None
+        self._variants = None
+        self._assistant = None
+        self._twin = None
 
     # ------------------------------ graphs ------------------------------
 
@@ -97,6 +100,30 @@ class ServiceRegistry:
 
             self._triage = TriageEngine(ner=self.ner, mapper=self.hpo_mapper)
         return self._triage
+
+    @property
+    def variants(self):
+        if self._variants is None:
+            from ml_services.variants.variant_engine import VariantEngine
+
+            self._variants = VariantEngine(graph=self.graph)
+        return self._variants
+
+    @property
+    def assistant(self):
+        if self._assistant is None:
+            from ml_services.assistant.assistant_service import AssistantService
+
+            self._assistant = AssistantService(self)
+        return self._assistant
+
+    @property
+    def twin(self):
+        if self._twin is None:
+            from ml_services.twin.twin_service import DigitalTwinService
+
+            self._twin = DigitalTwinService(self)
+        return self._twin
 
     # ------------------------- learning pipeline -------------------------
 

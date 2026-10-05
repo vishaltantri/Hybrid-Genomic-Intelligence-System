@@ -22,12 +22,14 @@ ROLE_PERMISSIONS: Dict[str, List[str]] = {
     # doctor reads the KG (disease detail, stats) to explain diagnoses at the point of care
     "doctor": ["clinical:read", "clinical:write", "diagnosis:run", "xai:read", "pgx:read",
                "reproductive:read", "reproductive:counsel", "feedback:write",
-               "kg:read", "dashboard:read"],
+               "kg:read", "dashboard:read", "variants:read", "variants:write",
+               "assistant:chat", "twin:read", "twin:write"],
     "patient": ["clinical:read:own", "diagnosis:read:own", "reproductive:read:own",
-                "pgx:read:own"],
+                "pgx:read:own", "assistant:chat"],
     "asha": ["triage:write", "triage:read", "clinical:write:limited", "sync:write"],
     "admin": ["*"],
-    "researcher": ["dashboard:read", "federated:read", "kg:read", "kg:propose"],
+    "researcher": ["dashboard:read", "federated:read", "kg:read", "kg:propose",
+                   "variants:read", "variants:write", "assistant:chat"],
 }
 
 

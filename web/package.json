@@ -6,16 +6,27 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "vitest run"
   },
   "dependencies": {
+    "@react-three/drei": "^9.122.0",
+    "@react-three/fiber": "^8.18.0",
+    "@react-three/postprocessing": "2.16.3",
     "@svg-maps/india": "^2.0.0",
     "lucide-react": "^1.52.0",
+    "postprocessing": "6.35.6",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "three": "^0.160.1"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/react": "^16.3.3",
+    "@testing-library/user-event": "^14.6.7",
     "@vitejs/plugin-react": "^4.3.4",
-    "vite": "^5.4.11"
+    "jsdom": "^29.1.1",
+    "vite": "^5.4.11",
+    "vitest": "^2.1.9"
   }
 }

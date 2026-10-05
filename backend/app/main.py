@@ -29,6 +29,9 @@ from backend.app.routers import (
     pharmacogenomics,
     reproductive,
     triage,
+    variants,
+    assistant,
+    digital_twin,
 )
 from backend.app.security import hash_password
 from backend.app.services import registry
@@ -64,7 +67,7 @@ app.add_middleware(
 
 for r in (auth.router, clinical.router, diagnosis.router, pharmacogenomics.router,
           reproductive.router, triage.router, dashboard.router, learning.router,
-          federated.router, emr.router):
+          federated.router, emr.router, variants.router, assistant.router, digital_twin.router):
     app.include_router(r)
 
 

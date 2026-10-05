@@ -36,7 +36,7 @@ const ROADMAP_DETAILS = {
     color: 'text-secondary',
     bg: 'bg-secondary/10',
     summary:
-      'Grounded clinical conversational assistant utilizing an internal Groq LLM architecture to provide natural language explanations of ranked differentials, variant pathogenicity, and founder effect risks.',
+      'Grounded clinical conversational assistant utilizing high-throughput genomic intelligence models to provide natural language explanations of ranked differentials, variant pathogenicity, and founder effect risks.',
     plannedFeatures: [
       'Case-aware conversational reasoning referencing active patient findings',
       'Direct attribution citations linking HPO terms to OMIM/Orphanet IDs',

@@ -45,7 +45,7 @@ export const NAVIGATION_SECTIONS = [
   {
     title: 'ADVANCED',
     items: [
-      { id: 'digital-twin', label: 'Digital Twin', icon: Cpu, badge: 'Phase 4' },
+      { id: 'digital-twin', label: 'Digital Twin', icon: Cpu, badge: 'Live' },
       { id: 'ai-assistant', label: 'AI Assistant', icon: Bot, badge: 'Phase 3' },
       { id: 'evidence', label: 'Evidence', icon: BookOpen, badge: 'Phase 2' },
     ],

@@ -21,6 +21,9 @@ import AshaView from './views/AshaView.jsx'
 import FhirView from './views/FhirView.jsx'
 import ReportsView from './views/ReportsView.jsx'
 import SettingsView from './views/SettingsView.jsx'
+import VariantsView from './views/VariantsView.jsx'
+import AssistantView from './views/AssistantView.jsx'
+import DigitalTwinView from './views/DigitalTwinView.jsx'
 import PlaceholderView from './views/PlaceholderView.jsx'
 
 // Helper to extract initial route from hash or URL query parameter
@@ -148,13 +151,25 @@ export default function App() {
       case 'diagnosis':
         return <DiagnosisView />
       case 'variants':
-        return <PlaceholderView moduleId="variants" onNavigateToDiagnosis={handleNavigate} />
+        return (
+          <VariantsView
+            onNavigateToDiagnosis={handleNavigate}
+            onNavigateToKg={handleNavigate}
+            onNavigateToReport={handleNavigate}
+          />
+        )
       case 'kg':
         return <KgView />
       case 'digital-twin':
-        return <PlaceholderView moduleId="digital-twin" onNavigateToDiagnosis={handleNavigate} />
+        return <DigitalTwinView onNavigate={handleNavigate} />
       case 'ai-assistant':
-        return <PlaceholderView moduleId="ai-assistant" onNavigateToDiagnosis={handleNavigate} />
+        return (
+          <AssistantView
+            onNavigateToDiagnosis={handleNavigate}
+            onNavigateToVariants={handleNavigate}
+            onNavigateToReport={handleNavigate}
+          />
+        )
       case 'evidence':
         return <PlaceholderView moduleId="evidence" onNavigateToDiagnosis={handleNavigate} />
       case 'pgx':

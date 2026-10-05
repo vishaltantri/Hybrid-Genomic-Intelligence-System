@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { api } from '../api.js'
+import { api, consumeNavContext } from '../api.js'
 import {
   Stethoscope,
   Sparkles,
@@ -67,6 +67,16 @@ export default function DiagnosisView() {
   const [busy, setBusy] = useState(false)
   const [activeTab, setActiveTab] = useState('cards') // 'cards' | 'matrix'
   const [showRawJson, setShowRawJson] = useState(false)
+
+  // Prefill from the Digital Twin (one-shot): the patient's documented phenotypes and demographics
+  useEffect(() => {
+    const ctx = consumeNavContext('diagnosis')
+    if (!ctx) return
+    if (ctx.text) setText(ctx.text)
+    if (ctx.state) setState(ctx.state)
+    if (ctx.community) setCommunity(ctx.community)
+    if (ctx.sex) setSex(ctx.sex)
+  }, [])
 
   useEffect(() => {
     api.reference()

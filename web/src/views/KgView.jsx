@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
-import { api } from '../api.js'
+import { api, consumeNavContext } from '../api.js'
+import KgFocusCard from '../components/twin/KgFocusCard.jsx'
 import {
   Network,
   Database,
@@ -49,6 +50,7 @@ export default function KgView() {
   const [learningBusy, setLearningBusy] = useState(false)
   const [selectedNode, setSelectedNode] = useState(SAMPLE_GRAPH_NODES[0])
   const [showRawJson, setShowRawJson] = useState(false)
+  const [focus] = useState(() => consumeNavContext('kg'))
 
   useEffect(() => {
     api.kgStats()
@@ -90,6 +92,8 @@ export default function KgView() {
           icon: Network,
         }}
       />
+
+      <KgFocusCard focus={focus} />
 
       {/* Error Alert */}
       {err && <ErrorAlert error={err} onRetry={() => window.location.reload()} />}

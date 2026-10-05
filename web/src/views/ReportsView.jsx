@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { api } from '../api.js'
 import { FileCheck, Download, Printer, RefreshCw } from 'lucide-react'
+import CaseBundlesPanel from '../components/twin/CaseBundlesPanel.jsx'
 
 export default function ReportsView() {
   const [brief, setBrief] = useState(null)
@@ -74,6 +75,8 @@ export default function ReportsView() {
           </div>
         )}
       </div>
+
+      <CaseBundlesPanel />
     </div>
   )
 }
