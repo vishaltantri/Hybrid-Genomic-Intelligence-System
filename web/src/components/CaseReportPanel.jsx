@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { api, downloadReport } from '../api.js'
+import { api, downloadReport, consumeNavContext } from '../api.js'
 
 const ALL = ['patient', 'phenotypes', 'variants', 'diagnosis', 'pedigree', 'pgx', 'reproductive', 'evidence']
 const LABEL = { available: 'Available', not_documented: 'Not documented', not_analyzed: 'Not analyzed', insufficient: 'Insufficient data', no_result: 'No matching result' }
@@ -14,15 +14,22 @@ export default function CaseReportPanel() {
   const [error, setError] = useState(null)
   const [info, setInfo] = useState(null)
 
-  useEffect(() => { api.listPatients().then((p) => setPatients(Array.isArray(p) ? p : p?.patients || [])).catch(() => {}) }, [])
+  useEffect(() => {
+    const ctx = consumeNavContext('reports')
+    api.listPatients().then((p) => { setPatients(Array.isArray(p) ? p : p?.patients || []); if (ctx?.patient_id) load(ctx.patient_id) }).catch(() => {})
+  }, [])
 
   const guard = async (fn) => {
     setError(null); setInfo(null); setBusy(true)
     try { await fn() } catch (e) { setError(e.message) } finally { setBusy(false) }
   }
+  const [quality, setQuality] = useState(null)
   const load = (id) => guard(async () => {
-    setPid(id); setReport(null); setVersions([])
-    if (id) setVersions(await api.reportVersions(id))
+    setPid(id); setReport(null); setVersions([]); setQuality(null)
+    if (id) {
+      setVersions(await api.reportVersions(id))
+      try { setQuality(await api.qualityCase(id)) } catch { setQuality(null) }
+    }
   })
   const open = (id) => guard(async () => setReport(await api.reportGet(id)))
   const generate = () => guard(async () => {
@@ -50,6 +57,14 @@ export default function CaseReportPanel() {
           {patients.map((p) => <option key={p.patient_id} value={p.patient_id}>{p.patient_id}{p.name ? ` — ${p.name}` : ''}</option>)}
         </select>
       </label>
+      {pid && quality && (
+        <div data-testid="data-quality" className={`rounded-lg border p-3 text-xs ${quality.conflicts.length ? 'border-amber-300 bg-amber-50 text-amber-900' : 'border-outline-variant bg-surface-container-low text-on-surface-variant'}`}>
+          <div className="font-semibold">Data quality: {quality.status}</div>
+          {quality.conflicts.map((c, i) => <div key={i} role="alert">{c.message}</div>)}
+          {quality.notes.map((n, i) => <div key={i}>{n.message}</div>)}
+          {quality.missing.length > 0 && <div>Missing: {quality.missing.map((m) => `${m.domain} (${m.state})`).join('; ')}</div>}
+        </div>
+      )}
       {pid && (
         <>
           <fieldset className="flex flex-wrap gap-3 text-xs">

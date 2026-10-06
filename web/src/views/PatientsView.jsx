@@ -96,7 +96,7 @@ export default function PatientsView({ onSelectPatientForDiagnosis }) {
       {/* Search and Filters */}
       <div className="p-4 rounded-xl bg-white border border-outline-variant/40 shadow-xs flex items-center gap-3">
         <Search size={18} className="text-outline shrink-0" />
-        <input
+        <input aria-label="Filter by Patient ID, State, Community, or District..."
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -207,7 +207,7 @@ export default function PatientsView({ onSelectPatientForDiagnosis }) {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label>Age (Years)</label>
-                  <input
+                  <input aria-label="Age (Years)"
                     type="number"
                     min="0"
                     max="120"
@@ -218,7 +218,7 @@ export default function PatientsView({ onSelectPatientForDiagnosis }) {
                 </div>
                 <div>
                   <label>Sex</label>
-                  <select value={sex} onChange={(e) => setSex(e.target.value)}>
+                  <select aria-label="Sex" value={sex} onChange={(e) => setSex(e.target.value)}>
                     <option value="M">Male (M)</option>
                     <option value="F">Female (F)</option>
                   </select>
@@ -228,7 +228,7 @@ export default function PatientsView({ onSelectPatientForDiagnosis }) {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label>State (Consanguinity Prior)</label>
-                  <input
+                  <input aria-label="State (Consanguinity Prior)"
                     type="text"
                     value={state}
                     onChange={(e) => setState(e.target.value)}
@@ -238,7 +238,7 @@ export default function PatientsView({ onSelectPatientForDiagnosis }) {
                 </div>
                 <div>
                   <label>District</label>
-                  <input
+                  <input aria-label="District"
                     type="text"
                     value={district}
                     onChange={(e) => setDistrict(e.target.value)}
@@ -250,7 +250,7 @@ export default function PatientsView({ onSelectPatientForDiagnosis }) {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label>Community (Founder Prior)</label>
-                  <input
+                  <input aria-label="Community (Founder Prior)"
                     type="text"
                     value={community}
                     onChange={(e) => setCommunity(e.target.value)}
@@ -259,7 +259,7 @@ export default function PatientsView({ onSelectPatientForDiagnosis }) {
                 </div>
                 <div>
                   <label>Consanguineous Union</label>
-                  <select
+                  <select aria-label="Consanguineous Union"
                     value={consanguineous ? 'yes' : 'no'}
                     onChange={(e) => setConsanguineous(e.target.value === 'yes')}
                   >
@@ -271,7 +271,7 @@ export default function PatientsView({ onSelectPatientForDiagnosis }) {
 
               <div>
                 <label>Clinical Notes / Symptoms</label>
-                <textarea
+                <textarea aria-label="Clinical Notes / Symptoms"
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder="Clinical presentation, observed symptoms, age of onset..."

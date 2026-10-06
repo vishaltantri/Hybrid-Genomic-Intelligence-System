@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { api, setNavContext } from '../api.js'
+import { api, setNavContext, consumeNavContext } from '../api.js'
 
 const SAFETY = 'Calculated genetic probability, not a clinical outcome prediction.'
 const STATUSES = [['carrier', 'Carrier'], ['not_carrier', 'Not a carrier'], ['affected', 'Affected'], ['unknown', 'Unknown']]
@@ -35,7 +35,10 @@ export default function ReproCasePanel({ onNavigate }) {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
 
-  useEffect(() => { api.listPatients().then((p) => setPatients(Array.isArray(p) ? p : p?.patients || [])).catch(() => {}) }, [])
+  useEffect(() => {
+    const ctx = consumeNavContext('repro')
+    api.listPatients().then((p) => { setPatients(Array.isArray(p) ? p : p?.patients || []); if (ctx?.patient_id) pick(ctx.patient_id) }).catch(() => {})
+  }, [])
 
   const run = async (id, a, b) => {
     setRes(null); setExplain(null); setMc(null); setScenario(null); setError(null); setBusy(true)

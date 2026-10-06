@@ -458,7 +458,7 @@ def demo_case(client):
 def test_demo_family_is_labelled_synthetic_and_uses_real_vcf_genotypes(client):
     case, info = demo_case(client)
     ped = client.get(f"{BASE}/{case}", headers=hdr()).json()
-    assert ped["synthetic"] and ped["synthetic_banner"] == "Synthetic/Test Family — Not Clinical Data"
+    assert ped["synthetic"] and ped["synthetic_banner"] == "Sample Family — Not Clinical Data"
     assert {m["label"] for m in ped["members"]} == {"Father", "Mother", "Proband"} and ped["proband_id"]
     analysis = registry.variants.get_analysis(info["analysis_id"])
     atp7b = "chr13:51943246:C>G"
@@ -474,7 +474,7 @@ def test_demo_trio_recessive_and_de_novo_results(client):
     case, _ = demo_case(client)
     atp = client.get(f"{BASE}/{case}/analysis", params={"variant_key": "chr13:51943246:C>G"}, headers=hdr()).json()
     assert atp["most_consistent"]["model"] == "AR" and atp["de_novo"]["status"] == "inherited"
-    assert atp["synthetic_banner"] == "Synthetic/Test Family — Not Clinical Data"
+    assert atp["synthetic_banner"] == "Sample Family — Not Clinical Data"
     vhl = client.get(f"{BASE}/{case}/analysis", params={"variant_key": "chr3:10141973:C>G"}, headers=hdr()).json()
     assert vhl["de_novo"]["status"] == "candidate"                                       # VHL: 0/1 vs 0/0 and 0/0 in the VCF
     ov = client.get(f"{BASE}/{case}/overview", headers=hdr()).json()["variants"]
@@ -599,7 +599,7 @@ def test_assistant_receives_pedigree_context_and_nothing_invented(client):
         registry.assistant.llm = original
     assert r.status_code == 200, r.text
     prompt = json.dumps(stub.messages)
-    assert "SYNTHETIC/TEST FAMILY" in prompt and "Autosomal recessive" in prompt and "Father" in prompt and "ATP7B" in prompt
+    assert "SAMPLE FAMILY" in prompt and "Autosomal recessive" in prompt and "Father" in prompt and "ATP7B" in prompt
     assert "Grandmother" not in prompt                                                # no members that were not recorded
     assert r.json()["context_summary"]["pedigree"] is True
     assert any(c["source_type"] == "Pedigree Analysis" for c in r.json()["citations"])

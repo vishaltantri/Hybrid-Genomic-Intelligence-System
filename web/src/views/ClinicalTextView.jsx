@@ -99,7 +99,7 @@ export default function ClinicalTextView({ onNavigate }) {
             {busy ? <Loader2 size={14} className="animate-spin" /> : <ScanText size={14} />}{busy ? 'Analysing…' : 'Analyse text'}</button>
           <button onClick={() => fileRef.current?.click()} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-primary/30 text-primary text-xs font-semibold"><Upload size={13} />Upload .txt</button>
           <input ref={fileRef} type="file" accept=".txt,text/plain" onChange={onFile} className="hidden" aria-label="Upload text file" />
-          <button onClick={() => setText(SAMPLE)} className="text-xs text-primary font-semibold">Use synthetic example</button>
+          <button onClick={() => setText(SAMPLE)} className="text-xs text-primary font-semibold">Use example text</button>
           <button onClick={() => { setText(''); setRes(null); setError(null) }} className="inline-flex items-center gap-1 text-xs text-on-surface-variant"><Eraser size={12} />Clear</button>
           <span className="ml-auto text-[11px] text-outline">{text.length}/20000</span>
         </div>

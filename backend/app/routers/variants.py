@@ -94,6 +94,14 @@ async def upload_vcf(
         if patient and patient.get("hpo_ids"):
             patient_hpos = patient.get("hpo_ids", [])
 
+    # A patient id that matches no case must not create records pointing at a case that does not exist: the analysis is
+    # kept, unlinked, and the response says so (a quiet orphan would later surface in reports and dashboards).
+    requested_pid = patient_id
+    unlinked_note = None
+    if patient_id and not store.get_patient(patient_id):
+        unlinked_note = f"No case '{patient_id[:60]}' exists; the analysis was stored without a case link."
+        patient_id = None
+
     analysis = registry.variants.analyze_vcf(
         vcf_content=content,
         filename=filename,
@@ -111,6 +119,8 @@ async def upload_vcf(
         })
     store.audit(user["username"], "variants.upload", patient_id or "", f"file={filename}, total={analysis['qc_metrics']['total_variants']}")
 
+    if unlinked_note:
+        return {**analysis, "patient_link": {"requested": requested_pid[:60], "linked": False, "note": unlinked_note}}
     return analysis
 
 
@@ -221,7 +231,10 @@ def handoff_to_report(analysis_id: str, payload: ReportHandoffRequest, user: dic
         "status": "ready_for_review",
     }
 
-    if payload.patient_id:
+    if payload.patient_id and store.get_patient(payload.patient_id):
         store.add_event(payload.patient_id, "variant_report_bundle", report_bundle)
+    elif payload.patient_id:
+        report_bundle["patient_link"] = {"requested": payload.patient_id[:60], "linked": False,
+                                         "note": "No case with this id exists; nothing was recorded against it."}
 
     return report_bundle

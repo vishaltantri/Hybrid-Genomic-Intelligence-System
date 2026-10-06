@@ -17,7 +17,7 @@ from ml_services.pedigree import analysis as pa
 from ml_services.pedigree import structure as ps
 from ml_services.variants.acmg_engine import reclassify_with_extra_criterion
 
-SYNTHETIC_BANNER = "Synthetic/Test Family — Not Clinical Data"
+SYNTHETIC_BANNER = "Sample Family — Not Clinical Data"
 MAX_IMPORT = 500
 
 

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { api, setNavContext } from '../api.js'
+import { api, setNavContext, consumeNavContext } from '../api.js'
 import { Loader2 } from 'lucide-react'
 
 function Chip({ children, tone = 'sky' }) {
@@ -24,7 +24,10 @@ export default function DiagnosisIntelView({ onNavigate }) {
   const [error, setError] = useState(null)
   const [msg, setMsg] = useState(null)
 
-  useEffect(() => { api.listPatients().then((p) => setPatients(Array.isArray(p) ? p : p?.patients || [])).catch(() => {}) }, [])
+  useEffect(() => {
+    const ctx = consumeNavContext('dx-intel')
+    api.listPatients().then((p) => { setPatients(Array.isArray(p) ? p : p?.patients || []); if (ctx?.patient_id) load(ctx.patient_id) }).catch(() => {})
+  }, [])
 
   const load = async (id) => {
     setPid(id); setWs(null); setWhy(null); setMatrix(null); setDisc(null); setWi(null); setSel(null); setError(null)
@@ -77,15 +80,25 @@ export default function DiagnosisIntelView({ onNavigate }) {
           {!ws.available ? <p data-testid="dx-empty" className="text-xs text-on-surface-variant">{ws.note}</p> : (
             <>
               <Panel title="Differential diagnosis" testid="dx-differential">
+                {ws.interpretation && <p className="text-xs text-on-surface-variant mb-2" data-testid="dx-interpretation">{ws.interpretation} {ws.confidence_note}</p>}
                 <table className="w-full"><thead><tr className="text-left text-on-surface-variant"><th>#</th><th>Disease</th><th>Probability</th><th>Similarity</th><th>Genes</th><th>Variants</th><th>Evidence</th></tr></thead>
                   <tbody>{ws.differential.map((d) => (
                     <tr key={d.disease_id} onClick={() => pickDisease(d)} className={`border-t border-outline-variant/30 cursor-pointer ${sel === d.disease_id ? 'bg-primary/5' : ''}`}>
-                      <td>{d.rank}</td><td className="py-1 font-semibold">{d.disease_name}{d.rank === 1 && <span className="ml-1"><Chip>Top</Chip></span>}</td>
+                      <td>{d.rank}</td><td className="py-1 font-semibold">{d.disease_name}{d.rank === 1 && <span className="ml-1"><Chip>Top</Chip></span>}{d.claim && <span className={`ml-2 text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded border ${d.claim === 'Clinician-confirmed' ? 'border-emerald-300 bg-emerald-50 text-emerald-800' : 'border-outline bg-surface-container-low text-on-surface-variant'}`}>{d.claim}{d.confirmation ? ` by ${d.confirmation.confirmed_by}` : ''}</span>}</td>
                       <td>{d.probability}</td><td>{d.phenotype_similarity}</td><td>{d.genes.join(', ') || '—'}</td>
                       <td>{d.variants.length ? d.variants.map((v) => v.gene_symbol).join(', ') : (ws.summary.variant_note ? 'Not analyzed' : 'None matching')}</td>
                       <td>{d.evidence_quality.label}</td>
                     </tr>))}</tbody></table>
               </Panel>
+              {cur && cur.claim !== 'Clinician-confirmed' && (
+                <div className="flex items-center gap-3 text-xs">
+                  <button type="button" onClick={() => run(() => api.dxConfirm(pid, { disease_id: cur.disease_id }), () => { setMsg(`${cur.disease_name} recorded as clinician-confirmed.`); load(pid) })}
+                    className="px-3 py-1.5 rounded-lg border border-primary text-primary font-semibold hover:bg-surface-container-low">
+                    Record my confirmation of {cur.disease_name}
+                  </button>
+                  <span className="text-on-surface-variant">Only a clinician confirmation turns a model ranking into a diagnosis.</span>
+                </div>
+              )}
               {cur && (
                 <div className="grid lg:grid-cols-2 gap-4" data-testid="dx-detail">
                   <Panel title={`Why ${cur.rank === 1 ? 'ranked first' : `rank ${cur.rank}`}: ${cur.disease_name}`} testid="dx-why">

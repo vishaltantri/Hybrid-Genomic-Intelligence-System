@@ -1299,3 +1299,130 @@ Risks: changing security defaults can break existing tests/dev flow (use env-dri
 - Totals: backend 377 passed (was 313 before Phase 16), frontend 114 passed (was 110), `npm run build` clean (chunk-size warning only).
 - Phase 16-20 additions: 7 + 36 + 10 + 4 + 7 = 64 backend tests; 4 frontend tests.
 - Limits: frontend accessibility is covered only by role/aria queries in existing component tests, not an automated axe audit; no browser-driven E2E was run in this phase; performance numbers are from a single local SQLite machine.
+
+## 50. Phase 21 — Performance and scalability
+
+Task list (21-25) was audited first: existing = Vite SPA with all views eagerly imported, sqlite store with indexes from Phase 18, no readiness endpoint, no request logging, one `demo/run_demo.py` script, docker-compose for dev services only.
+
+- Measured with `scripts/perf_baseline.py` (TestClient, 600 seeded patients, median of 7, one local machine). Raw files: `docs/perf/baseline.json`, `docs/perf/after21.json`.
+- Backend was already fast (every endpoint < 50 ms except report create 106 ms and report PDF 296 ms). Differences between the two runs (e.g. search 48 -> 30 ms, diagnosis 33 -> 21 ms) are within run-to-run noise on a warm machine and are NOT claimed as optimizations. No clinical computation was touched.
+- Real finding: the frontend shipped one 888 KB entry bundle with every view. Views are now `React.lazy` with a Suspense status fallback and react/lucide are split chunks. Initial JS needed by the landing page and shell: index 95.7 KB + react 133.9 KB + icons 50.6 KB = 280 KB (was 888 KB, measured from `dist/`). The 3D stage (926 KB) was already lazy and stays so.
+- Pagination: `GET /api/v1/patients` gained `offset` and returns `X-Total-Count` (exposed via CORS); limit/offset are bounded. Migration 4 adds `(state, created_utc)` and `created_utc` indexes; `EXPLAIN QUERY PLAN` confirms use, and tests assert pages partition the unpaged list identically.
+- Already present and verified, not changed: 200 ms debounce in global search, KG neighborhood queries per node (not whole graph), WebGL fallback in the Twin.
+- Not done: report PDF stays synchronous (227-296 ms measured; background processing is not justified by the measurement). Frontend render profiling (re-renders, virtualization) was not performed; no evidence of a problem was gathered.
+- Tests: `tests/test_performance.py` (3).
+
+## 51. Phase 22 — Accessibility and responsive experience
+
+Measured in the real browser pane (logged in, every module route), via DOM probes:
+- Overflow: no horizontal page overflow at 375 px on 20 routes. At 768 px one route overflowed by 15 px: the shell used `w-screen` (100vw includes the scrollbar); changed to `w-full`, re-measured scrollWidth == clientWidth.
+- Unlabelled controls found (before): 1 icon button and 1+ inputs on every route, up to 8 on Variants (selects, file input, filters, assistant message box). After: 0 unlabelled buttons or form controls on all 20 routes (same probe).
+- Fixes: `aria-label` on 40 form controls (labels taken from the visible text), skip-to-content link, labelled `main` and `nav` landmarks, `aria-current="page"` on the active nav item, Escape closes the mobile drawer, labelled close/sign-out buttons, the top-bar search is now a real keyboard-focusable button (was a pointer-events-none read-only input), global `:focus-visible` outline, `prefers-reduced-motion` support, wide tables scroll inside their container under 768 px.
+- Mobile navigation: the existing drawer was verified functional (opens to 256 px, navigating closes it, closes via button). Note: the transition does not animate while the pane is hidden (document.hidden), which is a test-environment artifact.
+- Charts: Analytics SVG charts already expose `role="img"` with a data summary. Severity/classification badges carry text labels.
+- Not done: no automated axe/contrast audit was run, so contrast is not claimed; screen reader behaviour was not tested with a real reader; closed mobile drawer links stay in tab order; Analytics page scrolls at document level at 768 px (cosmetic, pre-existing); multiple `h1` on 5 pages not restructured.
+- Tests: `web/src/__tests__/accessibility.test.jsx` (5). Frontend total 119.
+
+## 52. Phase 23 — Clinical UI/UX polish (scoped)
+
+Audit-first: the existing UI already uses a shared component set (`PageHeader`, `StatCard`, `StatusBadge`, `EmptyState`, `ErrorAlert`, `LoadingSkeleton`, `ScoreBar`) on the light ocean-blue theme; no dark/neon classes exist and only a handful of light `bg-gradient-to-*` uses (landing, overview, map panels). Nothing was redesigned.
+
+Done (verified):
+- Error states: `api.js` now maps failures to user wording (`friendlyDetail`): 5xx never shows server text (shows a reference id when the server provides one), 429/403/413 are actionable, network failure says the service cannot be reached. 4xx validation text is passed through as before. Test: `errorStates.test.jsx` (3).
+- Provider hiding: no `groq`/`openai`/provider strings exist in `web/src` (grep); the assistant is labelled "AI Assistant".
+- Motion: `prefers-reduced-motion` respected globally; visible focus ring; the lazy-load fallback is a status region with a spinner (loading state per module).
+- Cross-cut with Phase 22: consistent labelled controls and landmarks.
+
+Not done (stated plainly): no visual regression pass or screenshots (the browser pane was hidden, so rendering screenshots timed out), no new empty/loading designs were added for modules beyond what exists, no Knowledge Graph/Digital Twin/National View restyling. These are unchanged and still functional. Frontend total 122.
+
+## 53. Phase 24 — Demo mode and showcase
+
+Audit: only `demo/run_demo.py` (a CLI script) and `GET /variants/demo-vcf` existed; the landing page's "Explore" button tried a hard-coded `login('clinician','changeme')` (the function was not even imported, so it always fell back to the sign-in modal). That default-credential path is removed.
+
+Architecture: the demo case is an ordinary patient record flagged `demo`/`synthetic` with a `DEMO-<USER>` id, built by the real services in `backend/app/demo.py`: `phenotype.import_confirm` (tremor, jaundice, hepatomegaly, cirrhosis), `variants.analyze_vcf` on the verified trio VCF, `pedigree.demo_family`. Diagnosis, PGx, reproductive, Digital Twin, evidence and the report are computed from those stored records by the normal modules. Nothing is canned.
+- API (`/api/v1/demo`, permission `demo:manage` = doctor + admin, normal JWT; no bypass): `GET /status` (per-step real counts), `POST /seed` (idempotent, rolls back a half-built case), `POST /reset` (only the caller's `DEMO-` cases flagged demo; admin: all demo cases; audit log kept; a real record that happens to use a DEMO- id is refused/never deleted).
+- Labelling: banner "DEMO MODE — Synthetic Data" in the shell while demo mode is on (persisted per browser, with "Leave demo mode"); "Demo - synthetic" badge on the patient row (`PatientOut.demo`); report title, patient section ("Data source") and PDF disclaimer say synthetic; the assistant context contains a SYNTHETIC DEMO CASE statement.
+- UI: `Demo Case` view with the guided steps (patient, phenotypes, variants, evidence, diagnosis, pedigree, Digital Twin, PGx, reproductive, report). Each step shows real server state ("Data present"/"No data yet") and opens the real module with the case preselected (phenotypes, diagnosis intelligence, PGx, reproductive and report panels now consume the case id from the navigation context, which previously only some views did). Presentation mode hides sidebar/top bar and uses real full-screen; the banner stays. "Ask AI Assistant about this case" opens the assistant with the prompt "Explain the primary finding in this demo case." for the case.
+- Fixes found along the way: assistant grounding now prefers the selected patient's own analysis (previously the user's newest analysis regardless of patient), and the retriever read the nonexistent `consanguinity` key (always "No"); it now reads `consanguineous`.
+- Removed meaningless "Phase N"/"Live" badges from the navigation.
+- Tests: `tests/test_demo.py` (8), `web/src/__tests__/demo.test.jsx` (4). Not verified: spoken/voice demo, multi-user demo isolation beyond ownership checks.
+
+## 54. Phase 25 — Production deployment and observability
+
+Audit found: `/health` only (no readiness), no request ids, plain-text logs through uvicorn's access log (full URLs), no metrics, no Dockerfile for the app (compose covered dev services only), default dev users seeded outside production, a sign-in modal that pre-filled `changeme` in every build, and docs that listed the dev passwords as the way in.
+
+Implemented (all verified unless stated):
+- `backend/app/observability.py`: request-id middleware (propagates a sane inbound `X-Request-ID`), one structured access line per request using the route template (no query strings, bodies, headers or raw ids), credential-masking log filter, JSON/text formats (`GENOMERA_LOG_FORMAT`), in-process metrics (requests by route/status, latency histogram, errors, in-flight, AI requests, report generations), generic 500 with request id and server-side stack, real process/host resources via psutil when installed.
+- Endpoints: `GET /readiness` (database ping, migrations applied, graph loaded; 503 otherwise — tested by pointing the app at an unopenable database and at a pending migration), `GET /metrics` (Prometheus text, admin only), `GET /api/v1/ops/status` (admin: readiness, counters, resources, security posture). `/health` unchanged.
+- Production behaviour: demo mode is disabled unless `GENOMERA_ENABLE_DEMO=1`; no default users are seeded; the dev quick-fill accounts and password prefill exist only under `import.meta.env.DEV` and are absent from the production bundle (test scans `dist`).
+- `scripts/backup_db.py`: online backup + manifest (sha256, row counts, migrations), `verify`, `restore` (verifies first, refuses overwrite without `--force`, keeps the replaced file). Verified by tests (round trip then readiness and API read on the restored DB; tampered backup rejected and not restored) and by CLI runs.
+- `scripts/smoke_test.py` + a real production-mode server (`GENOMERA_ENV=production`, temp DB, generated secrets): 14/14 steps passed (health, readiness, login, patient, phenotypes, VCF analysis, diagnosis, PGx, reproductive, Digital Twin, report+PDF, search, AI Assistant, metrics). The run's log was scanned: 0 occurrences of the admin password, JWT secret, any token, or raw patient id. The default `clinician/changeme` login returned 401 in that server.
+- A configuration error was found by that run and fixed in the docs/templates: `DATABASE_URL` must be `sqlite:///...` (four slashes for an absolute POSIX path).
+- `Dockerfile`, `web/Dockerfile`, `web/nginx.conf`, `docker-compose.prod.yml`, `.dockerignore`, `.env.production.example`: written, NOT built or started (the Docker daemon was not running here). Not claimed as working.
+- Docs: `docs/DEPLOYMENT.md` now starts with a production section containing only commands that were run, with each path's verification status.
+- Housekeeping: `.gitignore` now ignores backups, SQLite files and `uvicorn.log`.
+- Tests: `tests/test_production.py` (12).
+Limitations: metrics and rate limits are per process; no scheduled backups, TLS, or log shipping are provided; SQLite is the only database; psutil is optional.
+
+## 55. Phases 21-25 regression record
+
+- Backend: 377 (before Phase 21) -> 400 passed (+3 performance, +8 demo, +12 production). Frontend: 114 -> 126 passed (+5 accessibility, +3 error states, +4 demo). `npm run build` clean.
+- Demo variant file: `data/seeds/demo_wilson_trio.vcf` (ATP7B, HBB, CYP2C19 lines from the verified trio VCF) so the synthetic case tells one coherent story instead of carrying eight unrelated pathogenic variants.
+
+### Final verification (end of Phase 25)
+- Backend 401 passed; frontend 126 passed; `npm run build` clean.
+- Live UI walk (dev stack, signed in as the seeded clinician): all 19 module routes render with no alerts or script errors; demo case created from the UI; the 10 guided steps each open the real module with the case selected (Variants and the AI Assistant needed fixes found during the walk: they ignored the case). Report generated from the UI is titled "DEMO MODE - Synthetic Data" with the synthetic data-source row and disclaimer. The AI Assistant answered the prompt "Explain the primary finding in this demo case." from the case's own VCF (ATP7B, homozygous, likely pathogenic).
+- Bugs found and fixed during the walk: the assistant's Patient selector used a nonexistent `id` field (options were `undefined`, so patient selection never worked) and auto-selected the newest analysis regardless of patient; demo status showed 0 variants (wrong key); `DATABASE_URL` examples were invalid.
+- Known AI limitation: the model's prose can deviate from the structured data (it wrote p.Phe977Leu where the variant record says p.Pro977Leu). The variant table shows the record's value; the paraphrase is not verified.
+- Performance honesty: `docs/perf/final25.json` was taken with the dev servers and browser pane running and is slower than `baseline.json` across the board (e.g. health 9 vs 7 ms). An A/B of the request middleware on `/health` (400 requests, twice) showed no measurable cost (median 11.2 vs 12.0 ms and 12.4 vs 14.4 ms with vs without). The only measured improvement from Phase 21 is the initial JavaScript (888 KB -> 280 KB).
+
+## 56. Phases 26-30 — master task list and repository audit
+
+Audit (grep over backend, ml_services, web/src, scripts for TODO, FIXME, mock, placeholder, dummy, fake, hardcoded, random, simulation, temporary, localhost, debug), each hit classified:
+- TODO/FIXME/Math.random: none. `mock`: only `PlaceholderView.jsx`, imported but never rendered, with stale "Phase N" copy -> dead code, removed (Phase 29).
+- `fake` hits are comments saying the opposite ("never produces fake transcripts", "not a fake progress bar"): legitimate. `dummy`: `_DUMMY_HASH` in login (constant-time check): legitimate security.
+- `random.`: seeded generators in synthetic-case generation, federated simulation, differential privacy, Monte Carlo: legitimate and labelled simulations. `simulate_village_records` and `/triage/alerts/simulated`: labelled simulated demo paths. National dashboard data: simulated and labelled; actual defects found there (below).
+- `localhost`: dev CORS default and Neo4j default (config), docstring: development-only configuration, not production behaviour.
+- `print()`: `emr_integration.py` and `migrations.py` `__main__` CLIs only.
+- Actual defects found: (1) the National View stripped the "SIMULATED DATA" notice out of the policy brief and described the figures as "monthly submissions from participating district health centers and ASHA field workers" and as "Formulated for MoHFW/ICMR guidance"; on an API failure it silently showed bundled numbers for the wrong month. (2) A raw-JSON "Audit Log" accordion in production UI. (3) VCF upload and four other routes recorded events/analyses against patient ids that do not exist (orphans). (4) README/PROJECT_REPORT claimed 12,880 diseases, 124 tests, etc. that do not describe this checkout. (5) Interactive API docs were exposed in production. (6) Tests could write into the developer database.
+Dependencies: 26 (integration verification) -> 27 (provenance labels build on verified flows) -> 28 (assistant uses provenance/quality-checked sources) -> 29 (UI polish after features settle) -> 30 (audit/gate).
+
+## 57. Phase 26 — Clinical workflow and cross-module integration QA
+`tests/test_phase26_integration.py` (5 tests) drives two patients (Wilson story, PAH story) over real HTTP through patient, phenotype, VCF, pedigree, diagnosis, Digital Twin, PGx, reproductive, report, FHIR, workflow, notifications, search and the assistant context.
+Verified: analyses stay attached to their own patient; phenotypes are stored once per case with normalised HPO ids; each patient's variant ids appear only in that patient's twin, pedigree, report and FHIR bundle (checked by variant id, because gene names legitimately appear as disease candidates in the other patient's differential); the report and FHIR bundle carry only the case's id; notifications correspond to real assignment/finalisation events and do not leak other cases; search hits open real entities (case, report, variant analysis, disease); a patient-role user cannot read another case or use it as assistant context (403); an unattached analysis is private to its uploader (404 for another doctor, in both the API and the assistant); ASHA users cannot read variants or generate reports; every module rejects unauthenticated requests.
+No isolation or data-mixing defect was found. Notes: analyses attached to a case are visible to all clinicians by design; the engine's differential for a two-phenotype case is nearly flat (equal similarity), which Phase 27 now states as "relative scores, not calibrated confidence".
+
+## 58. Phase 27 — Data quality, provenance and clinical honesty
+- `ml_services/quality/service.py`, `GET /api/v1/quality/provenance/{pid}` and `GET /api/v1/quality/case/{pid}`: per-domain source labels (Clinician-entered, Laboratory-derived (uploaded VCF), Calculated, Model-generated, Literature-derived, Synthetic), recorded-by and timestamps, analysis id/filename, model and data versions read from the running system (knowledge-graph and ontology file hashes, schema version); explicit states (Not provided, Not analyzed, Insufficient data); conflicts (a phenotype recorded present then absent is reported with both sources and timestamps and the one used; patient vs pedigree-proband sex/age); staleness (report older than newer case data; diagnosis confirmation older than phenotype changes); identifier checks.
+- Model ranking vs clinician confirmation: every differential row is labelled "Model ranking"; `POST /api/v1/dx/case/{pid}/confirm` (permission `diagnosis:confirm`, doctor/admin) records a clinician confirmation as an audited event with the model's rank at that time; rows then show "Clinician-confirmed by <user>". The workspace and reports state that probabilities are relative scores, not calibrated confidence.
+- Reports now include provenance, data-quality, versions, the confirmation state and (in the PDF) a "Data provenance and quality" section.
+- UI: ranking/confirmation labels and confirm button in Diagnosis Intelligence; data-quality panel in the report panel.
+- National View honesty fixes (see section 56). Evidence already carried source, date and retrieval time and never invents grades.
+- Tests: `tests/test_phase27_quality.py` (9), `web/src/__tests__/provenance.test.jsx` (2).
+
+## 59. Phase 28 — AI intelligence integration
+- `ml_services/assistant/orchestrator.py`: the assistant now selects authorised sources from the question (diagnosis intelligence, PGx, reproductive, pedigree, Digital Twin, literature, and a knowledge-graph gene/disease actually found in the question), builds them with the existing permission-checked builders, drops inferred sources that cannot be built, and reports `contexts_used`. `auto_context=false` disables it. Inference can never widen access.
+- Output guardrail (`verify_answer`): variant notation, PMIDs, DOIs and ClinVar accessions that do not occur in the context given to the model are replaced; provider names are scrubbed; a note states what was removed; "No supporting evidence was retrieved." is appended when requested literature is absent. Streaming sends a `correction` event the UI applies. In the live run the guardrail removed a model-invented protein change (p.Phe977Leu where the record says p.Pro977Leu).
+- Injection screen extended (disregard/act-as/developer-mode/list-all-patients/Hindi variants); refusals never call the model.
+- Evaluation: `tests/test_ai_eval.py` (34 checks with a scripted model: grounding, orchestration per question type, KG linking, authorisation, fabricated PMID/DOI/accession/notation removal, retrieved PMIDs kept, no-evidence statement, provider scrubbing, 9 injection and benign cases, untrusted note handling, patient-friendly/Hindi instructions, streaming correction); `python -m scripts.ai_eval` live: 8/8 on the last run (non-deterministic; not clinical validation; results in `docs/ai_eval.json`).
+- Voice input/output uses the browser Web Speech API; it exists in the UI but was not verified end to end here (browser dependent). The assistant API accepts the same context options as before.
+
+## 60. Phase 29 — Final polish and release candidate
+- Branding: API title and docs say GENOMERA; dead `PlaceholderView` (stale "Phase N" copy) removed; "(Module 9)" removed from the ASHA screen; the raw-payload inspector is development-only and absent from the production bundle (checked by search of `dist`).
+- Verified in the browser at 375, 768 and 1280 px on 21 routes (including Demo Case): no horizontal overflow, 0 unlabelled buttons or form controls, no error alerts. Global search opens the entity. Initial JavaScript 282 KB. Frontend 128 tests, build clean.
+- Not done: no visual redesign, no screenshot-based review (pane hidden), no automated contrast/screen-reader audit.
+
+## 61. Phase 30 — Final quality gate
+- Full suites: backend 458 passed, frontend 128 passed, build clean. Baselines: 313/110 before Phase 16 (section 44).
+- `tests/test_final_audit.py`: 179 method+path routes inventoried; every route except health/readiness/token/docs requires authentication; no debug/internal endpoints; JSON 404/405; audit trail present and free of credentials; login failures identical for bad user and bad password; production refuses a weak secret and exposes no docs/openapi (new: `GENOMERA_ENABLE_DOCS=1` to enable); no route writes events for a nonexistent case (new `store.add_event_for_case`; upload and report-handoff keep the analysis but return `patient_link.linked=false`).
+- `scripts/db_audit.py`: integrity ok, WAL, migrations 1-4, 16 indexes, no FK constraints declared (application-enforced). Findings in the developer database: 76 orphan `clinical_events` and 8 orphan `variant_analyses` for the id `P001` and one free-text id, written by earlier test runs and the old upload behaviour. They are legacy developer data; left in place (not silently deleted). `tests/conftest.py` now gives every test its own database so this cannot recur.
+- Production-mode server (`GENOMERA_ENV=production`, temp database): ready in 16.3 s; smoke 14/14 including the AI Assistant; docs and openapi 404; default `clinician/changeme` login 401; CORS preflight from an untrusted origin gets no allow-origin header; log scan: 0 occurrences of password, JWT secret, any token or any patient id.
+- Performance (docs/perf/final30.json vs baseline): global search 27 ms (48), diagnosis 18 (33), Digital Twin 28 (41), report create 109 (106; the report now carries provenance and quality), report PDF 230 (296), analytics 7 (7). No regression.
+- Regression vs the Phases 16-20 commit: no router route removed (164 -> 170 decorators), no test removed, one dead file removed, no model or calculation changed (the diagnosis API only gained labels). Models unchanged: GNN still off.
+- Documentation: README rewritten to the measured state; ARCHITECTURE, TESTING, MODELS, RELEASE_CHECKLIST added; PROJECT_REPORT.md flagged as describing an earlier, larger build.
+- Release status: RELEASE CANDIDATE — BLOCKED (see docs/RELEASE_CHECKLIST.md).
+
+## 62. Post-release fixes (user-reported)
+- Blank Differential Diagnosis page: `ConfidenceBadge` received a numeric confidence (HPO terms) and called `.toLowerCase()` on it, crashing React and blanking the app. The badge now accepts numbers. A new `ErrorBoundary` around every module means a render failure shows a recoverable message instead of a blank page. The "Run Demonstration Case" / "Run Demonstration Scenario" buttons (now "Run Sample Case/Scenario") hit the same crash.
+- Free-text cases: `ml_services/nlp/llm_symptoms.py` lets the language model SELECT phenotype terms from the knowledge graph's own vocabulary (validated, cannot invent ids; failures fall back to the lexicon; one call per distinct text; `GENOMERA_LLM_SYMPTOMS=0` disables). Used by diagnosis, the HPO mapper endpoint and the explanation endpoint so all three read the same phenotypes. The provider is never named in the UI. Tests: `tests/test_llm_symptoms.py` (5); tests run with it disabled unless they stub the model.
+- Wording: "Demo/synthetic" labels removed from navigation, banner, badges, buttons, account names and the case id prefix (now `CASE-`; legacy `DEMO-` records are still recognised and reset). The statements that a case is a sample (not a real patient) remain in the banner, reports and assistant context, and the National View still says its figures are modelled estimates, because removing them would misrepresent what the data is.

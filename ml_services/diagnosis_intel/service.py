@@ -80,8 +80,23 @@ class DiagnosisIntelligence:
                 "evidence_quality": self._evidence_quality(patient_id, vids, d["genes"]),
                 "confirmatory_tests": d.get("confirmatory_tests"),
             })
+        confirmed = self._confirmations(events)
+        by_id = {c["disease_id"]: c for c in confirmed}
+        for r in rows:
+            r["claim"] = "Clinician-confirmed" if r["disease_id"] in by_id else "Model ranking"
+            r["confirmation"] = by_id.get(r["disease_id"])
         return {"patient_id": patient_id, "summary": summary, "available": True, "top_diagnosis": rows[0], "differential": rows,
-                "ranking_basis": dx["ranking_basis"], "engine": dx["engine"], "disclaimer": DISCLAIMER}
+                "ranking_basis": dx["ranking_basis"], "engine": dx["engine"], "disclaimer": DISCLAIMER,
+                "interpretation": "The differential is a model ranking (decision support), not a clinical diagnosis. Only a clinician confirmation makes a diagnosis.",
+                "confirmed_diagnoses": confirmed,
+                "confidence_note": "Probabilities are relative scores within this differential, not calibrated clinical confidence."}
+
+    @staticmethod
+    def _confirmations(events: List[dict]) -> List[dict]:
+        return [{"disease_id": e["payload"].get("disease_id"), "disease_name": e["payload"].get("disease_name"),
+                 "confirmed_by": e["payload"].get("confirmed_by"), "confirmed_utc": e["created_utc"], "note": e["payload"].get("note"),
+                 "model_rank_at_confirmation": e["payload"].get("model_rank_at_confirmation")}
+                for e in sorted(events, key=lambda x: x.get("created_utc") or "") if e["kind"] == "diagnosis_confirmation"]
 
     # ------------------------------ why ranked ------------------------------
     def why(self, patient_id: str, disease_id: str) -> dict:

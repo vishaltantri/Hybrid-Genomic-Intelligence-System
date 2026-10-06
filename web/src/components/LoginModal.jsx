@@ -2,9 +2,13 @@ import React, { useState } from 'react'
 import { login } from '../api.js'
 import Logo from './Logo.jsx'
 
+// Seeded development accounts are offered only by the Vite dev server. `import.meta.env.DEV` is replaced by `false`
+// in production builds, so the quick-fill block and its credentials are removed from the shipped bundle.
+const DEV_LOGINS = import.meta.env.DEV
+
 export default function LoginModal({ isOpen, onClose, onSuccess }) {
-  const [username, setUsername] = useState('clinician')
-  const [password, setPassword] = useState('changeme')
+  const [username, setUsername] = useState(DEV_LOGINS ? 'clinician' : '')
+  const [password, setPassword] = useState(DEV_LOGINS ? 'changeme' : '')
   const [error, setError] = useState(null)
   const [busy, setBusy] = useState(false)
 
@@ -93,11 +97,11 @@ export default function LoginModal({ isOpen, onClose, onSuccess }) {
             />
           </div>
 
-          {/* Quick Demo Credentials */}
-          <div className="mb-6 p-3.5 rounded-xl bg-surface-container-low border border-outline-variant/30">
+          {/* Quick development credentials (dev server only) */}
+          {DEV_LOGINS && <div className="mb-6 p-3.5 rounded-xl bg-surface-container-low border border-outline-variant/30">
             <div className="flex items-center justify-between mb-2">
               <span className="text-[11px] font-semibold text-on-surface-variant uppercase tracking-wider">
-                Demo Accounts (Click to Fill):
+                Development accounts (click to fill):
               </span>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -135,7 +139,7 @@ export default function LoginModal({ isOpen, onClose, onSuccess }) {
                 ASHA Worker
               </button>
             </div>
-          </div>
+          </div>}
 
           {/* Action Buttons */}
           <div className="flex items-center gap-3">

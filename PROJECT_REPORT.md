@@ -1,3 +1,8 @@
+> **Status note (Phase 30 audit):** the dataset sizes and metrics below (12,880 diseases, 33k-node graph, NER F1, HPO recall, 0.92 hits@5)
+> describe an earlier build over the full public datasets. They were **not reproduced** against this checkout, whose knowledge graph is
+> seed-scale (362 nodes, 19 diseases). Current measured numbers are in [docs/ML_BENCHMARK.md](docs/ML_BENCHMARK.md). Treat this report as
+> history, not as a description of what runs here.
+
 # GENOMIND-INDIA — Project Report
 
 *What was built, what data it uses, how the models were trained, and what the results are.*

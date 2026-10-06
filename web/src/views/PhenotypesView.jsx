@@ -34,8 +34,8 @@ export default function PhenotypesView({ onNavigateToDiagnosis }) {
   const seq = useRef(0)
 
   useEffect(() => {
-    api.listPatients().then((p) => setPatients(Array.isArray(p) ? p : p?.patients || [])).catch(() => {})
     const ctx = consumeNavContext('phenotypes')
+    api.listPatients().then((p) => { setPatients(Array.isArray(p) ? p : p?.patients || []); if (ctx?.patient_id) pick(ctx.patient_id) }).catch(() => {})
     if (ctx?.nlp_import) {
       const n = ctx.nlp_import
       const mk = (arr, assertion) => (arr || []).map((p) => ({ ...p, assertion, selected: true }))

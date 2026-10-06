@@ -362,7 +362,7 @@ export function FamilyPanel({ twin, nav, patientId }) {
       )}
       {ped && ped.exists && (
         <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 space-y-1" data-testid="twin-pedigree-summary">
-          {ped.synthetic && <div className="font-semibold text-amber-800">Synthetic/Test Family — Not Clinical Data</div>}
+          {ped.synthetic && <div className="font-semibold text-amber-800">Sample Family — Not Clinical Data</div>}
           <div className="font-semibold text-on-surface">Pedigree: {ped.members} members, proband {ped.proband || 'not designated'}, {ped.affected} affected</div>
           {ped.validation_errors > 0 && <div className="text-red-700">{ped.validation_errors} pedigree validation error(s)</div>}
           {ped.variants.slice(0, 4).map((v) => (

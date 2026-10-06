@@ -41,6 +41,13 @@ def check_prompt_injection(user_message: str) -> Optional[str]:
         r"are you (groq|openai|claude|chatgpt)",
         r"bypass safety",
         r"print (the |your )?environment variables",
+        r"disregard (all |the |your )?(previous|prior|above|earlier) (instructions|rules|prompt)",
+        r"(you are|act as|pretend to be) (now )?(an? )?(unrestricted|jailbroken|developer mode|dan)",
+        r"developer mode",
+        r"(show|list|give) (me )?(all|other|every) (the )?patients?",
+        r"repeat (the |your )?(system|initial) (prompt|message|instructions)",
+        r"पिछले निर्देश(ों)? (को )?(अनदेखा|भूल)",
+        r"(api|एपीआई) ?(key|कुंजी)",
     ]
     
     for pat in suspicious_patterns:

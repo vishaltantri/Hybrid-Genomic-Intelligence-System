@@ -1,177 +1,98 @@
-# GENOMIND-INDIA
+# GENOMERA
 
-AI decision-support platform for **rare genetic disease diagnosis in India**. Clinicians and ASHA
-health workers enter symptoms in Hindi, Hinglish, Tamil or English; the system maps them to HPO
-terms, ranks differentials over a 12,880-disease knowledge network, adjusts the ranking with
-**Indian population genetics** (state consanguinity, community founder effects, sex-linked
-inheritance), and explains every answer. Also covers pharmacogenomics safety, reproductive/carrier
-counselling, federated learning, and a national dashboard.
+Genomic intelligence and clinical decision-support platform for rare-disease genetics in India. Clinicians, researchers and
+ASHA field workers work on **cases**: phenotypes (HPO), VCF variants with ACMG/AMP classification, a ranked differential
+diagnosis, pedigree and inheritance analysis, pharmacogenomics, reproductive risk, a Digital Twin with what-if scenarios,
+literature evidence, an AI Assistant grounded in the case, clinical reports (PDF/JSON), FHIR export, workflow and
+notifications, analytics, and a national view.
 
-**Status:** all 11 modules functional · **124/124 automated tests passing** · dockerized ·
-web dashboard + offline-first Android APK for ASHA workers. See [PROJECT_REPORT.md](PROJECT_REPORT.md)
-for metrics (NER F1, HPO retrieval, 400-case diagnosis benchmark) and honest limitations.
+**GENOMERA is decision support, not a diagnostic device.** Every ranking is labelled as a model output; only a clinician
+can record a confirmed diagnosis. See [Limitations](#limitations).
 
----
+## What is in this checkout (measured, not aspirational)
+
+| Item | Value |
+|---|---|
+| Backend | FastAPI, 179 method+path routes, JWT + role-based access, SQLite (WAL) with versioned migrations |
+| Frontend | React 18 + Vite + Tailwind, 21 module screens, lazy-loaded (initial JS about 280 KB) |
+| Knowledge graph | 362 nodes / 404 edges: 19 diseases, 67 HPO terms, 38 genes, 35 drugs (seed-scale; see Limitations) |
+| Tests | 458 backend (pytest) + 128 frontend (Vitest); `npm run build` clean |
+| ML | Deterministic Resnik/Bayes diagnosis engine (default), rule-based ACMG engine, lexical NER and HPO mapper; GNN checkpoint present but disabled |
+
+## Quick start (verified commands)
+
+Requirements: Python 3.12+, Node 20+. The knowledge graph file `data/processed/kg.json` must exist (it is generated, not versioned).
+
+```bash
+pip install -r requirements.txt psutil
+python -m uvicorn backend.app.main:app --port 8000        # API; first start loads the graph (about 15-30 s)
+
+cd web && npm ci && npm run dev                            # http://localhost:5173, proxies /api to :8000
+```
+
+Development mode seeds three accounts (`admin`, `clinician`, `asha1`; passwords are in `backend/app/main.py` and are offered by the
+sign-in screen **only in the Vite dev server**). Production seeds nothing; see [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
+
+Run the checks:
+
+```bash
+GENOMIND_EMBED_MODEL=none python -m pytest -q       # backend, about 6 minutes
+cd web && npx vitest run && npm run build           # frontend tests and production build
+```
+
+## Demo mode
+
+Sign in as a doctor, open **Demo Case**, and create the synthetic case (Wilson disease trio). It is built by the real modules,
+labelled "DEMO MODE - Synthetic Data" everywhere (banner, patient list, report, AI context), and resets without touching real
+records. Guided steps open each module on the case. Disabled in production unless `GENOMERA_ENABLE_DEMO=1`.
+
+## Documentation
+
+| Document | Contents |
+|---|---|
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Components, data flow, security model, AI pipeline |
+| [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) | Production configuration, health/metrics/logging, backups, smoke test |
+| [docs/DATABASE.md](docs/DATABASE.md) | Schema, migrations, `DATABASE_URL`, indexes |
+| [docs/TESTING.md](docs/TESTING.md) | Test layout, commands, audits, evaluations |
+| [docs/MODELS.md](docs/MODELS.md) | Model inventory, measured metrics, model cards |
+| [docs/ML_BENCHMARK.md](docs/ML_BENCHMARK.md) | Generated benchmark report |
+| [docs/RELEASE_CHECKLIST.md](docs/RELEASE_CHECKLIST.md) | Final release checklist with verified status |
+| [PLAN.md](PLAN.md) | Phase-by-phase build record, decisions and findings |
+
+## Environment variables
+
+See [.env.example](.env.example) (development) and [.env.production.example](.env.production.example). The important ones:
+`GENOMERA_ENV`, `GENOMIND_JWT_SECRET`, `GENOMERA_BOOTSTRAP_ADMIN_PASSWORD`, `DATABASE_URL` (`sqlite:///...`),
+`GENOMERA_CORS_ORIGINS`, `GENOMERA_LOG_FORMAT`, `GENOMERA_ENABLE_DEMO`, `GENOMERA_ENABLE_DOCS`. The AI Assistant needs a language-model
+key in the environment (`GROQ_API_KEY` in `ml_services/config.py`); without one it runs in an explicit offline mode and says so.
 
 ## Repository map
 
 ```
-ml_services/          11 AI/ML modules (nlp, etl, graph_ai, pharmacogenomics,
-                      reproductive, xai, federated, asha, learning_pipeline)
-backend/              FastAPI app: routers, JWT auth + RBAC, FHIR, services registry
-web/                  React (Vite) clinician dashboard
-asha_app/             Flutter offline-first ASHA app (Android/iOS)
-data/raw              Third-party datasets (downloaded, not in git)
-data/seeds/           Hand-built Indian datasets (committed)
-data/processed/       Built knowledge graph (generated — NOT in git, must be built)
-models/               Trained checkpoints (weights gitignored; gnn_han.pt tracked)
-demo/run_demo.py      End-to-end 11-module demo
-tests/                7 pytest files, 124 tests
-docs/                 DEPLOYMENT, TRAINING_RECIPES, DATASETS, PATENT_CLAIM_MAP
+backend/app/        FastAPI app: routers, security, hardening, store (SQLite), migrations, observability, demo
+ml_services/        Domain logic: graph_ai (diagnosis), variants (VCF/ACMG), phenotype, pedigree, twin, evidence, assistant,
+                    reports, quality, pharmacogenomics, reproductive, nlp, asha, federated (simulation)
+web/                React frontend (src/views, src/components, src/__tests__)
+data/seeds/         Committed seed datasets and demo VCFs
+models/             Registry (registry.json), benchmark.json, checkpoints
+scripts/            ml_benchmark, perf_baseline, db_benchmark, db_audit, backup_db, smoke_test, ai_eval
+docs/               Documentation, model cards, performance results
+tests/              pytest suites (unit, integration, security, production, AI evaluation, audits)
+asha_app/           Flutter offline ASHA app (not built or tested in this repository audit)
 ```
 
-## Prerequisites
+## Limitations
 
-| Tool | Version | Needed for |
-|---|---|---|
-| Docker + Compose | any recent | Backend stack (recommended path) |
-| Python | 3.11+ | Bare-metal API, ETL, tests (developed on 3.12/3.14) |
-| Node.js | 18+ | Web dashboard |
-| Flutter | 3.24+ | Mobile app (optional) |
-| JDK 17 + Android SDK | — | Android APK builds (optional) |
-
-~6 GB free disk for a full data + model rebuild.
-
-## Quickstart A — Docker (recommended)
-
-```bash
-git clone https://github.com/vishaltantri/Hybrid-Genomic-Intelligence-System.git
-cd Hybrid-Genomic-Intelligence-System
-
-# build the API image, then start Postgres + Redis + Neo4j + API
-docker compose build api
-docker compose up -d postgres redis neo4j api
-
-# wait for startup (first boot loads the 33k-node graph; check until it answers)
-curl http://localhost:8000/health
-# → {"status":"ok","graph_nodes":33632,"graph_edges":311290,"modules":["M1",...,"M11"]}
-```
-
-The Docker API mounts `data/processed` from the host (read-only). If the repo was cloned fresh,
-`data/processed` does not exist yet — either build it once via the bare-metal path below
-(`make etl && make kg-build`) and restart the api container, or run everything bare-metal.
-
-API docs: http://localhost:8000/docs · Neo4j browser: http://localhost:7474 (neo4j / genomind_dev_password)
-
-### Demo accounts (development only — change before any real deployment)
-
-| User | Password | Role |
-|---|---|---|
-| `admin` | `admin-password-change-me` | admin |
-| `clinician` | `changeme` | doctor |
-| `asha1` | `changeme` | asha |
-
-```bash
-# get a token (OAuth2 password form)
-curl -s -X POST http://localhost:8000/api/v1/auth/token \
-  -d "username=clinician&password=changeme"
-```
-
-## Quickstart B — bare metal
-
-```bash
-git clone https://github.com/vishaltantri/Hybrid-Genomic-Intelligence-System.git
-cd Hybrid-Genomic-Intelligence-System
-
-make venv          # creates .venv
-make install       # installs requirements.txt (core deps; CPU-friendly)
-
-# REQUIRED for a fresh clone: build the knowledge graph
-# (data/processed/ is generated and gitignored)
-make etl           # parse third-party datasets → data/processed
-make kg-build      # build the 33k-node / 311k-edge graph (uses Neo4j if up, else JSON)
-
-# environment: copy the template and edit; defaults match the Docker stack ports
-cp .env.example .env
-#   GENOMIND_JWT_SECRET   – change for anything non-local
-#   NEO4J_*, POSTGRES_DSN, REDIS_URL – only needed if you run those services
-
-make api           # FastAPI on http://localhost:8000 (/docs for Swagger UI)
-
-# verify
-.venv/bin/python -m pytest -q        # 124 tests, ~2 min
-.venv/bin/python -m demo.run_demo    # end-to-end 11-module walkthrough
-```
-
-### Web dashboard (clinician)
-
-```bash
-cd web
-npm install
-npm run dev        # http://localhost:5173 — proxies /api → localhost:8000
-```
-
-Log in with a demo account above. Views: Diagnosis (with state/community dropdowns and
-live HPO mapping), XAI, PGx, Reproductive, Knowledge Graph, National, Learning, Reference.
-
-### Mobile app (ASHA, optional)
-
-```bash
-cd asha_app
-flutter pub get
-flutter run                       # emulator: API defaults to http://10.0.2.2:8000
-
-# release APK pointing at a LAN API server:
-flutter build apk --release \
-  --dart-define=API_URL=http://<your-lan-ip>:8000
-# output: build/app/outputs/flutter-apk/app-release.apk
-```
-
-Android builds need JDK 17 (`flutter config --jdk-dir <path>`) — Gradle 8.7 fails on JDK 21.
-The release manifest allows cleartext HTTP so field workers can sync to a plain-HTTP LAN
-server; switch to HTTPS + `networkSecurityConfig` for production.
-
-## Default ports
-
-| Service | Port |
-|---|---|
-| FastAPI | 8000 (`/health`, `/docs`) |
-| Vite dashboard | 5173 |
-| Postgres | 5432 |
-| Redis | 6379 |
-| Neo4j | 7474 (HTTP) / 7687 (Bolt) |
-| MLflow / Label Studio / Adminer | 5000 / 8080 / 8081 (optional extras) |
-
-## Training the ML models (optional, GPU recommended)
-
-The API and demo run without model weights (lexical fallbacks). To retrain:
-
-```bash
-pip install torch --index-url https://download.pytorch.org/whl/cu121
-pip install torch-geometric
-make etl && make kg-build
-.venv/bin/python -m ml_services.nlp.train_clinical_ner
-.venv/bin/python -m ml_services.nlp.train_hpo_mapper
-.venv/bin/python -m ml_services.graph_ai.han_model
-```
-
-Recipes and expected metrics: [docs/TRAINING_RECIPES.md](docs/TRAINING_RECIPES.md),
-[PROJECT_REPORT.md](PROJECT_REPORT.md).
-
-## Troubleshooting
-
-- **Health check is `/health`**, not `/api/health`.
-- **First API start takes ~30 s** — it loads the full knowledge graph before answering.
-- **Backend code changes require `docker compose build api`** (the image copies the code;
-  only `data/seeds` and `data/processed` are volume-mounted, so seed CSV edits are live
-  after an api restart with no rebuild).
-- **Port 5173 busy** → Vite will pick 5174; stop the other process to keep the canonical port.
-- **`make demo` fails after a fresh clone** → run `make etl && make kg-build` first.
-
-## More documentation
-
-- [PROJECT_REPORT.md](PROJECT_REPORT.md) — full build report: data, models, benchmarks, limitations
-- [AGENT_CONTEXT.md](AGENT_CONTEXT.md) — handoff/runbook for developers and AI agent sessions
-- [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) — module-by-module tour
-- [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) — API endpoint reference and deployment guide
-- [docs/PATENT_CLAIM_MAP.md](docs/PATENT_CLAIM_MAP.md) — claimed innovations → implementations
+- **Data scale.** The knowledge graph and phenotype data in this checkout are seed-scale (19 diseases). `PROJECT_REPORT.md` and
+  older documents describe a build over the full public datasets (12,880 diseases, 33k-node graph); those raw datasets are not in this
+  repository and those numbers were **not reproduced** here. The documented 0.92 hits@5 does not reproduce on this graph (see ML_BENCHMARK).
+- **Diagnosis** is a ranking from phenotype similarity and priors, evaluated only on synthetic cases built from the same annotations
+  (circular). No real-world outcome validation exists. Probabilities are relative scores, not calibrated confidence.
+- **National View** shows simulated data (labelled), not a real registry.
+- **AI Assistant** answers can still be wrong in prose. The server removes variant notation, PMIDs, DOIs and ClinVar accessions that
+  are not in the case data or retrieved evidence, but it cannot verify clinical reasoning. Voice input/output uses the browser's
+  speech APIs and works only where the browser provides them.
+- **Access model:** case access is clinician-wide (no care-team model). Rate limiting and metrics are per process. SQLite is the only
+  database; PostgreSQL is not implemented.
+- **Docker files are untested** (no Docker daemon was available during the audit).
+- Not a regulated medical device; no clinical validation has been performed.

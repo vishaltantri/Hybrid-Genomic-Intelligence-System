@@ -29,8 +29,7 @@ def couple_risk(payload: CoupleRequest, user: dict = Depends(require("reproducti
 def lab_report(payload: LabReportIn, user: dict = Depends(require("reproductive:read"))):
     """Parse CBC/HPLC/biochemistry/prenatal screening report text and interpret it."""
     parsed = lab_report_parser.parse_text(payload.text)
-    if payload.patient_id:
-        store.add_event(payload.patient_id, "lab_report", parsed)
+    store.add_event_for_case(payload.patient_id, "lab_report", parsed)
     store.audit(user["username"], "reproductive.lab_report", payload.patient_id or "",
                 f"{parsed['n_values_extracted']} values, {len(parsed['flags'])} flags")
     return parsed

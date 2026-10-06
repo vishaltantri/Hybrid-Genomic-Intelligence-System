@@ -96,8 +96,8 @@ export default function NationalView() {
           setErr(null)
         }
       } catch (ex) {
-        // Non-fatal: keep baseline data so map always renders
-        console.warn('National dashboard API notice:', ex.message)
+        // The map still renders from the bundled snapshot of the same simulated dataset, but the user is told so.
+        if (isMounted) setErr(`Live national data could not be loaded (${ex.message}). Showing the bundled snapshot of the simulated dataset for ${BASELINE_NATIONAL_DATA.month}, not the selected cycle.`)
       } finally {
         if (isMounted) setLoading(false)
       }
@@ -194,7 +194,7 @@ export default function NationalView() {
           <div className="flex items-center gap-2">
             <span className="text-xs font-semibold text-outline hidden sm:inline">Surveillance Cycle:</span>
             <div className="relative">
-              <select
+              <select aria-label="Surveillance Cycle"
                 value={selectedMonth}
                 onChange={(e) => setSelectedMonth(e.target.value)}
                 className="h-9 px-3 pr-8 rounded-lg bg-surface-container border border-outline-variant/50 text-xs font-bold text-primary focus:outline-none focus:border-primary appearance-none cursor-pointer"
@@ -264,8 +264,8 @@ export default function NationalView() {
           <div className="flex items-start gap-2.5">
             <Info size={18} className="text-blue-700 shrink-0 mt-0.5" />
             <div className="text-xs leading-relaxed">
-              <span className="font-bold">Synthetic Surveillance Model: </span>
-              State-level estimates are synthesized from knowledge-graph disease prevalences, NFHS-5 regional consanguinity rates, and clinical demographic models. India's official National Registry for Rare Diseases (ICMR NRROID) is not open for raw public download.
+              <span className="font-bold">Modelled Surveillance Estimates: </span>
+              State-level estimates are modelled from knowledge-graph disease prevalences, NFHS-5 regional consanguinity rates, and clinical demographic models. India's official National Registry for Rare Diseases (ICMR NRROID) is not open for raw public download.
             </div>
           </div>
           <button
@@ -290,7 +290,7 @@ export default function NationalView() {
             </div>
             <div>
               <span className="font-bold">Temporal Cadence: </span>
-              Surveillance data aggregates monthly submissions from participating district health centers and ASHA field workers.
+              In this prototype the monthly figures are simulated from knowledge-graph prevalences and NFHS-5 rates; they are not submissions from health centers or ASHA workers.
             </div>
           </div>
         )}
@@ -339,7 +339,7 @@ export default function NationalView() {
                 size={15}
                 className="absolute left-3 top-1/2 -translate-y-1/2 text-outline"
               />
-              <input
+              <input aria-label="Search state or territory (e.g. Tamil Nadu)..."
                 type="text"
                 placeholder="Search state or territory (e.g. Tamil Nadu)..."
                 value={tableSearch}
@@ -602,30 +602,30 @@ export default function NationalView() {
         {brief && (
           <ClinicalCard
             title={`Monthly Policy Brief: Rare Disease Surveillance${brief.month ? ` (${brief.month})` : ''}`}
-            subtitle="Formulated for Ministry of Health & Family Welfare (MoHFW) / ICMR guidance"
+            subtitle="Prototype brief generated from simulated data. Not an official MoHFW or ICMR document."
             icon={FileText}
           >
             <div className="space-y-4">
               <div className="text-xs text-on-surface leading-relaxed whitespace-pre-wrap bg-surface-container-low/50 p-4 rounded-xl border border-outline-variant/40 font-sans">
                 {typeof brief.markdown === 'string'
-                  ? brief.markdown.replace(/_?SIMULATED DATA: real national rare-disease registries[^_\n]*_?/gi, '').trim()
+                  ? brief.markdown.trim()
                   : typeof brief.brief === 'string'
-                  ? brief.brief.replace(/_?SIMULATED DATA: real national rare-disease registries[^_\n]*_?/gi, '').trim()
+                  ? brief.brief.trim()
                   : JSON.stringify(brief, null, 2)}
               </div>
             </div>
           </ClinicalCard>
         )}
 
-        {/* Raw JSON Debug Accordion */}
-        <div className="pt-2">
+        {/* Raw payload inspector: developer aid, present only in the Vite dev server, absent from production builds */}
+        {import.meta.env.DEV && <div className="pt-2">
           <button
             onClick={() => setShowRawJson(!showRawJson)}
             className="text-xs font-mono text-outline hover:text-on-surface flex items-center gap-1.5"
           >
             <Code2 size={14} />
             <span>
-              {showRawJson ? 'Hide Raw National Payload' : 'Inspect Raw Surveillance Payload (Audit Log)'}
+              {showRawJson ? 'Hide Raw National Payload' : 'Inspect raw payload (development only)'}
             </span>
           </button>
           {showRawJson && (
@@ -633,7 +633,7 @@ export default function NationalView() {
               {JSON.stringify(nat, null, 2)}
             </pre>
           )}
-        </div>
+        </div>}
       </div>
     </div>
   )

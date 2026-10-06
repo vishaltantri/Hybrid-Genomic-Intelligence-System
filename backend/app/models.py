@@ -50,6 +50,7 @@ class PatientOut(BaseModel):
     community: Optional[str] = None
     consanguineous: bool = False
     created_utc: Optional[str] = None
+    demo: bool = False
 
 
 class ClinicalNoteIn(BaseModel):

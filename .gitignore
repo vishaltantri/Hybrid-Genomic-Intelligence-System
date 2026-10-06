@@ -33,3 +33,7 @@ mobile_app/build/
 # frontend build outputs
 web/dist/
 node_modules/
+backups/
+data/*.sqlite3*
+uvicorn.log
+.env.production

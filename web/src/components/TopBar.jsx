@@ -42,24 +42,22 @@ export default function TopBar({
 
       {/* Center: Global Search Bar Placeholder */}
       <div className="hidden md:flex items-center flex-1 max-w-md mx-4">
-        <div
+        <button
+          type="button"
           onClick={onOpenSearch}
-          className="relative w-full cursor-pointer group"
+          aria-label="Open search (Ctrl+K)"
+          aria-keyshortcuts="Control+K Meta+K"
+          className="relative w-full h-9 text-left cursor-pointer group rounded-lg bg-surface-container-low/70 border border-outline-variant/40 hover:border-primary/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary transition-colors"
         >
-          <Search
-            size={16}
-            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-outline group-hover:text-primary transition-colors"
-          />
-          <input
-            type="text"
-            readOnly
-            placeholder="Search cases, diseases, genes, phenotypes... (⌘K)"
-            className="w-full h-9 pl-9 pr-12 rounded-lg bg-surface-container-low/70 border border-outline-variant/40 text-xs text-on-surface placeholder:text-outline focus:outline-none focus:border-primary/50 cursor-pointer pointer-events-none group-hover:border-primary/40 transition-colors"
-          />
-          <kbd className="absolute right-2.5 top-1/2 -translate-y-1/2 px-1.5 py-0.5 rounded bg-white text-[10px] font-mono text-outline border border-outline-variant/40 shadow-xs">
-            ⌘K
+          <Search size={16} aria-hidden="true"
+            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-outline group-hover:text-primary transition-colors" />
+          <span className="block pl-9 pr-12 leading-9 text-xs text-outline truncate">
+            Search cases, diseases, genes, phenotypes...
+          </span>
+          <kbd className="absolute right-2.5 top-1/2 -translate-y-1/2 px-1.5 py-0.5 rounded bg-white text-[10px] font-mono text-outline border border-outline-variant/40">
+            Ctrl K
           </kbd>
-        </div>
+        </button>
       </div>
 
       {/* Right: Actions, Notifications & User Info */}
@@ -86,6 +84,7 @@ export default function TopBar({
           <button
             onClick={onLogout}
             title="Sign out"
+            aria-label="Sign out"
             className="p-1.5 rounded-lg text-outline hover:text-red-600 hover:bg-red-50 transition-colors"
           >
             <LogOut size={16} />

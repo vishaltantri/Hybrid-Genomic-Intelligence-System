@@ -1,35 +1,36 @@
-import React, { useEffect, useState } from 'react'
+import React, { Suspense, lazy, useEffect, useState } from 'react'
 import { verifySession, getUser, logout } from './api.js'
 
 // Components
 import LandingPage from './components/LandingPage.jsx'
 import LoginModal from './components/LoginModal.jsx'
 import AppShell from './components/AppShell.jsx'
+import ErrorBoundary from './components/ErrorBoundary.jsx'
 
 // Existing Functional Views
-import DiagnosisView from './views/DiagnosisView.jsx'
-import PgxView from './views/PgxView.jsx'
-import AnalyticsView from './views/AnalyticsView.jsx'
-import ReproView from './views/ReproView.jsx'
-import NationalView from './views/NationalView.jsx'
-import KgView from './views/KgView.jsx'
+const DiagnosisView = lazy(() => import('./views/DiagnosisView.jsx'))
+const PgxView = lazy(() => import('./views/PgxView.jsx'))
+const AnalyticsView = lazy(() => import('./views/AnalyticsView.jsx'))
+const ReproView = lazy(() => import('./views/ReproView.jsx'))
+const NationalView = lazy(() => import('./views/NationalView.jsx'))
+const KgView = lazy(() => import('./views/KgView.jsx'))
 
 // Enhanced & Connected Module Views
-import OverviewView from './views/OverviewView.jsx'
-import PatientsView from './views/PatientsView.jsx'
-import PhenotypesView from './views/PhenotypesView.jsx'
-import AshaView from './views/AshaView.jsx'
-import FhirView from './views/FhirView.jsx'
-import ReportsView from './views/ReportsView.jsx'
-import SettingsView from './views/SettingsView.jsx'
-import VariantsView from './views/VariantsView.jsx'
-import AssistantView from './views/AssistantView.jsx'
-import DigitalTwinView from './views/DigitalTwinView.jsx'
-import PedigreeView from './views/PedigreeView.jsx'
-import EvidenceView from './views/EvidenceView.jsx'
-import ClinicalTextView from './views/ClinicalTextView.jsx'
-import DiagnosisIntelView from './views/DiagnosisIntelView.jsx'
-import PlaceholderView from './views/PlaceholderView.jsx'
+const OverviewView = lazy(() => import('./views/OverviewView.jsx'))
+const PatientsView = lazy(() => import('./views/PatientsView.jsx'))
+const PhenotypesView = lazy(() => import('./views/PhenotypesView.jsx'))
+const AshaView = lazy(() => import('./views/AshaView.jsx'))
+const FhirView = lazy(() => import('./views/FhirView.jsx'))
+const ReportsView = lazy(() => import('./views/ReportsView.jsx'))
+const SettingsView = lazy(() => import('./views/SettingsView.jsx'))
+const VariantsView = lazy(() => import('./views/VariantsView.jsx'))
+const AssistantView = lazy(() => import('./views/AssistantView.jsx'))
+const DigitalTwinView = lazy(() => import('./views/DigitalTwinView.jsx'))
+const PedigreeView = lazy(() => import('./views/PedigreeView.jsx'))
+const EvidenceView = lazy(() => import('./views/EvidenceView.jsx'))
+const ClinicalTextView = lazy(() => import('./views/ClinicalTextView.jsx'))
+const DiagnosisIntelView = lazy(() => import('./views/DiagnosisIntelView.jsx'))
+const DemoView = lazy(() => import('./views/DemoView.jsx'))
 
 // Helper to extract initial route from hash or URL query parameter
 function getInitialRoute() {
@@ -40,11 +41,27 @@ function getInitialRoute() {
   return params.get('route') || params.get('view') || 'overview'
 }
 
+function ViewLoading() {
+  return (
+    <div role="status" aria-live="polite" className="p-8 flex items-center gap-3 text-sm text-primary">
+      <span className="w-5 h-5 border-2 border-primary/20 border-t-primary rounded-full animate-spin" aria-hidden="true" />
+      Loading module...
+    </div>
+  )
+}
+
 export default function App() {
   const [user, setUser] = useState(getUser())
   const [route, setRoute] = useState(getInitialRoute())
   const [showLoginModal, setShowLoginModal] = useState(false)
   const [initialLoading, setInitialLoading] = useState(true)
+  const [pendingRoute, setPendingRoute] = useState(null)
+  const [demoActive, setDemoActiveState] = useState(() => { try { return localStorage.getItem('genomera_demo_active') === '1' } catch { return false } })
+  const [presentation, setPresentation] = useState(false)
+  const setDemoActive = (v) => {
+    setDemoActiveState(!!v)
+    try { if (v) localStorage.setItem('genomera_demo_active', '1'); else localStorage.removeItem('genomera_demo_active') } catch { /* storage unavailable */ }
+  }
 
   // Verify active JWT against /api/v1/auth/me on mount with strict timeout guard
   useEffect(() => {
@@ -94,16 +111,10 @@ export default function App() {
     handleNavigate('overview')
   }
 
-  // Quick demo launch from Landing Page (e.g. "All-India Genomics Map" or "Live Demo")
-  const handleExploreDemo = async (targetRoute = 'national') => {
-    try {
-      // Auto-authenticate as demo clinician
-      const demoUser = await login('clinician', 'changeme')
-      setUser(demoUser)
-      handleNavigate(targetRoute)
-    } catch {
-      setShowLoginModal(true)
-    }
+  // Landing page shortcuts never sign anyone in: they open the normal sign-in and continue to the chosen module afterwards.
+  const handleExploreDemo = (targetRoute = 'national') => {
+    setPendingRoute(targetRoute)
+    setShowLoginModal(true)
   }
 
   // Handle patient selection from PatientsView to auto-populate Diagnosis
@@ -137,6 +148,7 @@ export default function App() {
           onSuccess={(authenticatedUser) => {
             setUser(authenticatedUser)
             setShowLoginModal(false)
+            if (pendingRoute) { handleNavigate(pendingRoute); setPendingRoute(null) }
           }}
         />
       </>
@@ -197,6 +209,11 @@ export default function App() {
         return <AshaView />
       case 'fhir':
         return <FhirView />
+      case 'demo':
+        return (
+          <DemoView onNavigate={handleNavigate} onDemoActive={setDemoActive}
+            presentation={presentation} onPresentation={setPresentation} />
+        )
       case 'settings':
         return <SettingsView user={user} />
       default:
@@ -210,8 +227,16 @@ export default function App() {
       onRouteChange={handleNavigate}
       user={user}
       onLogout={handleLogout}
+      demoActive={demoActive}
+      onExitDemo={() => { setDemoActive(false); setPresentation(false) }}
+      presentation={presentation}
+      onPresentation={setPresentation}
     >
-      {renderActiveView()}
+      <ErrorBoundary resetKey={route}>
+        <Suspense fallback={<ViewLoading />}>
+          {renderActiveView()}
+        </Suspense>
+      </ErrorBoundary>
     </AppShell>
   )
 }

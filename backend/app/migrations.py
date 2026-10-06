@@ -53,10 +53,19 @@ def _m3_lookup_indexes(conn: sqlite3.Connection) -> None:
             conn.execute(f"CREATE INDEX IF NOT EXISTS {name} ON {table} ({cols})")
 
 
+def _m4_patient_listing_index(conn: sqlite3.Connection) -> None:
+    """Patient list = filter by state, order by created_utc DESC; avoids a scan + sort on large registries."""
+    have = {r[1] for r in conn.execute("PRAGMA table_info(patients)")}
+    if {"state", "created_utc"} <= have:
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_patients_state_created ON patients (state, created_utc DESC)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_patients_created ON patients (created_utc DESC)")
+
+
 MIGRATIONS: List[Migration] = [
     (1, "baseline schema", _m1_baseline),
     (2, "persist VCF analyses (variant_analyses)", _m2_variant_analyses),
     (3, "lookup indexes on patient/case columns", _m3_lookup_indexes),
+    (4, "patient listing indexes (state, created_utc)", _m4_patient_listing_index),
 ]
 
 

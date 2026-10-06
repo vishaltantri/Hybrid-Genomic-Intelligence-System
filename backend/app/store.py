@@ -330,14 +330,21 @@ def get_patient(patient_id: str) -> Optional[dict]:
     return d
 
 
-def list_patients(state: Optional[str] = None, limit: int = 100) -> List[dict]:
+def count_patients(state: Optional[str] = None) -> int:
+    with _connect() as conn:
+        if state:
+            return conn.execute("SELECT COUNT(*) FROM patients WHERE state = ?", (state,)).fetchone()[0]
+        return conn.execute("SELECT COUNT(*) FROM patients").fetchone()[0]
+
+
+def list_patients(state: Optional[str] = None, limit: int = 100, offset: int = 0) -> List[dict]:
     query = "SELECT * FROM patients"
     params: tuple = ()
     if state:
         query += " WHERE state = ?"
         params = (state,)
-    query += " ORDER BY created_utc DESC LIMIT ?"
-    params = params + (limit,)
+    query += " ORDER BY created_utc DESC LIMIT ? OFFSET ?"
+    params = params + (limit, max(0, int(offset)))
     with _connect() as conn:
         rows = conn.execute(query, params).fetchall()
     out = []
@@ -360,6 +367,14 @@ def add_event(patient_id: str, kind: str, payload: dict) -> dict:
                      (event["event_id"], patient_id, kind, event["created_utc"],
                       json.dumps(payload, ensure_ascii=False)))
     return event
+
+
+def add_event_for_case(patient_id: Optional[str], kind: str, payload: dict) -> Optional[dict]:
+    """Record a clinical event only against a case that exists. An unknown id records nothing (returns None) instead of
+    leaving orphan rows that later appear in dashboards and reports."""
+    if not patient_id or not get_patient(patient_id):
+        return None
+    return add_event(patient_id, kind, payload)
 
 
 def list_events(patient_id: str, kind: Optional[str] = None) -> List[dict]:

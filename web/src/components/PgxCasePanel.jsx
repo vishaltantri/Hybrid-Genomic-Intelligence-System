@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { api, setNavContext } from '../api.js'
+import { api, setNavContext, consumeNavContext } from '../api.js'
 
 const SAFETY = 'Pharmacogenomic decision support. Clinical prescribing decisions require qualified clinician review.'
 
@@ -12,7 +12,10 @@ export default function PgxCasePanel({ onNavigate }) {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
 
-  useEffect(() => { api.listPatients().then((p) => setPatients(Array.isArray(p) ? p : p?.patients || [])).catch(() => {}) }, [])
+  useEffect(() => {
+    const ctx = consumeNavContext('pgx')
+    api.listPatients().then((p) => { setPatients(Array.isArray(p) ? p : p?.patients || []); if (ctx?.patient_id) load(ctx.patient_id) }).catch(() => {})
+  }, [])
 
   const load = async (id) => {
     setPid(id); setWs(null); setLookup(null); setError(null)

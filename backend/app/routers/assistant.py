@@ -145,6 +145,38 @@ def _extra_context(payload: "ChatMessageIn", user: dict) -> Optional[dict]:
 
 
 
+_FLAGS = ("include_twin", "include_pedigree", "include_evidence", "include_repro", "include_pgx", "include_diagnosis_intel", "graph_node")
+
+
+def _auto_extra(payload: "ChatMessageIn", user: dict):
+    """Orchestration: pick sources from the question, build them with the normal permission checks, and drop any inferred source
+    that cannot be built (no pedigree yet, unreachable literature...) instead of failing the whole question."""
+    explicit = _extra_context(payload, user)
+    if not payload.auto_context:
+        return explicit, []
+    from ml_services.assistant.orchestrator import infer_context
+    flags, used = infer_context(registry, payload.message, payload.patient_id, lambda p: has_perm(user, p),
+                                {f: bool(getattr(payload, f, None)) for f in _FLAGS})
+    if not flags:
+        return explicit, []
+    kept: list = []
+    parts = [explicit] if explicit else []
+    for flag, value in flags.items():
+        trial = payload.model_copy(update={**{f: (None if f == "graph_node" else False) for f in _FLAGS}, flag: value})
+        try:
+            part = _extra_context(trial, user)
+        except HTTPException:
+            continue
+        if part:
+            parts.append(part)
+            kept.append(flag.replace("include_", "").replace("_", " ") if flag != "graph_node" else f"knowledge graph ({value})")
+    if not parts:
+        return None, []
+    merged = {"text": "\n\n".join(c["text"] for c in parts), "citations": [x for c in parts for x in c["citations"]],
+              "summary": {k: v for c in parts for k, v in c["summary"].items()}}
+    return merged, kept
+
+
 def _scope(patient_id: Optional[str], analysis_id: Optional[str], user: dict) -> Optional[str]:
     """Enforce object-level access for assistant grounding; returns the analysis id the retriever may use."""
     if patient_id and not has_perm(user, "clinical:read"):
@@ -158,6 +190,9 @@ def _scope(patient_id: Optional[str], analysis_id: Optional[str], user: dict) ->
     if not all_analyses:
         return None                      # nothing exists anywhere: retriever's demo-trio behaviour is unchanged
     mine = [a for a in all_analyses if analysis_visible(user, a)]
+    linked = [a for a in mine if patient_id and a.get("patient_id") == patient_id]      # the selected patient's own analysis first
+    if linked:
+        return linked[0]["analysis_id"]
     return mine[0]["analysis_id"] if mine else NO_VISIBLE_ANALYSIS
 
 
@@ -182,6 +217,7 @@ class ChatMessageIn(BaseModel):
     evidence_query: Optional[str] = Field(default=None, max_length=200, description="Literature query (defaults to the message)")
     evidence_gene: Optional[str] = Field(default=None, max_length=20)
     pedigree_variant_key: Optional[str] = Field(default=None, description="Variant (e.g. chr13:51943246:C>G) to analyse in the family")
+    auto_context: bool = Field(default=True, description="Let the assistant choose which authorised Genomera sources to ground on from the question")
 
 
 class ChatResponseOut(BaseModel):
@@ -190,6 +226,8 @@ class ChatResponseOut(BaseModel):
     citations: List[Dict[str, Any]]
     intent: str
     context_summary: Optional[Dict[str, Any]] = None
+    verification: List[Dict[str, Any]] = Field(default_factory=list)
+    contexts_used: List[str] = Field(default_factory=list)
 
 
 @router.post("/chat", response_model=ChatResponseOut)
@@ -197,7 +235,7 @@ def chat_sync(payload: ChatMessageIn, user: dict = Depends(require("assistant:ch
     """Synchronous chat endpoint with complete evidence citations and grounding."""
     username = user.get("username", "clinician")
     payload.analysis_id = _scope(payload.patient_id, payload.analysis_id, user)
-    twin_ctx = _extra_context(payload, user)
+    twin_ctx, contexts_used = _auto_extra(payload, user)
     conv_id = registry.assistant.get_or_create_conversation(payload.conversation_id, username)
 
     result = registry.assistant.chat_sync(
@@ -214,7 +252,7 @@ def chat_sync(payload: ChatMessageIn, user: dict = Depends(require("assistant:ch
     )
 
     store.audit(username, "assistant.chat", payload.patient_id or "", f"intent={result.get('intent')}")
-    return ChatResponseOut(**result)
+    return ChatResponseOut(**result, contexts_used=contexts_used)
 
 
 @router.post("/chat/stream")
@@ -222,7 +260,7 @@ def chat_stream(payload: ChatMessageIn, user: dict = Depends(require("assistant:
     """Server-Sent Events streaming chat endpoint."""
     username = user.get("username", "clinician")
     payload.analysis_id = _scope(payload.patient_id, payload.analysis_id, user)
-    twin_ctx = _extra_context(payload, user)
+    twin_ctx, _contexts_used = _auto_extra(payload, user)
     conv_id = registry.assistant.get_or_create_conversation(payload.conversation_id, username)
 
     generator = registry.assistant.chat_stream(

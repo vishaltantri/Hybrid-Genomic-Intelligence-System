@@ -1,0 +1,16 @@
+# Production-style stack: API + web. Usage (after copying .env.production.example to .env.production and editing it):
+#   docker compose -f docker-compose.prod.yml --env-file .env.production up -d --build
+# Not verified in the authoring environment (no Docker daemon was available); see docs/DEPLOYMENT.md.
+services:
+  api:
+    build: .
+    env_file: .env.production
+    volumes: [genomera_data:/data]
+    restart: unless-stopped
+  web:
+    build: ./web
+    ports: ["8080:80"]
+    depends_on: [api]
+    restart: unless-stopped
+volumes:
+  genomera_data:

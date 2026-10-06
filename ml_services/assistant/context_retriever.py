@@ -74,11 +74,14 @@ class ContextRetriever:
                 comm = patient_record.get("community") or "General"
                 age = patient_record.get("age_years")
                 sex = patient_record.get("sex") or "Unknown"
-                cons = "Yes (Positive)" if patient_record.get("consanguinity") else "No"
+                cons = "Yes (Positive)" if patient_record.get("consanguineous") else "No"
                 patient_parts.append(
                     f"PATIENT CONTEXT: ID={patient_id}, Age={age}, Sex={sex}, State={state}, "
                     f"Community={comm}, Consanguinity={cons}."
                 )
+                if (patient_record.get("extra") or {}).get("demo"):
+                    patient_parts.append("SAMPLE CASE: this is a fictional patient created by Genomera, "
+                                         "not a real person. State that clearly when describing it.")
 
         # -------------------------------------------------------------
         # 1. Variant & ACMG Retrieval (Phase 3B Engine)

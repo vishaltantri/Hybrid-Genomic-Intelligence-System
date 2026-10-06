@@ -249,3 +249,15 @@ tr:hover td {
   font-size: 14px;
   line-height: 1.5;
 }
+
+/* Phase 22: on narrow screens wide clinical tables scroll inside their container instead of widening the page. */
+@media (max-width: 767px) {
+  main table { display: block; max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+}
+
+/* Visible keyboard focus for controls that do not define their own. */
+:focus-visible { outline: 2px solid #0b6fa4; outline-offset: 2px; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+}

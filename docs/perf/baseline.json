@@ -1,0 +1,117 @@
+{
+  "label": "baseline",
+  "patients_seeded": 600,
+  "endpoints": {
+    "health": {
+      "status": 200,
+      "median_ms": 6.9,
+      "p95_ms": 8.0,
+      "bytes": 120
+    },
+    "patients list (limit 500)": {
+      "status": 200,
+      "median_ms": 21.9,
+      "p95_ms": 24.1,
+      "bytes": 83241
+    },
+    "patients list (limit 50)": {
+      "status": 200,
+      "median_ms": 11.7,
+      "p95_ms": 12.0,
+      "bytes": 8321
+    },
+    "patient detail": {
+      "status": 200,
+      "median_ms": 11.8,
+      "p95_ms": 12.2,
+      "bytes": 234
+    },
+    "global search": {
+      "status": 200,
+      "median_ms": 48.3,
+      "p95_ms": 56.5,
+      "bytes": 1053
+    },
+    "hpo search": {
+      "status": 200,
+      "median_ms": 16.4,
+      "p95_ms": 19.5,
+      "bytes": 759
+    },
+    "kg search": {
+      "status": 200,
+      "median_ms": 9.3,
+      "p95_ms": 10.5,
+      "bytes": 384
+    },
+    "kg stats": {
+      "status": 200,
+      "median_ms": 7.5,
+      "p95_ms": 8.1,
+      "bytes": 364
+    },
+    "diagnosis": {
+      "status": 200,
+      "median_ms": 32.6,
+      "p95_ms": 34.2,
+      "bytes": 4342
+    },
+    "analytics overview": {
+      "status": 200,
+      "median_ms": 6.6,
+      "p95_ms": 7.0,
+      "bytes": 1073
+    },
+    "digital twin": {
+      "status": 200,
+      "median_ms": 40.6,
+      "p95_ms": 43.3,
+      "bytes": 9287
+    },
+    "notifications": {
+      "status": 200,
+      "median_ms": 10.3,
+      "p95_ms": 11.5,
+      "bytes": 2
+    },
+    "workflow queue": {
+      "status": 200,
+      "median_ms": 10.2,
+      "p95_ms": 16.6,
+      "bytes": 2
+    },
+    "variant analyses list": {
+      "status": 200,
+      "median_ms": 13.2,
+      "p95_ms": 16.8,
+      "bytes": 2
+    },
+    "national dashboard": {
+      "status": 200,
+      "median_ms": 10.5,
+      "p95_ms": 11.3,
+      "bytes": 4681
+    },
+    "vcf upload+analysis": {
+      "status": 200,
+      "median_ms": 37.9,
+      "bytes": 415
+    },
+    "report create": {
+      "status": 200,
+      "median_ms": 105.8,
+      "bytes": 1958
+    },
+    "report pdf": {
+      "status": 200,
+      "median_ms": 295.5,
+      "bytes": 2895
+    }
+  },
+  "bundle_bytes": {
+    "index-B9DoOGeL.js": 888068,
+    "index-m5jIN1OY.css": 3222,
+    "Stage3D-B_unh6WH.js": 925975
+  },
+  "note": "Single local machine, TestClient (no network). Compare labels from the same machine only."
+}

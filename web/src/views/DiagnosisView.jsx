@@ -182,7 +182,7 @@ export default function DiagnosisView() {
             <label className="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1.5">
               Clinical Findings / Symptoms (English / Hindi / Hinglish)
             </label>
-            <textarea
+            <textarea aria-label="Clinical Findings / Symptoms (English / Hindi / Hinglish)"
               rows={3}
               value={text}
               onChange={(e) => setText(e.target.value)}
@@ -197,7 +197,7 @@ export default function DiagnosisView() {
               <label className="block text-xs font-semibold text-on-surface-variant mb-1">
                 State (Consanguinity Prior)
               </label>
-              <select
+              <select aria-label="State (Consanguinity Prior)"
                 value={state}
                 onChange={(e) => setState(e.target.value)}
                 className="w-full h-10 px-3 rounded-lg bg-surface-container-low border border-outline-variant/60 text-xs text-on-surface focus:outline-none focus:border-primary font-medium"
@@ -215,7 +215,7 @@ export default function DiagnosisView() {
               <label className="block text-xs font-semibold text-on-surface-variant mb-1">
                 Community (Founder Effect)
               </label>
-              <select
+              <select aria-label="Community (Founder Effect)"
                 value={community}
                 onChange={(e) => setCommunity(e.target.value)}
                 className="w-full h-10 px-3 rounded-lg bg-surface-container-low border border-outline-variant/60 text-xs text-on-surface focus:outline-none focus:border-primary font-medium"
@@ -233,7 +233,7 @@ export default function DiagnosisView() {
               <label className="block text-xs font-semibold text-on-surface-variant mb-1">
                 Biological Sex
               </label>
-              <select
+              <select aria-label="Biological Sex"
                 value={sex}
                 onChange={(e) => setSex(e.target.value)}
                 className="w-full h-10 px-3 rounded-lg bg-surface-container-low border border-outline-variant/60 text-xs text-on-surface focus:outline-none focus:border-primary font-medium"
@@ -891,7 +891,7 @@ export default function DiagnosisView() {
           icon={Stethoscope}
           title="No Differential Analysis Run"
           description="Enter clinical notes above and click 'Run Differential Diagnosis' to generate ranked Bayesian candidates with Indian population priors."
-          actionText="Run Demonstration Case"
+          actionText="Run Sample Case"
           onAction={() => {
             applyCase(QUICK_CASES[0])
             run()

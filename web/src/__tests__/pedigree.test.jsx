@@ -80,7 +80,7 @@ describe('Pedigree canvas', () => {
 
   it('shows the synthetic/test banner and no validation noise for a complete trio', async () => {
     await openCase()
-    expect(screen.getByTestId('synthetic-banner')).toHaveTextContent('Synthetic/Test Family — Not Clinical Data')
+    expect(screen.getByTestId('synthetic-banner')).toHaveTextContent('Sample Family — Not Clinical Data')
     expect(screen.queryByTestId('validation')).not.toBeInTheDocument()
   })
 
@@ -351,7 +351,7 @@ describe('Empty and error states', () => {
   it('offers the labelled synthetic demo family for an empty pedigree and reloads after creating it', async () => {
     api.pedigreeDemoFamily.mockResolvedValue({})
     const { user } = await openCase(EMPTY)
-    expect(screen.getByTestId('empty-pedigree')).toHaveTextContent('synthetic test family')
+    expect(screen.getByTestId('empty-pedigree')).toHaveTextContent('sample family')
     await user.click(screen.getByTestId('demo-family'))
     await waitFor(() => expect(api.pedigreeDemoFamily).toHaveBeenCalledWith(CASE))
     expect(api.pedigree.mock.calls.length).toBeGreaterThan(1)

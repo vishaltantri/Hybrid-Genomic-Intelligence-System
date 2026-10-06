@@ -1,0 +1,149 @@
+{
+  "label": "final25",
+  "patients_seeded": 600,
+  "endpoints": {
+    "health": {
+      "status": 200,
+      "median_ms": 9.4,
+      "p95_ms": 9.6,
+      "bytes": 120
+    },
+    "patients list (limit 500)": {
+      "status": 200,
+      "median_ms": 28.0,
+      "p95_ms": 33.0,
+      "bytes": 89741
+    },
+    "patients list (limit 50)": {
+      "status": 200,
+      "median_ms": 15.8,
+      "p95_ms": 16.6,
+      "bytes": 8971
+    },
+    "patient detail": {
+      "status": 200,
+      "median_ms": 15.4,
+      "p95_ms": 16.0,
+      "bytes": 234
+    },
+    "global search": {
+      "status": 200,
+      "median_ms": 52.0,
+      "p95_ms": 58.5,
+      "bytes": 1053
+    },
+    "hpo search": {
+      "status": 200,
+      "median_ms": 25.2,
+      "p95_ms": 28.7,
+      "bytes": 759
+    },
+    "kg search": {
+      "status": 200,
+      "median_ms": 14.8,
+      "p95_ms": 16.1,
+      "bytes": 384
+    },
+    "kg stats": {
+      "status": 200,
+      "median_ms": 12.9,
+      "p95_ms": 13.5,
+      "bytes": 364
+    },
+    "diagnosis": {
+      "status": 200,
+      "median_ms": 35.9,
+      "p95_ms": 38.0,
+      "bytes": 4342
+    },
+    "analytics overview": {
+      "status": 200,
+      "median_ms": 19.4,
+      "p95_ms": 25.6,
+      "bytes": 1073
+    },
+    "digital twin": {
+      "status": 200,
+      "median_ms": 60.3,
+      "p95_ms": 62.8,
+      "bytes": 9287
+    },
+    "notifications": {
+      "status": 200,
+      "median_ms": 23.0,
+      "p95_ms": 23.8,
+      "bytes": 2
+    },
+    "workflow queue": {
+      "status": 200,
+      "median_ms": 25.2,
+      "p95_ms": 37.6,
+      "bytes": 2
+    },
+    "variant analyses list": {
+      "status": 200,
+      "median_ms": 24.5,
+      "p95_ms": 35.5,
+      "bytes": 2
+    },
+    "national dashboard": {
+      "status": 200,
+      "median_ms": 21.9,
+      "p95_ms": 22.9,
+      "bytes": 4681
+    },
+    "vcf upload+analysis": {
+      "status": 200,
+      "median_ms": 45.2,
+      "bytes": 415
+    },
+    "report create": {
+      "status": 200,
+      "median_ms": 191.8,
+      "bytes": 1958
+    },
+    "report pdf": {
+      "status": 200,
+      "median_ms": 557.5,
+      "bytes": 2892
+    }
+  },
+  "bundle_bytes": {
+    "AnalysisPanel-D8KEoniA.js": 11015,
+    "AnalyticsView-ePMDwad6.js": 10733,
+    "AshaView-CSVkzge3.js": 8819,
+    "AssistantView-DIabKEE_.js": 15927,
+    "ClinicalTextView-BrOu2ItN.js": 10166,
+    "DemoView-B2rs70ml.js": 5437,
+    "DiagnosisIntelView-CZdHHz8m.js": 10469,
+    "DiagnosisView-C0TOVNBD.js": 27673,
+    "DigitalTwinView-BKE2q19E.js": 85566,
+    "EmptyState-D4szJi5l.js": 1009,
+    "ErrorAlert-DE0mmoC7.js": 3378,
+    "EvidenceView-DgkbAA4S.js": 13754,
+    "FhirView-B9oTGh6A.js": 4497,
+    "icons-B1Tgeo2n.js": 51034,
+    "index-CtEJrW5N.css": 3598,
+    "index-Sm12aU0L.js": 97643,
+    "KgView-DvYTk0z8.js": 23300,
+    "LoadingSkeleton-BvPi8HB9.js": 796,
+    "NationalView-B1vhwqux.js": 218928,
+    "OverviewView-DEH9aWUO.js": 10842,
+    "PageHeader-tsABDPzs.js": 1504,
+    "PatientsView-wXM86zmC.js": 8349,
+    "PedigreeView-Dtr-0hxt.js": 42732,
+    "PgxView-LkMMIHBW.js": 21542,
+    "PhenotypesView-BRVdPj6p.js": 12909,
+    "PlaceholderView-Bzat47mb.js": 6111,
+    "react-Cph6s5LE.js": 133927,
+    "ReportsView-puZUiZwK.js": 12844,
+    "ReproView-dQyxM2P7.js": 28074,
+    "ScoreBar-CR_ct4ey.js": 1205,
+    "SettingsView-DhsJINxE.js": 4140,
+    "Stage3D-BhwOlcCo.js": 926114,
+    "StatCard-CCeSXwQl.js": 1459,
+    "StatusBadge-esdYTZ_t.js": 2956,
+    "VariantsView-PuXPpXI7.js": 25674
+  },
+  "note": "Single local machine, TestClient (no network). Compare labels from the same machine only."
+}

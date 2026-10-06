@@ -47,6 +47,17 @@ class AssistantService:
         retrieved.context_summary["citations_count"] = len(retrieved.citations)
         retrieved.has_sufficient_context = True
 
+    @staticmethod
+    def _finalise(text: str, retrieved: RetrievedContext, citations_list: List[dict]):
+        """Output guardrail: drop specifics that are not in the context, and state plainly when requested literature was not retrieved."""
+        from ml_services.assistant.orchestrator import verify_answer
+        context = retrieved.patient_context_text + chr(10) + retrieved.retrieved_data_text
+        cleaned, flags = verify_answer(text, context, [c.get("identifier", "") for c in citations_list])
+        lit = (retrieved.context_summary or {}).get("literature")
+        if lit and lit != "retrieved":
+            cleaned += chr(10) * 2 + "No supporting evidence was retrieved."
+        return cleaned, [f for f in flags if f["type"] != "provider_reference"] + [f for f in flags if f["type"] == "provider_reference"]
+
     def get_or_create_conversation(self, conversation_id: Optional[str], username: str) -> str:
         if conversation_id and conversation_id in self._conversations:
             conv = self._conversations[conversation_id]
@@ -146,8 +157,12 @@ class AssistantService:
             full_response_text.append(token)
             yield f"data: {json.dumps({'type': 'content', 'delta': token})}\n\n"
 
-        # 7. Persist interaction in conversation history
+        # 7. Persist interaction in conversation history (after the output guardrail; the client replaces the streamed text if corrected)
         assembled_content = "".join(full_response_text)
+        corrected, verification = self._finalise(assembled_content, retrieved, citations_list)
+        if corrected != assembled_content:
+            assembled_content = corrected
+            yield f"data: {json.dumps({'type': 'correction', 'content': corrected, 'flags': verification})}\n\n"
         if conv:
             conv["messages"].append({
                 "role": "user",
@@ -213,6 +228,7 @@ class AssistantService:
 
         response_text = self.llm.generate(messages)
         citations_list = [asdict(c) for c in retrieved.citations]
+        response_text, verification = self._finalise(response_text, retrieved, citations_list)
 
         if conv:
             conv["messages"].append({"role": "user", "content": query, "timestamp": time.time()})
@@ -231,4 +247,5 @@ class AssistantService:
             "citations": citations_list,
             "intent": retrieved.intent,
             "context_summary": retrieved.context_summary,
+            "verification": verification,
         }

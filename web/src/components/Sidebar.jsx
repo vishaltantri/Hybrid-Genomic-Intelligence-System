@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import Logo from './Logo.jsx'
 import {
   LayoutDashboard,
@@ -17,6 +17,7 @@ import {
   HeartHandshake,
   Map,
   BarChart3,
+  Presentation,
   FileCheck,
   ShieldAlert,
   Server,
@@ -34,26 +35,27 @@ export const NAVIGATION_SECTIONS = [
       { id: 'overview', label: 'Overview', icon: LayoutDashboard },
       { id: 'patients', label: 'Patients', icon: Users },
       { id: 'cases', label: 'Cases', icon: FolderKanban },
+      { id: 'demo', label: 'Guided Case', icon: Presentation },
     ],
   },
   {
     title: 'CLINICAL INTELLIGENCE',
     items: [
-      { id: 'clinical-text', label: 'Clinical Text', icon: ScanText, badge: 'Phase 5' },
+      { id: 'clinical-text', label: 'Clinical Text', icon: ScanText },
       { id: 'phenotypes', label: 'Phenotypes', icon: FileText },
       { id: 'diagnosis', label: 'Diagnosis', icon: Stethoscope },
-      { id: 'dx-intel', label: 'Diagnosis Intelligence', icon: Stethoscope, badge: 'Phase 8' },
-      { id: 'variants', label: 'Variants', icon: Dna, badge: 'Phase 2' },
+      { id: 'dx-intel', label: 'Diagnosis Intelligence', icon: Stethoscope },
+      { id: 'variants', label: 'Variants', icon: Dna },
       { id: 'kg', label: 'Knowledge Graph', icon: Network },
-      { id: 'pedigree', label: 'Pedigree', icon: GitBranch, badge: 'Phase 3E' },
+      { id: 'pedigree', label: 'Pedigree', icon: GitBranch },
     ],
   },
   {
     title: 'ADVANCED',
     items: [
-      { id: 'digital-twin', label: 'Digital Twin', icon: Cpu, badge: 'Live' },
-      { id: 'ai-assistant', label: 'AI Assistant', icon: Bot, badge: 'Phase 3' },
-      { id: 'evidence', label: 'Evidence', icon: BookOpen, badge: 'Phase 4' },
+      { id: 'digital-twin', label: 'Digital Twin', icon: Cpu },
+      { id: 'ai-assistant', label: 'AI Assistant', icon: Bot },
+      { id: 'evidence', label: 'Evidence', icon: BookOpen },
     ],
   },
   {
@@ -101,6 +103,13 @@ export default function Sidebar({
   user,
   onLogout,
 }) {
+  useEffect(() => {
+    if (!mobileOpen) return undefined
+    const onKey = (e) => { if (e.key === 'Escape' && onMobileClose) onMobileClose() }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [mobileOpen, onMobileClose])
+
   return (
     <>
       {/* Mobile Backdrop */}
@@ -137,6 +146,7 @@ export default function Sidebar({
           {/* Mobile close button */}
           <button
             onClick={onMobileClose}
+            aria-label="Close navigation menu"
             className="lg:hidden p-1.5 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors"
           >
             <X size={18} />
@@ -144,7 +154,7 @@ export default function Sidebar({
         </div>
 
         {/* Navigation Items (Scrollable) */}
-        <div className="flex-1 overflow-y-auto px-2.5 py-3 space-y-4">
+        <nav aria-label="Main navigation" className="flex-1 overflow-y-auto px-2.5 py-3 space-y-4">
           {NAVIGATION_SECTIONS.map((section, sIdx) => (
             <div key={sIdx} className="space-y-0.5">
               {!collapsed && (
@@ -167,7 +177,9 @@ export default function Sidebar({
                       if (onMobileClose) onMobileClose()
                     }}
                     title={collapsed ? item.label : undefined}
-                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold transition-all group ${
+                    aria-label={collapsed ? item.label : undefined}
+                    aria-current={isActive ? 'page' : undefined}
+                    className={`w-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold transition-all group ${
                       isActive
                         ? 'bg-primary text-white shadow-sm'
                         : 'text-on-surface-variant hover:bg-surface-container-low hover:text-primary'
@@ -200,7 +212,7 @@ export default function Sidebar({
               })}
             </div>
           ))}
-        </div>
+        </nav>
 
         {/* Footer / User Profile & Collapse Toggle */}
         <div className="p-3 border-t border-outline-variant/30 bg-surface-container-lowest flex flex-col gap-2">
@@ -227,6 +239,7 @@ export default function Sidebar({
               <button
                 onClick={onLogout}
                 title="Sign out"
+                aria-label="Sign out"
                 className="p-1.5 rounded-lg text-outline hover:text-red-600 hover:bg-red-50 transition-colors"
               >
                 <LogOut size={16} />

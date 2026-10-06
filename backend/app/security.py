@@ -25,7 +25,7 @@ ROLE_PERMISSIONS: Dict[str, List[str]] = {
                "reproductive:read", "reproductive:counsel", "feedback:write",
                "kg:read", "dashboard:read", "variants:read", "variants:write",
                "assistant:chat", "twin:read", "twin:write", "pedigree:read", "pedigree:write", "evidence:read", "evidence:write",
-               "referral:read", "referral:handoff", "workflow:read", "workflow:write", "search:read", "triage:read", "triage:write", "analytics:read"],
+               "referral:read", "referral:handoff", "workflow:read", "workflow:write", "search:read", "triage:read", "triage:write", "analytics:read", "demo:manage", "diagnosis:confirm"],
     "patient": ["clinical:read:own", "diagnosis:read:own", "reproductive:read:own",
                 "pgx:read:own", "assistant:chat", "search:read"],
     "asha": ["triage:write", "triage:read", "clinical:write:limited", "sync:write", "referral:write", "referral:read", "workflow:read", "search:read"],

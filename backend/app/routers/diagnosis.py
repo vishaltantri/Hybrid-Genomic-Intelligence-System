@@ -15,7 +15,8 @@ def _resolve_hpo(payload: DiagnosisRequest) -> list:
     if payload.hpo_ids:
         return payload.hpo_ids
     if payload.text:
-        return registry.hpo_mapper.map_text(payload.text)["hpo_ids"]
+        from ml_services.nlp.llm_symptoms import assisted_profile
+        return assisted_profile(registry, payload.text)["hpo_ids"]
     raise HTTPException(status_code=400, detail="provide either hpo_ids or text")
 
 
@@ -25,8 +26,7 @@ def diagnose(payload: DiagnosisRequest, user: dict = Depends(require("diagnosis:
     hpo_ids = _resolve_hpo(payload)
     context = {"state": payload.state, "community": payload.community, "sex": payload.sex}
     result = registry.diagnosis.diagnose(hpo_ids, context, top_k=payload.top_k, explain=payload.explain)
-    if payload.patient_id:
-        store.add_event(payload.patient_id, "diagnosis", result)
+    store.add_event_for_case(payload.patient_id, "diagnosis", result)
     store.audit(user["username"], "diagnosis.run", payload.patient_id or "", f"n_hpo={len(hpo_ids)}")
     return result
 
@@ -34,8 +34,11 @@ def diagnose(payload: DiagnosisRequest, user: dict = Depends(require("diagnosis:
 @router.post("/xai/explain")
 def explain(payload: DiagnosisRequest, user: dict = Depends(require("xai:read"))):
     """Module 7: full multi-layer explanation bundle for the leading differential."""
+    hpo_ids = payload.hpo_ids
+    if not hpo_ids and payload.text:
+        hpo_ids = _resolve_hpo(payload)          # same phenotype reading as the diagnosis the explanation belongs to
     bundle = registry.xai.explain(text=payload.text or "",
-                                  hpo_ids=payload.hpo_ids,
+                                  hpo_ids=hpo_ids,
                                   patient_context={"state": payload.state, "community": payload.community,
                                                    "sex": payload.sex},
                                   top_k=max(3, payload.top_k), lang="en")

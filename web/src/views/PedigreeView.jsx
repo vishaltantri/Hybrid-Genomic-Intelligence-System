@@ -155,9 +155,9 @@ export default function PedigreeView({ onNavigate }) {
           )}
           {ped.members.length === 0 && (
             <div className="rounded-xl border border-outline-variant/40 bg-white p-4 text-xs space-y-2" data-testid="empty-pedigree">
-              <p>This case has no pedigree yet. Add the proband and relatives, or load the verified demo trio as a clearly labelled synthetic test family.</p>
+              <p>This case has no pedigree yet. Add the proband and relatives, or load the verified trio as a sample family.</p>
               <button onClick={runDemo} disabled={demoBusy} data-testid="demo-family" className="px-3 py-1.5 rounded-lg border border-primary text-primary font-semibold disabled:opacity-60">
-                {demoBusy ? 'Creating…' : 'Create synthetic demo family (verified trio VCF)'}</button>
+                {demoBusy ? 'Creating…' : 'Create sample family (verified trio VCF)'}</button>
             </div>
           )}
 

@@ -135,7 +135,7 @@ export default function MemberInspector({ caseId, ped, member, nav, onChanged, o
           <div className="text-on-surface-variant">
             {member.relation_to_proband && member.relation_to_proband !== 'self' ? `${member.relation_to_proband} of the proband · ` : ''}
             Sex: {member.sex === 'M' ? 'Male' : member.sex === 'F' ? 'Female' : 'Unspecified'} · Status: {member.affected} · Generation {member.generation + 1}
-            {member.synthetic ? ' · synthetic/test' : ''}
+            {member.synthetic ? ' · sample' : ''}
           </div>
         </div>
       </div>

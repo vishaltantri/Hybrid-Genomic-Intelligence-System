@@ -56,7 +56,11 @@ export function SeverityBadge({ severity, className = '' }) {
 }
 
 export function ConfidenceBadge({ confidence, score, className = '' }) {
-  let level = (confidence || '').toLowerCase()
+  if (typeof confidence === 'number') {
+    score = confidence
+    confidence = ''
+  }
+  let level = typeof confidence === 'string' ? confidence.toLowerCase() : ''
   if (!level && typeof score === 'number') {
     if (score >= 0.75) level = 'high'
     else if (score >= 0.4) level = 'medium'

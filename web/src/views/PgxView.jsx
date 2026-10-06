@@ -164,7 +164,7 @@ export default function PgxView({ onNavigate }) {
             <label className="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1">
               Prescribed Medications (Comma-separated)
             </label>
-            <input
+            <input aria-label="Prescribed Medications (Comma-separated)"
               type="text"
               value={drugs}
               onChange={(e) => setDrugs(e.target.value)}
@@ -179,7 +179,7 @@ export default function PgxView({ onNavigate }) {
               <label className="block text-xs font-semibold text-on-surface-variant mb-1">
                 Patient State (Optional AF Prior)
               </label>
-              <input
+              <input aria-label="Patient State (Optional AF Prior)"
                 type="text"
                 value={state}
                 onChange={(e) => setState(e.target.value)}
@@ -192,7 +192,7 @@ export default function PgxView({ onNavigate }) {
               <label className="block text-xs font-semibold text-on-surface-variant mb-1">
                 Community / Ethnicity (Optional)
               </label>
-              <input
+              <input aria-label="Community / Ethnicity (Optional)"
                 type="text"
                 value={ethnicity}
                 onChange={(e) => setEthnicity(e.target.value)}
@@ -205,7 +205,7 @@ export default function PgxView({ onNavigate }) {
               <label className="block text-xs font-semibold text-on-surface-variant mb-1">
                 Known Genotypes (gene: variant)
               </label>
-              <input
+              <input aria-label="Known Genotypes (gene: variant)"
                 type="text"
                 value={genotypes}
                 onChange={(e) => setGenotypes(e.target.value)}
@@ -507,7 +507,7 @@ export default function PgxView({ onNavigate }) {
           actions={
             <div className="relative w-48">
               <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-outline" />
-              <input
+              <input aria-label="Filter pairs..."
                 type="text"
                 placeholder="Filter pairs..."
                 value={coverageFilter}

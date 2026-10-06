@@ -48,6 +48,30 @@ def workspace(patient_id: str, user: dict = Depends(require("diagnosis:run"))):
     return out
 
 
+class ConfirmIn(BaseModel):
+    disease_id: str = Field(..., max_length=64)
+    note: Optional[str] = Field(None, max_length=500)
+
+
+@router.post("/case/{patient_id}/confirm")
+def confirm_diagnosis(patient_id: str, body: ConfirmIn, user: dict = Depends(require("diagnosis:confirm"))):
+    """A clinician records that THEY confirm this diagnosis for the case. The model ranking itself never becomes a diagnosis."""
+    if not store.get_patient(patient_id):
+        raise HTTPException(status_code=404, detail=f"Patient '{patient_id}' not found")
+    node = registry.graph.node("Disease", body.disease_id)
+    if not node:
+        raise HTTPException(status_code=422, detail=f"Disease '{body.disease_id}' is not in the knowledge graph")
+    who = user.get("sub") or user.get("username")
+    ws = registry.diagnosis_intel.workspace(patient_id)
+    rank = next((d["rank"] for d in ws.get("differential", []) if d["disease_id"] == body.disease_id), None)
+    ev = store.add_event(patient_id, "diagnosis_confirmation", {
+        "disease_id": body.disease_id, "disease_name": node.get("name"), "confirmed_by": who, "note": body.note,
+        "model_rank_at_confirmation": rank, "model": "resnik-bayes-deterministic"})
+    store.audit(who, "dx_confirm", patient_id, f"{body.disease_id} rank={rank}")
+    return {"event_id": ev["event_id"], "patient_id": patient_id, "disease_id": body.disease_id, "disease_name": node.get("name"),
+            "confirmed_by": who, "confirmed_utc": ev["created_utc"], "model_rank_at_confirmation": rank}
+
+
 @router.get("/case/{patient_id}/why")
 def why(patient_id: str, disease_id: str = Query(..., max_length=64), user: dict = Depends(require("diagnosis:run"))):
     return _run(registry.diagnosis_intel.why, patient_id, disease_id)

@@ -105,7 +105,7 @@ export default function LandingPage({ onSignIn, onExploreDemo }) {
               onClick={handleOpenNationalMap}
               className="inline-flex items-center justify-center h-9 px-4 rounded-lg font-title-sm text-sm font-semibold bg-primary-container text-white border border-secondary-fixed/50 hover:bg-primary transition-all shadow-[0_2px_8px_rgba(0,98,163,0.18)]"
             >
-              Live Demo
+              Explore Platform
             </button>
           </div>
         </div>

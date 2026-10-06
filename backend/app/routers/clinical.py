@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
 
 from backend.app import store
 from backend.app.models import ClinicalNoteIn, HpoProfileOut, PatientCreate, PatientOut
@@ -35,14 +35,16 @@ def reference_data(user: dict = Depends(require("clinical:read"))):
 @router.post("/patients", response_model=PatientOut)
 def create_patient(payload: PatientCreate, user: dict = Depends(require("clinical:write"))):
     created = store.create_patient(payload.model_dump(), user["username"])
-    return PatientOut(**{k: created.get(k) for k in PatientOut.model_fields})
+    return PatientOut(**{k: created.get(k) for k in PatientOut.model_fields if k != "demo"})
 
 
 @router.get("/patients", response_model=List[PatientOut])
-def list_patients(state: Optional[str] = Query(default=None), limit: int = Query(default=50, le=500),
+def list_patients(response: Response, state: Optional[str] = Query(default=None, max_length=80),
+                  limit: int = Query(default=50, ge=1, le=500), offset: int = Query(default=0, ge=0, le=1_000_000),
                   user: dict = Depends(require("clinical:read"))):
-    rows = store.list_patients(state=state, limit=limit)
-    return [PatientOut(**{k: r.get(k) for k in PatientOut.model_fields}) for r in rows]
+    response.headers["X-Total-Count"] = str(store.count_patients(state))
+    rows = store.list_patients(state=state, limit=limit, offset=offset)
+    return [PatientOut(**{k: r.get(k) for k in PatientOut.model_fields if k != "demo"}, demo=bool((r.get("extra") or {}).get("demo"))) for r in rows]
 
 
 @router.get("/patients/{patient_id}")
@@ -60,9 +62,7 @@ def get_patient(patient_id: str, user: dict = Depends(require("clinical:read")))
 def extract_entities(payload: ClinicalNoteIn, user: dict = Depends(require("clinical:write"))):
     """Module 1: token-level NER + language ID over a clinical note."""
     result = registry.ner.extract(payload.text)
-    if payload.patient_id:
-        store.add_event(payload.patient_id, "clinical_note", {"text": payload.text,
-                                                             "entities": result["entities"]})
+    store.add_event_for_case(payload.patient_id, "clinical_note", {"text": payload.text, "entities": result["entities"]})
     store.audit(user["username"], "clinical.extract", payload.patient_id or "", f"{len(payload.text)} chars, {len(result['entities'])} entities")   # never log note text
     return result
 
@@ -70,9 +70,9 @@ def extract_entities(payload: ClinicalNoteIn, user: dict = Depends(require("clin
 @router.post("/clinical/hpo-map", response_model=HpoProfileOut)
 def hpo_map(payload: ClinicalNoteIn, user: dict = Depends(require("clinical:write"))):
     """Module 2: map clinical text to HPO terms (with low-confidence review flagging)."""
-    profile = registry.hpo_mapper.map_text(payload.text)
-    if payload.patient_id:
-        store.add_event(payload.patient_id, "hpo_profile", profile)
+    from ml_services.nlp.llm_symptoms import assisted_profile
+    profile = assisted_profile(registry, payload.text)
+    store.add_event_for_case(payload.patient_id, "hpo_profile", profile)
 
     # Feed the active-learning queue when the mapper was unsure (Module 10)
     uncertainty = registry.active_learning.score_uncertainty(

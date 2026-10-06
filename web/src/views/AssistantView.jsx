@@ -65,8 +65,10 @@ export default function AssistantView({ onNavigateToDiagnosis, onNavigateToVaria
   // Auto-scroll
   const messagesEndRef = useRef(null)
 
+  const ctxPatientRef = useRef(null)
   useEffect(() => {
     const ctx = consumeNavContext('ai-assistant')
+    if (ctx?.patient_id) ctxPatientRef.current = ctx.patient_id
     if (ctx?.graph_node) {
       setGraphNode(ctx.graph_node)
       if (ctx.prompt) setInputValue(ctx.prompt)
@@ -104,11 +106,13 @@ export default function AssistantView({ onNavigateToDiagnosis, onNavigateToVaria
       ])
       if (pts.status === 'fulfilled' && pts.value) {
         setPatientsList(pts.value)
-        if (pts.value.length > 0) setPatientId(pts.value[0].id)
+        if (ctxPatientRef.current) setPatientId(ctxPatientRef.current)   // arrived for a specific case: keep it selected
       }
       if (analyses.status === 'fulfilled' && analyses.value) {
         setAnalysesList(analyses.value)
-        if (analyses.value.length > 0) setSelectedAnalysisId(analyses.value[0].analysis_id)
+        const own = ctxPatientRef.current ? analyses.value.find((a) => a.patient_id === ctxPatientRef.current) : null
+        if (own) setSelectedAnalysisId(own.analysis_id)                  // that case's own analysis, not simply the newest one
+        else if (analyses.value.length > 0) setSelectedAnalysisId(analyses.value[0].analysis_id)
       }
     } catch (err) {
       console.warn('Failed to load context sources:', err)
@@ -311,6 +315,16 @@ export default function AssistantView({ onNavigateToDiagnosis, onNavigateToVaria
           }
           return next
         })
+      },
+      // onCorrection: the server removed details that were not in the case data or evidence
+      (corrected) => {
+        accumulatedContent = corrected
+        setMessages((prev) => {
+          const next = [...prev]
+          const last = next[next.length - 1]
+          if (last && last.role === 'assistant') last.content = corrected
+          return next
+        })
       }
     )
   }
@@ -417,15 +431,15 @@ export default function AssistantView({ onNavigateToDiagnosis, onNavigateToVaria
 
           <div className="flex items-center gap-1.5">
             <span className="text-[11px] text-on-surface-variant">Patient:</span>
-            <select
+            <select aria-label="Patient"
               value={patientId}
               onChange={(e) => setPatientId(e.target.value)}
               className="px-2.5 py-1 text-xs rounded-lg border border-outline bg-surface text-on-surface focus:outline-none"
             >
               <option value="">Unlinked (General Genomics)</option>
               {patientsList.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name || p.id} ({p.state || 'India'})
+                <option key={p.patient_id || p.id} value={p.patient_id || p.id}>
+                  {p.name || p.patient_id || p.id} ({p.state || 'India'})
                 </option>
               ))}
             </select>
@@ -433,7 +447,7 @@ export default function AssistantView({ onNavigateToDiagnosis, onNavigateToVaria
 
           <div className="flex items-center gap-1.5">
             <span className="text-[11px] text-on-surface-variant">Variant Run:</span>
-            <select
+            <select aria-label="Variant Run"
               value={selectedAnalysisId}
               onChange={(e) => setSelectedAnalysisId(e.target.value)}
               className="px-2.5 py-1 text-xs rounded-lg border border-outline bg-surface text-on-surface focus:outline-none"
@@ -625,6 +639,7 @@ export default function AssistantView({ onNavigateToDiagnosis, onNavigateToVaria
           {/* Text Input */}
           <input
             type="text"
+            aria-label="Message to AI Assistant"
             placeholder={
               language === 'hi'
                 ? 'इस जीनोमिक केस के बारे में पूछें...'

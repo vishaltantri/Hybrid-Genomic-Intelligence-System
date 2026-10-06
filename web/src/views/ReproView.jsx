@@ -141,7 +141,7 @@ export default function ReproView({ onNavigate } = {}) {
               <label className="block text-xs font-semibold text-on-surface-variant mb-1">
                 Partner A Community
               </label>
-              <input
+              <input aria-label="Partner A Community"
                 type="text"
                 value={aCommunity}
                 onChange={(e) => setACommunity(e.target.value)}
@@ -154,7 +154,7 @@ export default function ReproView({ onNavigate } = {}) {
               <label className="block text-xs font-semibold text-on-surface-variant mb-1">
                 Partner B Community
               </label>
-              <input
+              <input aria-label="Partner B Community"
                 type="text"
                 value={bCommunity}
                 onChange={(e) => setBCommunity(e.target.value)}
@@ -167,7 +167,7 @@ export default function ReproView({ onNavigate } = {}) {
               <label className="block text-xs font-semibold text-on-surface-variant mb-1">
                 State (Optional)
               </label>
-              <input
+              <input aria-label="State (Optional)"
                 type="text"
                 value={state}
                 onChange={(e) => setState(e.target.value)}
@@ -180,7 +180,7 @@ export default function ReproView({ onNavigate } = {}) {
               <label className="block text-xs font-semibold text-on-surface-variant mb-1">
                 Consanguinity Kinship
               </label>
-              <select
+              <select aria-label="Consanguinity Kinship"
                 value={relation}
                 onChange={(e) => setRelation(e.target.value)}
                 className="w-full h-10 px-3 rounded-lg bg-surface-container-low border border-outline-variant/60 text-xs text-on-surface focus:outline-none focus:border-primary font-medium"
@@ -196,7 +196,7 @@ export default function ReproView({ onNavigate } = {}) {
               <label className="block text-xs font-semibold text-on-surface-variant mb-1">
                 Report Language
               </label>
-              <select
+              <select aria-label="Report Language"
                 value={lang}
                 onChange={(e) => setLang(e.target.value)}
                 className="w-full h-10 px-3 rounded-lg bg-surface-container-low border border-outline-variant/60 text-xs text-on-surface focus:outline-none focus:border-primary font-medium"
@@ -497,7 +497,7 @@ export default function ReproView({ onNavigate } = {}) {
           icon={HeartHandshake}
           title="No Carrier Assessment Generated"
           description="Select partner communities and consanguinity kinship above, then click 'Generate Counseling Report' to assess reproductive carrier risk."
-          actionText="Run Demonstration Scenario"
+          actionText="Run Sample Scenario"
           onAction={() => {
             applyCouple(QUICK_COUPLES[0])
             run()

@@ -49,9 +49,9 @@ export default function AshaView() {
 
       {/* Triage Simulation Panel */}
       <div className="panel">
-        <h3>Transcript / Symptom Triage (Module 9)</h3>
+        <h3>Transcript / Symptom Triage</h3>
         <label>ASHA Worker Voice Transcript or Clinical Observations</label>
-        <textarea
+        <textarea aria-label="ASHA Worker Voice Transcript or Clinical Observations"
           value={transcript}
           onChange={(e) => setTranscript(e.target.value)}
           placeholder="Enter village symptom report in Hindi / Hinglish..."

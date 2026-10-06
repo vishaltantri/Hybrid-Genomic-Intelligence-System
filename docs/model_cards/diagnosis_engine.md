@@ -31,4 +31,4 @@
 
 ## Limitations
 
-See docs/ML_BENCHMARK.md for caveats: synthetic cases are circular, no real outcome data.
+See docs/ML_BENCHMARK.md: synthetic cases are circular and no real outcome data exists.

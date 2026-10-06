@@ -1,0 +1,21 @@
+##fileformat=VCFv4.2
+##fileDate=20261005
+##source=GenomeraClinicalSeedTrio
+##reference=GRCh38
+##INFO=<ID=DP,Number=1,Type=Integer,Description="Total Depth">
+##INFO=<ID=AF,Number=A,Type=Float,Description="Allele Frequency in Global Reference">
+##INFO=<ID=AF_IND,Number=A,Type=Float,Description="Allele Frequency in IndiGenomes/GenomeIndia">
+##INFO=<ID=GENE,Number=1,Type=String,Description="Gene Symbol">
+##INFO=<ID=CLINVAR,Number=1,Type=String,Description="ClinVar Accession">
+##INFO=<ID=CLNSIG,Number=1,Type=String,Description="ClinVar Clinical Significance">
+##INFO=<ID=CONSEQUENCE,Number=1,Type=String,Description="Molecular Consequence">
+##INFO=<ID=HGVSc,Number=1,Type=String,Description="HGVS coding DNA notation">
+##INFO=<ID=HGVSp,Number=1,Type=String,Description="HGVS protein notation">
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Read Depth">
+##FORMAT=<ID=AD,Number=R,Type=Integer,Description="Allelic depths for the ref and alt alleles in the order listed">
+##FORMAT=<ID=GQ,Number=1,Type=Integer,Description="Genotype Quality">
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	PROBAND	MOTHER	FATHER
+chr13	51943246	rs121908298	C	G	99.0	PASS	DP=45;GENE=ATP7B;CLINVAR=VCV000001337;CLNSIG=Likely pathogenic;CONSEQUENCE=missense_variant;HGVSc=c.2931C>G;HGVSp=p.Pro977Leu;AF_IND=0.008	GT:DP:AD:GQ	1/1:45:2,43:99	0/1:42:21,21:99	0/1:38:19,19:99
+chr11	5227002	rs334	A	T	99.0	PASS	DP=52;GENE=HBB;CLINVAR=VCV000019738;CLNSIG=Pathogenic;CONSEQUENCE=missense_variant;HGVSc=c.20A>T;HGVSp=p.Glu7Val;AF_IND=0.021	GT:DP:AD:GQ	0/1:52:26,26:99	0/1:48:24,24:99	0/0:44:44,0:99
+chr10	94781859	rs4244285	G	A	99.0	PASS	DP=40;GENE=CYP2C19;CLINVAR=VCV000099700;CLNSIG=Pathogenic;CONSEQUENCE=splice_region_variant;HGVSc=c.681G>A;AF_IND=0.300	GT:DP:AD:GQ	1/1:40:1,39:99	0/1:36:18,18:99	0/1:41:20,21:99

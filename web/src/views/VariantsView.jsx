@@ -60,6 +60,12 @@ export default function VariantsView({ onNavigateToDiagnosis, onNavigateToKg, on
         loadAnalysisDetail(ctx.analysis_id, ctx.variant_id)
         return
       }
+      // Arriving for a specific patient: open that patient's own newest analysis (the list is newest first)
+      const own = ctx?.patient_id ? (list || []).find((x) => x.patient_id === ctx.patient_id) : null
+      if (own) {
+        loadAnalysisDetail(own.analysis_id)
+        return
+      }
       // If we don't have an active analysis but there's a previous one, load it
       if (!currentAnalysis && list && list.length > 0) {
         loadAnalysisDetail(list[0].analysis_id)
@@ -360,7 +366,7 @@ export default function VariantsView({ onNavigateToDiagnosis, onNavigateToKg, on
         {/* Upload Drop Area */}
         <div className="lg:col-span-7 flex flex-col sm:flex-row items-center gap-4">
           <div className="w-full relative border-2 border-dashed border-outline-variant rounded-xl p-4 text-center hover:border-primary/60 transition-colors bg-surface-container-lowest/50">
-            <input
+            <input aria-label="Upload VCF file"
               type="file"
               accept=".vcf,.vcf.gz,.txt"
               onChange={handleFileChange}
@@ -394,7 +400,7 @@ export default function VariantsView({ onNavigateToDiagnosis, onNavigateToKg, on
             <label className="block text-[11px] font-semibold text-on-surface-variant uppercase tracking-wider mb-1">
               Link Clinical Patient (Optional)
             </label>
-            <select
+            <select aria-label="Link Clinical Patient (Optional)"
               value={patientId}
               onChange={(e) => setPatientId(e.target.value)}
               className="w-full px-3 py-2 text-xs rounded-lg border border-outline bg-surface text-on-surface focus:outline-none focus:ring-1 focus:ring-primary"
@@ -414,7 +420,7 @@ export default function VariantsView({ onNavigateToDiagnosis, onNavigateToKg, on
               <label className="block text-[11px] font-semibold text-on-surface-variant uppercase tracking-wider mb-1">
                 Recent Runs
               </label>
-              <select
+              <select aria-label="Recent Runs"
                 value={currentAnalysis?.analysis_id || ''}
                 onChange={(e) => loadAnalysisDetail(e.target.value)}
                 className="w-full px-3 py-2 text-xs rounded-lg border border-outline bg-surface text-on-surface focus:outline-none focus:ring-1 focus:ring-primary"
@@ -494,7 +500,7 @@ export default function VariantsView({ onNavigateToDiagnosis, onNavigateToKg, on
             <div className="panel p-3 flex flex-wrap items-center justify-between gap-3">
               <div className="relative flex-1 min-w-[180px]">
                 <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant" />
-                <input
+                <input aria-label="Filter gene, cDNA, ClinVar, disease..."
                   type="text"
                   placeholder="Filter gene, cDNA, ClinVar, disease..."
                   value={searchQuery}
@@ -504,7 +510,7 @@ export default function VariantsView({ onNavigateToDiagnosis, onNavigateToKg, on
               </div>
 
               <div className="flex items-center gap-2 flex-wrap">
-                <select
+                <select aria-label="Filter by ACMG classification"
                   value={selectedClassification}
                   onChange={(e) => setSelectedClassification(e.target.value)}
                   className="px-2.5 py-1.5 text-xs rounded-lg border border-outline bg-surface text-on-surface focus:outline-none"
@@ -515,7 +521,7 @@ export default function VariantsView({ onNavigateToDiagnosis, onNavigateToKg, on
                   <option value="BENIGN">Benign / Likely Benign</option>
                 </select>
 
-                <select
+                <select aria-label="Filter by tier"
                   value={selectedTier}
                   onChange={(e) => setSelectedTier(e.target.value)}
                   className="px-2.5 py-1.5 text-xs rounded-lg border border-outline bg-surface text-on-surface focus:outline-none"
@@ -527,7 +533,7 @@ export default function VariantsView({ onNavigateToDiagnosis, onNavigateToKg, on
                 </select>
 
                 {distinctGenes.length > 0 && (
-                  <select
+                  <select aria-label="Filter by gene"
                     value={selectedGene}
                     onChange={(e) => setSelectedGene(e.target.value)}
                     className="px-2.5 py-1.5 text-xs rounded-lg border border-outline bg-surface text-on-surface focus:outline-none"

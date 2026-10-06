@@ -1,4 +1,4 @@
-"""GENOMIND-INDIA API.
+"""GENOMERA API.
 
 Run:
     .venv/bin/uvicorn backend.app.main:app --reload --port 8000
@@ -12,12 +12,14 @@ from __future__ import annotations
 
 import logging
 import os
+import time
 from contextlib import asynccontextmanager
 
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse, PlainTextResponse
 
-from backend.app import hardening, store
+from backend.app import hardening, migrations, observability, store
 from backend.app.models import HealthOut
 from backend.app.routers import (
     auth,
@@ -34,6 +36,8 @@ from backend.app.routers import (
     search,
     analytics as analytics_router,
     ml_registry as ml_registry_router,
+    demo as demo_router,
+    quality as quality_router,
     reports,
     reproductive,
     triage,
@@ -47,23 +51,29 @@ from backend.app.routers import (
     diagnosis_intel,
     nlp,
 )
-from backend.app.security import current_user, hash_password
+from backend.app.security import current_user, hash_password, require
 from backend.app.services import registry
 
-logging.basicConfig(level=logging.INFO)
+observability.configure_logging()
 logger = logging.getLogger("genomind.api")
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     ensure_bootstrap()
-    logger.info("GENOMIND-INDIA API ready: %s graph nodes", registry.status()["graph_nodes"])
+    logger.info("GENOMERA API ready: %s graph nodes", registry.status()["graph_nodes"])
     yield
 
 
+_HIDE_DOCS = hardening.is_production() and os.environ.get("GENOMERA_ENABLE_DOCS") != "1"
+
 app = FastAPI(
-    title="GENOMIND-INDIA API",
+    title="GENOMERA API",
     version="0.1.0",
     lifespan=lifespan,
+    # Interactive API docs expose the full route and schema inventory: off in production unless explicitly enabled.
+    docs_url=None if _HIDE_DOCS else "/docs",
+    redoc_url=None if _HIDE_DOCS else "/redoc",
+    openapi_url=None if _HIDE_DOCS else "/openapi.json",
     description=(
         "AI platform for rare genetic disease diagnosis, pharmacogenomics and reproductive "
         "risk, built for Indian populations. Prototype: outputs are decision support only and "
@@ -80,10 +90,12 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["Authorization", "Content-Type", "Accept"],
+    expose_headers=["X-Total-Count", "X-Request-ID"],
 )
-app.add_middleware(hardening.SecurityMiddleware)   # added last so it wraps CORS: headers and size limit apply to every response
+app.add_middleware(hardening.SecurityMiddleware)   # wraps CORS: headers and size limit apply to every response
+app.add_middleware(observability.RequestObservabilityMiddleware)   # outermost: request id, access log, metrics, safe 500s
 
-for r in (analytics_router.router, ml_registry_router.router, search.router,workflow.router, community.router, repro_workspace.router, reports.router, auth.router, clinical.router, diagnosis.router, pharmacogenomics.router,
+for r in (quality_router.router, demo_router.router, analytics_router.router, ml_registry_router.router, search.router,workflow.router, community.router, repro_workspace.router, reports.router, auth.router, clinical.router, diagnosis.router, pharmacogenomics.router,
           reproductive.router, triage.router, dashboard.router, learning.router,
           federated.router, emr.router, variants.router, assistant.router, digital_twin.router, pedigree.router, evidence.router, nlp.router, kg_explorer.router, phenotype.router, diagnosis_intel.router):
     app.include_router(r)
@@ -105,9 +117,9 @@ def ensure_bootstrap() -> None:
         return
     if not store.list_users():
         store.create_user("admin", "admin", hash_password("admin-password-change-me"),
-                          "Bootstrap Administrator")
-        store.create_user("clinician", "doctor", hash_password("changeme"), "Demo Clinician")
-        store.create_user("asha1", "asha", hash_password("changeme"), "Demo ASHA Worker")
+                          "Administrator")
+        store.create_user("clinician", "doctor", hash_password("changeme"), "Clinician")
+        store.create_user("asha1", "asha", hash_password("changeme"), "ASHA Worker")
         logger.warning("Created default dev users (admin / clinician / asha1) — change passwords in any real deployment.")
 
 
@@ -121,6 +133,40 @@ def health():
     status = registry.status()
     return HealthOut(status="ok", graph_nodes=status["graph_nodes"], graph_edges=status["graph_edges"],
                      modules=status["modules"])
+
+
+@app.get("/readiness", tags=["platform"])
+def readiness():
+    """Ready only when the database answers, migrations are applied and the knowledge graph is loaded (503 otherwise)."""
+    ok, body = observability.readiness(registry, store, migrations)
+    return JSONResponse(body, status_code=200 if ok else 503)
+
+
+@app.get("/metrics", tags=["platform"], response_class=PlainTextResponse)
+def prometheus_metrics(user: dict = Depends(require("ops:read"))):
+    """Prometheus text format. Admin token required; values are measured at runtime, per process."""
+    extra = {}
+    try:
+        with store._connect() as conn:
+            t = time.perf_counter()
+            conn.execute("SELECT 1").fetchone()
+            extra["genomera_database_up"] = 1
+            extra["genomera_database_ping_seconds"] = round(time.perf_counter() - t, 6)
+    except Exception:  # noqa: BLE001
+        extra["genomera_database_up"] = 0
+    for k, v in observability.system_resources().items():
+        if isinstance(v, (int, float)):
+            extra[f"genomera_{k}" if k.startswith("process_") else f"genomera_process_{k}"] = v
+    return observability.metrics.prometheus(extra)
+
+
+@app.get("/api/v1/ops/status", tags=["platform"])
+def ops_status(user: dict = Depends(require("ops:read"))):
+    """Administrator view of runtime health: request/error counters, resources and security posture."""
+    ok, ready = observability.readiness(registry, store, migrations)
+    return {"ready": ready, "metrics": observability.metrics.snapshot(), "resources": observability.system_resources(),
+            "security": hardening.posture(), "log_format": observability.LOG_FORMAT,
+            "limitations": ["Metrics are per process and reset on restart.", "There is no background job system, so no job metrics exist."]}
 
 
 @app.get("/api/v1/platform/status", tags=["platform"])

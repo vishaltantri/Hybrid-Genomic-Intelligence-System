@@ -41,7 +41,14 @@ async function request(path, { method = 'GET', body, form } = {}) {
     headers['Content-Type'] = 'application/json'
     payload = JSON.stringify(body)
   }
-  const res = await fetch(`/api/v1${path}`, { method, headers, body: payload })
+  let res
+  try {
+    res = await fetch(`/api/v1${path}`, { method, headers, body: payload })
+  } catch {
+    const err = new Error('Cannot reach the Genomera service. Check your connection and try again.')
+    err.status = 0
+    throw err
+  }
   if (res.status === 401) {
     logout()
     const err = new Error('Session expired — please sign in again.')
@@ -53,14 +60,25 @@ async function request(path, { method = 'GET', body, form } = {}) {
     try {
       const j = await res.json()
       detail = j.detail || detail
-      if (detail && typeof detail === 'object' && !Array.isArray(detail)) detail = detail.message || JSON.stringify(detail)
+      if (detail && typeof detail === 'object' && !Array.isArray(detail)) detail = detail.message || res.statusText
       else if (Array.isArray(detail)) detail = detail.map((d) => d.msg || JSON.stringify(d)).join('; ')
     } catch {
       /* keep */
     }
-    throw new Error(detail)
+    const err = new Error(friendlyDetail(res.status, detail, res.headers.get('X-Request-ID')))
+    err.status = res.status
+    throw err
   }
   return res.json()
+}
+
+// User-facing wording only: server faults never surface internal text; 4xx validation messages are written for users.
+export function friendlyDetail(status, detail, requestId) {
+  if (status >= 500) return `The service hit a problem and could not finish this request. Try again shortly${requestId ? ` (reference ${requestId})` : ''}.`
+  if (status === 429) return 'Too many requests. Please wait a moment and try again.'
+  if (status === 403) return 'Your role does not have permission for this action.'
+  if (status === 413) return 'That file or request is too large.'
+  return detail || 'The request could not be completed.'
 }
 
 export async function uploadVcfFile(formData) {
@@ -122,6 +140,12 @@ export const api = {
   // auth
   getMe: () => request('/auth/me'),
 
+
+  // demo mode (synthetic case)
+  demoStatus: () => request('/demo/status'),
+  demoSeed: () => request('/demo/seed', { method: 'POST' }),
+  demoReset: () => request('/demo/reset', { method: 'POST' }),
+
   // diagnosis + XAI
   diagnose: (body) => request('/diagnosis', { method: 'POST', body }),
   explain: (body) => request('/xai/explain', { method: 'POST', body }),
@@ -147,6 +171,8 @@ export const api = {
   phenoImport: (pid, items) => request(`/phenotype/case/${encodeURIComponent(pid)}/import`, { method: 'POST', body: { items } }),
 
   // diagnosis intelligence (Phase 8)
+  dxConfirm: (pid, body) => request(`/dx/case/${encodeURIComponent(pid)}/confirm`, { method: 'POST', body }),
+  qualityCase: (pid) => request(`/quality/case/${encodeURIComponent(pid)}`),
   dxCase: (pid) => request(`/dx/case/${encodeURIComponent(pid)}`),
   dxWhy: (pid, did) => request(`/dx/case/${encodeURIComponent(pid)}/why?disease_id=${encodeURIComponent(did)}`),
   dxMatrix: (pid) => request(`/dx/case/${encodeURIComponent(pid)}/matrix`),
@@ -302,7 +328,7 @@ export const api = {
   platformStatus: () => request('/platform/status'),
 }
 
-export async function streamAssistantChat(payload, onChunk, onCitations, onDone, onError) {
+export async function streamAssistantChat(payload, onChunk, onCitations, onDone, onError, onCorrection) {
   const token = getToken()
   const headers = { 'Content-Type': 'application/json' }
   if (token) headers['Authorization'] = `Bearer ${token}`
@@ -347,6 +373,8 @@ export async function streamAssistantChat(payload, onChunk, onCitations, onDone,
               onChunk(data.delta)
             } else if (data.type === 'citations' && onCitations) {
               onCitations(data.citations, data.context_summary)
+            } else if (data.type === 'correction' && onCorrection) {
+              onCorrection(data.content, data.flags)
             } else if (data.type === 'done' && onDone) {
               onDone(data.citations)
             }
