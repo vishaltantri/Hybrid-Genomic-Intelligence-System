@@ -50,11 +50,12 @@ AI
 
 Rare diseases are individually rare but collectively common: approximately 1 in 20
 Indians is estimated to be affected. For an affected family the average diagnostic odyssey
-is 5–7 years across 4 or more physicians. Two structural causes Amplify this delay in the
+is 5–7 years across 4 or more physicians. Two structural causes amplify this delay in the
 Indian context, and both are addressable by software:
 
 1. **Tools do not know Indian genetics.** The dominant phenotype-driven diagnosis
-   engines — Phenomizer [Köhler et al., 2009] and Exomiser [FigGS?] — compute disease
+   engines — Phenomizer [Köhler et al., 2009] andExomiser
+   [ref TBD] — compute disease
    similarity against catalogs (Orphanet, HPO annotations) derived overwhelmingly from
    European and North American patient populations. Indian-specific modifiers — the
    country's elevated consanguinity in specific states, deeply documented founder effects
@@ -69,7 +70,7 @@ Indian context, and both are addressable by software:
 
 Beyond diagnosis, pharmacogenomic decision support for Indian patients has the same gap:
 CYP2C19/CYP2D6/G6PD frequencies in Indian populations are documented (IndiGenomes), yet no
-pre-merged Indian pharmacogenomics risk table is available for clinical use withIndian
+pre-merged Indian pharmacogenomics risk table is available for clinical use with Indian
 allele distributions.
 
 ### 1.2 Contributions
@@ -101,7 +102,7 @@ allele distributions.
 §2 reviews related work. §3 presents the system architecture and each of the 11 modules.
 §4 details datasets. §5 describes model training. §6 reports results, including the
 negative GNN result. §7 discusses ethical and clinical considerations. §8 states
-limitation, and §9 concludes.
+limitations, and §9 concludes.
 
 ---
 
@@ -111,7 +112,7 @@ limitation, and §9 concludes.
 
 Phenomizer [Köhler 2009] scores query phenotypes against a term-generation null derived from
 disease–phenotype annotations; Resnik semantic similarity forms the backbone. Exomiser
-[Figs?] extends this with variant prioritization. Both are firmly validated in
+[ref TBD] extends this with variant prioritization. Both are firmly validated in
 European/North American settings — neither encodes Indian consanguinity or founder effects.
 
 ### 2.2 Indian population genetics
@@ -392,7 +393,7 @@ We list these explicitly because most exist as a consequence of honest engineeri
 choices rather than oversight:
 
 1. **NER hand-labelled gold set is 25 sentences**; the 0.800 F1 is a data ceiling, not a
-   model ceiling. The active-learning loop is the designed mitigation, and we Republic
+   model ceiling. The active-learning loop is the designed mitigation, and we report
    the number as-is rather than presenting it as a solved problem.
 2. **Benchmark cases are synthetic.** The India prior's aggregate benefit cannot be
    measured as a delta on this benchmark (see §6.2); we document that honestly and rely
@@ -426,7 +427,7 @@ don't.
 2. Acquire 1–2 h of real rural-dialect ASHA field audio; activate ASR end-to-end.
 3. Grow the hand-labelled NER corpus via the active-learning loop and re-evaluate
    against an honest external (not template-derived) gold standard.
-4. Run a first real-clinic pilot to produce the diagnosis-engine benchmark that§6.2
+4. Run a first real-clinic pilot to produce the diagnosis-engine benchmark that §6.2
    currently cannot: synthetic cases without context vs. real cases with it.
 5. Re-enable the GNN re-ranker after (4) produces outcome-labelled data.
 6. Migrate Android transport to HTTPS; release-sign the APK for field deployment.
